@@ -31,7 +31,7 @@ export async function isDuplicate(messageId: string): Promise<boolean> {
       },
       body: JSON.stringify({
         message_id: messageId,
-        processed_at: new Date().toISOString(),
+        phone: 'unknown',
       }),
       signal: AbortSignal.timeout(5000),
     });
@@ -68,7 +68,7 @@ export async function isDuplicate(messageId: string): Promise<boolean> {
 export async function cleanupDedup(): Promise<void> {
   try {
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    await fetch(SUPABASE_URL + '/wa_dedup?processed_at=lt.' + encodeURIComponent(cutoff), {
+    await fetch(SUPABASE_URL + '/wa_dedup?created_at=lt.' + encodeURIComponent(cutoff), {
       method: 'DELETE',
       headers,
       signal: AbortSignal.timeout(10000),
