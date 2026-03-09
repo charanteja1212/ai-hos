@@ -1,0 +1,51 @@
+services:
+  ai-hos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_SUPABASE_URL=https://pbevoxnglfbtxwgbbncp.supabase.co
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_XrKHVy9nN0HBDbsmWMZ53g_5tzuo545
+    restart: always
+    environment:
+      - NEXT_PUBLIC_SUPABASE_URL=https://pbevoxnglfbtxwgbbncp.supabase.co
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_XrKHVy9nN0HBDbsmWMZ53g_5tzuo545
+      - SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZXZveG5nbGZidHh3Z2JibmNwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTM5MjI5MywiZXhwIjoyMDg2OTY4MjkzfQ.rf2cAEDlFOmjxxeJt8r3x5y7_iOdAG3zRqOdBpU0Y7o
+      - NEXTAUTH_URL=https://app.ainewworld.in
+      - NEXTAUTH_SECRET=0d-UxhqtVLVB9GRu_DNDustRYjDjl_zK1OLjUzwJewI
+      - AUTH_TRUST_HOST=true
+      - DEFAULT_TENANT_ID=T001
+      - REDIS_URL=redis://redis:6379
+      - WA_PHONE_NUMBER_ID=991831654013001
+      - N8N_API_URL=https://ainewworld.in
+      - N8N_API_KEY=${N8N_API_KEY}
+      - WA_ACCESS_TOKEN=${WA_ACCESS_TOKEN}
+      - ADMIN_ALERT_PHONE=${ADMIN_ALERT_PHONE}
+      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.aihos.rule=Host(`app.ainewworld.in`)
+      - traefik.http.routers.aihos.tls=true
+      - traefik.http.routers.aihos.entrypoints=web,websecure
+      - traefik.http.services.aihos.loadbalancer.server.port=3000
+    networks:
+      - n8n_default
+
+  bullboard:
+    image: deadly0/bull-board:latest
+    restart: always
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.bullboard.rule=Host(`jobs.ainewworld.in`)
+      - traefik.http.routers.bullboard.tls=true
+      - traefik.http.routers.bullboard.entrypoints=web,websecure
+      - traefik.http.services.bullboard.loadbalancer.server.port=3000
+    networks:
+      - n8n_default
+
+networks:
+  n8n_default:
+    external: true
