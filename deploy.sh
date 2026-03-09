@@ -7,7 +7,7 @@
 set -e
 
 DEPLOY_DIR="/docker/ai-hos"
-REPO_URL="https://github.com/YOUR_USERNAME/ai-hos.git"  # Update with actual repo
+REPO_URL="https://github.com/charanteja1212/ai-hos.git"
 
 echo "═══════════════════════════════════════════"
 echo "  AI-HOS Deployment"
