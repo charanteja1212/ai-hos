@@ -164,6 +164,25 @@ export default function WhatsAppRoutingPage() {
         loadData()
       }
     }
+
+    // Also update the tenant record so the webhook can resolve it
+    if (formBranchId) {
+      const waApiUrl = `https://graph.facebook.com/v21.0/${formPhoneId}/messages`
+      const { error: tenantErr } = await supabase
+        .from("tenants")
+        .update({
+          whatsapp_phone_id: formPhoneId,
+          wa_token: formToken,
+          wa_api_url: waApiUrl,
+        })
+        .eq("tenant_id", formBranchId)
+      if (tenantErr) {
+        toast.error("Route saved but tenant update failed", { description: tenantErr.message })
+      } else {
+        toast.success("Tenant WhatsApp config updated")
+      }
+    }
+
     setSaving(false)
   }
 
@@ -313,8 +332,9 @@ export default function WhatsAppRoutingPage() {
             <li>Register a WhatsApp Business number in Meta Business Suite</li>
             <li>Get the <code className="bg-muted px-1 rounded">phone_number_id</code> from WhatsApp Business API settings</li>
             <li>Add a route here mapping that number to a client and branch</li>
-            <li>Set the webhook URL in Meta to: <code className="bg-muted px-1 rounded">https://ainewworld.in/webhook/whatsapp-cloud</code></li>
+            <li>Set the webhook URL in Meta to: <code className="bg-muted px-1 rounded">https://app.ainewworld.in/api/whatsapp/webhook</code></li>
             <li>Incoming messages will be routed to the correct hospital automatically</li>
+            <li>New numbers under the same WABA work instantly — no webhook setup needed</li>
           </ol>
         </CardContent>
       </Card>
