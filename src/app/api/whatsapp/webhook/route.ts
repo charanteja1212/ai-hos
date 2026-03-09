@@ -73,6 +73,59 @@ async function resolveTenant(receiverPhoneId: string): Promise<TenantConfig | nu
     console.error("[webhook] Tenant resolution error:", e)
   }
 
+  // Auto-create tenant for new phone numbers (same WABA, new number)
+  try {
+    const newTenantId = "T" + Date.now()
+    const waToken = WA_TOKEN_DEFAULT
+    const waApiUrl = `https://graph.facebook.com/v21.0/${receiverPhoneId}/messages`
+
+    const insertRes = await fetch(SUPABASE_URL + "/tenants", {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: "Bearer " + SUPABASE_KEY,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify({
+        tenant_id: newTenantId,
+        hospital_name: "New Branch",
+        bot_name: "Advera",
+        consultation_fee: 200,
+        whatsapp_phone_id: receiverPhoneId,
+        wa_token: waToken,
+        wa_api_url: waApiUrl,
+        openai_model: "gpt-4o-mini",
+        status: "active",
+      }),
+      signal: AbortSignal.timeout(10000),
+    })
+
+    if (insertRes.ok) {
+      const created = await insertRes.json()
+      const t = Array.isArray(created) ? created[0] : created
+      console.log("[webhook] Auto-created tenant:", t.tenant_id, "for phone_id:", receiverPhoneId)
+      return {
+        tenant_id: t.tenant_id,
+        hospital_name: t.hospital_name || "New Branch",
+        bot_name: t.bot_name || "Advera",
+        consultation_fee: t.consultation_fee || 200,
+        openai_api_key: "",
+        openai_model: t.openai_model || "gpt-4o-mini",
+        wa_token: t.wa_token || waToken,
+        wa_api_url: t.wa_api_url || waApiUrl,
+        whatsapp_phone_id: receiverPhoneId,
+        flow_registration_id: "",
+        flow_dependent_id: "",
+      }
+    } else {
+      const errText = await insertRes.text().catch(() => "")
+      console.error("[webhook] Auto-create tenant failed:", errText.substring(0, 200))
+    }
+  } catch (e) {
+    console.error("[webhook] Auto-create tenant error:", e)
+  }
+
   return null
 }
 
