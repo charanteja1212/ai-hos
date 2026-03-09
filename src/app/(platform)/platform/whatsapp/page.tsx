@@ -57,6 +57,7 @@ interface BranchOption {
   tenant_id: string
   hospital_name: string
   client_id: string
+  wa_token?: string
 }
 
 interface ClientOption {
@@ -94,7 +95,7 @@ export default function WhatsAppRoutingPage() {
     const supabase = createBrowserClient()
     const [routesRes, branchesRes, clientsRes] = await Promise.all([
       supabase.from("wa_phone_routing").select("*").order("created_at", { ascending: false }),
-      supabase.from("tenants").select("tenant_id, hospital_name, client_id").eq("status", "active"),
+      supabase.from("tenants").select("tenant_id, hospital_name, client_id, wa_token").eq("status", "active"),
       supabase.from("clients").select("client_id, name").eq("status", "active"),
     ])
     setRoutes(routesRes.data || [])
@@ -110,7 +111,10 @@ export default function WhatsAppRoutingPage() {
     setFormPhoneId("")
     setFormClientId("")
     setFormBranchId("")
-    setFormToken("")
+    // Auto-fill token from existing route or tenant (same WABA = same token)
+    const existingToken = routes.find(r => r.wa_access_token)?.wa_access_token
+      || branches.find(b => b.wa_token)?.wa_token || ""
+    setFormToken(existingToken)
     setFormDisplayName("")
     setDialogOpen(true)
   }
