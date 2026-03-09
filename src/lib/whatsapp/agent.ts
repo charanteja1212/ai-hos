@@ -394,9 +394,11 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     case 'BOOKING_SPECIALTY': {
       const sd = getSpecArray(data.specialtiesData);
       let matched = false;
+      // Normalize button ID: "spec_general_medicine" → "general medicine"
+      const normalizedMsg = lowerMsg.replace(/^spec_/, '').replace(/_/g, ' ');
       for (const s of sd) {
         const sName = (s.specialty || s.name || '').toLowerCase();
-        if (sName && lowerMsg.includes(sName)) {
+        if (sName && (normalizedMsg.includes(sName) || lowerMsg.includes(sName))) {
           data.specialty = s.specialty || s.name;
           data.matchedDoctors = s.doctors || [];
           matched = true;
@@ -440,12 +442,24 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     case 'BOOKING_DOCTOR': {
       const docs = data.matchedDoctors || [];
       let matched = false;
-      for (const d of docs) {
-        if (lowerMsg.includes((d.name || '').toLowerCase().replace(/^dr\.?\s*/i, ''))) {
-          data.doctor_id = d.doctor_id;
-          data.doctor_name = d.name;
+      // Match by index-based button ID (doc_1, doc_2) or by name
+      const docIdxMatch = lowerMsg.match(/^doc_(\d+)$/);
+      if (docIdxMatch) {
+        const idx = parseInt(docIdxMatch[1], 10) - 1;
+        if (idx >= 0 && idx < docs.length) {
+          data.doctor_id = docs[idx].doctor_id;
+          data.doctor_name = docs[idx].name;
           matched = true;
-          break;
+        }
+      }
+      if (!matched) {
+        for (const d of docs) {
+          if (lowerMsg.includes((d.name || '').toLowerCase().replace(/^dr\.?\s*/i, ''))) {
+            data.doctor_id = d.doctor_id;
+            data.doctor_name = d.name;
+            matched = true;
+            break;
+          }
         }
       }
 
@@ -477,7 +491,17 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     case 'BOOKING_DATE': {
       const avail = data.availabilityData;
       let matched = false;
-      if (avail && avail.available_dates) {
+      // Match by index-based button ID (date_1, date_2) or by date text
+      const dateIdxMatch = lowerMsg.match(/^date_(\d+)$/);
+      if (dateIdxMatch && avail && avail.available_dates) {
+        const idx = parseInt(dateIdxMatch[1], 10) - 1;
+        const availDates = avail.available_dates.filter((d: { available_count: number }) => d.available_count > 0);
+        if (idx >= 0 && idx < availDates.length) {
+          data.selectedDate = availDates[idx].date;
+          matched = true;
+        }
+      }
+      if (!matched && avail && avail.available_dates) {
         for (const d of avail.available_dates) {
           if (lowerMsg.includes((d.date || '').toLowerCase())) {
             data.selectedDate = d.date;
@@ -559,10 +583,25 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     }
 
     case 'BOOKING_SLOT': {
-      const timeMatch = messageBody.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
+      let timeMatch = messageBody.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
+
+      // Match by index-based button ID (slot_1, slot_2)
+      if (!timeMatch) {
+        const slotIdxMatch = lowerMsg.match(/^slot_(\d+)$/);
+        if (slotIdxMatch) {
+          const idx = parseInt(slotIdxMatch[1], 10) - 1;
+          const period = data.selectedPeriod || 'morning';
+          const dateData = data.availabilityData?.slots_by_date?.[data.selectedDate!];
+          const slots = dateData?.[period];
+          if (Array.isArray(slots) && idx >= 0 && idx < slots.length) {
+            data.selectedTime = slots[idx].time;
+            timeMatch = [slots[idx].time, slots[idx].time] as unknown as RegExpMatchArray;
+          }
+        }
+      }
 
       if (timeMatch) {
-        data.selectedTime = timeMatch[1].trim();
+        if (!data.selectedTime) data.selectedTime = timeMatch[1].trim();
         const patientName = data.patientName || (data.someoneElse && data.someoneElse.name) || 'Patient';
         const patientAge = (data.someoneElse && data.someoneElse.age) || data.patientAge || '';
 
@@ -753,7 +792,7 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     }
 
     case 'CANCEL_CONFIRM': {
-      if (lowerMsg === 'yes' || lowerMsg === 'हाँ' || lowerMsg === 'అవును') {
+      if (lowerMsg === 'yes' || lowerMsg === 'confirm_yes' || lowerMsg === 'हाँ' || lowerMsg === 'అవును') {
         const result = await exec('cancel_appointment', {
           booking_id: data.selectedBookingId,
           sender_phone: cleanPhone,
@@ -765,7 +804,7 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
         }
         nextState = 'MAIN_MENU';
         data = {};
-      } else if (lowerMsg === 'no' || lowerMsg === 'नहीं' || lowerMsg === 'కాదు') {
+      } else if (lowerMsg === 'no' || lowerMsg === 'confirm_no' || lowerMsg === 'नहीं' || lowerMsg === 'కాదు') {
         reply = msg('cancel_declined', language);
         nextState = 'MAIN_MENU';
         data = {};
@@ -831,7 +870,7 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     }
 
     case 'RESCHED_CONFIRM_OLD': {
-      if (lowerMsg === 'yes' || lowerMsg === 'हाँ' || lowerMsg === 'అవును') {
+      if (lowerMsg === 'yes' || lowerMsg === 'confirm_yes' || lowerMsg === 'हाँ' || lowerMsg === 'అవును') {
         const opResult = await exec('check_op_pass', { phone: cleanPhone });
         if (opResult && opResult.valid && opResult.reschedules_remaining > 0) {
           data.opPassValid = true;
@@ -846,7 +885,7 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
           reply = 'We\'re sorry, but you don\'t have a valid OP Pass or you\'ve exhausted all reschedule attempts.\n\nIs there anything else I can help you with?\n[BUTTONS:mainmenu]';
           nextState = 'MAIN_MENU';
         }
-      } else if (lowerMsg === 'no' || lowerMsg === 'नहीं' || lowerMsg === 'కాదు') {
+      } else if (lowerMsg === 'no' || lowerMsg === 'confirm_no' || lowerMsg === 'नहीं' || lowerMsg === 'కాదు') {
         reply = msg('resched_declined', language);
         nextState = 'MAIN_MENU';
         data = {};
@@ -860,9 +899,10 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     case 'RESCHED_SPECIALTY': {
       const sd = getSpecArray(data.specialtiesData);
       let matched = false;
+      const normalizedMsgRS = lowerMsg.replace(/^spec_/, '').replace(/_/g, ' ');
       for (const s of sd) {
         const sName = (s.specialty || s.name || '').toLowerCase();
-        if (sName && lowerMsg.includes(sName)) {
+        if (sName && (normalizedMsgRS.includes(sName) || lowerMsg.includes(sName))) {
           data.newSpecialty = s.specialty || s.name;
           data.matchedDoctorsResched = s.doctors || [];
           matched = true;
@@ -906,12 +946,23 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     case 'RESCHED_DOCTOR': {
       const docs = data.matchedDoctorsResched || [];
       let matched = false;
-      for (const d of docs) {
-        if (lowerMsg.includes((d.name || '').toLowerCase().replace(/^dr\.?\s*/i, ''))) {
-          data.newDoctorId = d.doctor_id;
-          data.newDoctorName = d.name;
+      const rDocIdxMatch = lowerMsg.match(/^doc_(\d+)$/);
+      if (rDocIdxMatch) {
+        const idx = parseInt(rDocIdxMatch[1], 10) - 1;
+        if (idx >= 0 && idx < docs.length) {
+          data.newDoctorId = docs[idx].doctor_id;
+          data.newDoctorName = docs[idx].name;
           matched = true;
-          break;
+        }
+      }
+      if (!matched) {
+        for (const d of docs) {
+          if (lowerMsg.includes((d.name || '').toLowerCase().replace(/^dr\.?\s*/i, ''))) {
+            data.newDoctorId = d.doctor_id;
+            data.newDoctorName = d.name;
+            matched = true;
+            break;
+          }
         }
       }
       if (matched) {
@@ -941,7 +992,16 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     case 'RESCHED_DATE': {
       const avail = data.availabilityData;
       let matched = false;
-      if (avail && avail.available_dates) {
+      const rDateIdxMatch = lowerMsg.match(/^date_(\d+)$/);
+      if (rDateIdxMatch && avail && avail.available_dates) {
+        const idx = parseInt(rDateIdxMatch[1], 10) - 1;
+        const availDates = avail.available_dates.filter((d: { available_count: number }) => d.available_count > 0);
+        if (idx >= 0 && idx < availDates.length) {
+          data.newSelectedDate = availDates[idx].date;
+          matched = true;
+        }
+      }
+      if (!matched && avail && avail.available_dates) {
         for (const d of avail.available_dates) {
           if (lowerMsg.includes((d.date || '').toLowerCase())) {
             data.newSelectedDate = d.date;
@@ -998,9 +1058,23 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     }
 
     case 'RESCHED_SLOT': {
-      const timeMatch = messageBody.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
-      if (timeMatch) {
-        data.newSelectedTime = timeMatch[1].trim();
+      let rTimeMatch = messageBody.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
+      // Match by index-based button ID (slot_1, slot_2)
+      if (!rTimeMatch) {
+        const rSlotIdxMatch = lowerMsg.match(/^slot_(\d+)$/);
+        if (rSlotIdxMatch) {
+          const idx = parseInt(rSlotIdxMatch[1], 10) - 1;
+          const period = data.newSelectedPeriod || 'morning';
+          const dateData = data.availabilityData?.slots_by_date?.[data.newSelectedDate!];
+          const slots = dateData?.[period];
+          if (Array.isArray(slots) && idx >= 0 && idx < slots.length) {
+            data.newSelectedTime = slots[idx].time;
+            rTimeMatch = [slots[idx].time, slots[idx].time] as unknown as RegExpMatchArray;
+          }
+        }
+      }
+      if (rTimeMatch) {
+        if (!data.newSelectedTime) data.newSelectedTime = rTimeMatch[1].trim();
         const patientName = (data.oldAppt && data.oldAppt.patient_name) || data.patientName || 'Patient';
         reply = 'Please review your new appointment details:\n\n' +
           '*Patient:* ' + patientName + '\n' +
@@ -1018,7 +1092,7 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     }
 
     case 'RESCHED_CONFIRM_NEW': {
-      if (lowerMsg === 'yes' || lowerMsg === 'हाँ' || lowerMsg === 'అవును') {
+      if (lowerMsg === 'yes' || lowerMsg === 'confirm_yes' || lowerMsg === 'हाँ' || lowerMsg === 'అవును') {
         const newDateParts = (data.newSelectedDate || '').split(/\s+/);
         const months: Record<string, string> = {
           'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
@@ -1055,7 +1129,7 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
         }
         nextState = 'MAIN_MENU';
         data = {};
-      } else if (lowerMsg === 'no' || lowerMsg === 'नहीं' || lowerMsg === 'కాదు') {
+      } else if (lowerMsg === 'no' || lowerMsg === 'confirm_no' || lowerMsg === 'नहीं' || lowerMsg === 'కాదు') {
         reply = msg('resched_new_declined', language);
         nextState = 'MAIN_MENU';
         data = {};
