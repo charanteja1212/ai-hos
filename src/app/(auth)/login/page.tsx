@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -193,6 +193,37 @@ export default function LoginPage() {
   const [authMethod, setAuthMethod] = useState<"pin" | "password">("pin")
   const [loginEmail, setLoginEmail] = useState("")
   const [loginPassword, setLoginPassword] = useState("")
+
+  // ---------------------------------------------------------------------------
+  // [TEMP] Auto-login as Admin — skips login UI entirely for testing
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    const autoLogin = async () => {
+      try {
+        const res = await fetch("/api/auth/tenants")
+        if (!res.ok) return
+        const clientList = await res.json()
+        if (!clientList.length) return
+        const branchRes = await fetch(`/api/auth/tenants?clientId=${clientList[0].client_id}`)
+        if (!branchRes.ok) return
+        const branchList = await branchRes.json()
+        if (!branchList.length) return
+        const result = await signIn("hospital-login", {
+          redirect: false,
+          loginMode: "branch",
+          role: "ADMIN",
+          tenantId: branchList[0].tenant_id,
+          pin: "0000",
+        })
+        if (!result?.error) {
+          router.push("/admin")
+          router.refresh()
+        }
+      } catch { /* ignore */ }
+    }
+    autoLogin()
+  }, [router])
+  // ---------------------------------------------------------------------------
 
   // ---------------------------------------------------------------------------
   // Data fetching helpers
