@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
+import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -31,7 +32,7 @@ import {
 // ---------------------------------------------------------------------------
 
 type LoginMode = "super_admin" | "client_admin" | "branch"
-type Step = "role" | "client" | "branch" | "credentials"
+type Step = "role" | "client" | "branch" | "doctor_pick" | "credentials"
 
 interface RoleCard {
   id: string
@@ -60,6 +61,12 @@ interface Branch {
   city: string
   branch_code: string
   status: string
+}
+
+interface DoctorOption {
+  doctor_id: string
+  name: string
+  specialty: string
 }
 
 // ---------------------------------------------------------------------------
@@ -182,6 +189,10 @@ export default function LoginPage() {
   const [fetchingClients, setFetchingClients] = useState(false)
   const [fetchingBranches, setFetchingBranches] = useState(false)
 
+  // [TEMP] Doctor picker
+  const [doctorList, setDoctorList] = useState<DoctorOption[]>([])
+  const [fetchingDoctors, setFetchingDoctors] = useState(false)
+
   // Credentials
   const [pin, setPin] = useState("")
   const [email, setEmail] = useState("")
@@ -278,6 +289,38 @@ export default function LoginPage() {
     }
   }, [])
 
+  // [TEMP] Fetch doctors for a tenant
+  const fetchDoctors = useCallback(async (tenantId: string): Promise<DoctorOption[]> => {
+    setFetchingDoctors(true)
+    try {
+      const supabase = createBrowserClient()
+      const { data } = await supabase
+        .from("doctors")
+        .select("doctor_id, name, specialty")
+        .eq("tenant_id", tenantId)
+        .eq("status", "active")
+        .order("name")
+      return (data || []) as DoctorOption[]
+    } finally {
+      setFetchingDoctors(false)
+    }
+  }, [])
+
+  // [TEMP] Helper: go to credentials or doctor_pick based on role
+  const goToCredentialsOrDoctorPick = useCallback(async (role: RoleCard, branch: Branch) => {
+    if (role.id === "DOCTOR") {
+      const doctors = await fetchDoctors(branch.tenant_id)
+      setDoctorList(doctors)
+      if (doctors.length === 0) {
+        setError("No active doctors found.")
+        return
+      }
+      setStep("doctor_pick")
+    } else {
+      setStep("credentials")
+    }
+  }, [fetchDoctors])
+
   // ---------------------------------------------------------------------------
   // Flow logic
   // ---------------------------------------------------------------------------
@@ -322,7 +365,7 @@ export default function LoginPage() {
 
       if (fetchedBranches.length === 1) {
         setSelectedBranch(fetchedBranches[0])
-        setStep("credentials")
+        await goToCredentialsOrDoctorPick(role, fetchedBranches[0])
       } else {
         setStep("branch")
       }
@@ -350,16 +393,45 @@ export default function LoginPage() {
 
     if (fetchedBranches.length === 1) {
       setSelectedBranch(fetchedBranches[0])
-      setStep("credentials")
+      if (selectedRole) await goToCredentialsOrDoctorPick(selectedRole, fetchedBranches[0])
     } else {
       setStep("branch")
     }
   }
 
-  const handleBranchSelect = (branch: Branch) => {
+  const handleBranchSelect = async (branch: Branch) => {
     setSelectedBranch(branch)
     setError("")
-    setStep("credentials")
+    if (selectedRole) await goToCredentialsOrDoctorPick(selectedRole, branch)
+    else setStep("credentials")
+  }
+
+  // ---------------------------------------------------------------------------
+  // [TEMP] Doctor select → auto-sign in
+  // ---------------------------------------------------------------------------
+  const handleDoctorSelect = async (doctor: DoctorOption) => {
+    setLoading(true)
+    setError("")
+    try {
+      const result = await signIn("hospital-login", {
+        redirect: false,
+        loginMode: "branch",
+        role: "DOCTOR",
+        tenantId: selectedBranch?.tenant_id,
+        identifier: doctor.doctor_id,
+        pin: "0000",
+      })
+      if (!result?.error) {
+        router.push("/doctor")
+        router.refresh()
+      } else {
+        setError("Login failed for " + doctor.name)
+        setLoading(false)
+      }
+    } catch {
+      setError("Something went wrong")
+      setLoading(false)
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -455,6 +527,25 @@ export default function LoginPage() {
 
   const handleBack = () => {
     setError("")
+
+    // [TEMP] Back from doctor picker → go to branch or role
+    if (step === "doctor_pick") {
+      setDoctorList([])
+      if (branches.length > 1) {
+        setSelectedBranch(null)
+        setStep("branch")
+      } else if (clients.length > 1) {
+        setSelectedBranch(null)
+        setSelectedClient(null)
+        setStep("client")
+      } else {
+        setStep("role")
+        setSelectedRole(null)
+        setSelectedClient(null)
+        setSelectedBranch(null)
+      }
+      return
+    }
 
     if (step === "credentials") {
       setPin("")
@@ -823,6 +914,66 @@ export default function LoginPage() {
                   </motion.button>
                 ))}
               </motion.div>
+            </motion.div>
+          )}
+
+          {/* ================================================================ */}
+          {/* [TEMP] STEP: Doctor Picker                                       */}
+          {/* ================================================================ */}
+          {step === "doctor_pick" && (
+            <motion.div
+              key="doctor-picker"
+              variants={pageVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+            >
+              <BackButton />
+
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-white tracking-tight">Select Doctor</h2>
+                <p className="text-sm text-white/35 mt-1">
+                  {selectedBranch?.hospital_name} &mdash; choose your profile
+                </p>
+              </div>
+
+              {fetchingDoctors ? (
+                <div className="text-center py-10 text-white/40">Loading doctors...</div>
+              ) : (
+                <motion.div variants={cardStagger} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {doctorList.map((doc) => (
+                    <motion.button
+                      key={doc.doctor_id}
+                      variants={cardItem}
+                      onClick={() => handleDoctorSelect(doc)}
+                      disabled={loading}
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="group relative flex items-center gap-4 p-5 rounded-2xl text-left bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] hover:border-white/[0.14] transition-colors duration-300 disabled:opacity-50"
+                      style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)" }}
+                    >
+                      <div
+                        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                        style={{ background: `radial-gradient(circle at 30% 50%, ${activeGlow}, transparent 70%)` }}
+                      />
+                      <div
+                        className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${activeGradient} flex items-center justify-center shrink-0`}
+                        style={{ boxShadow: `0 4px 12px ${activeGlow}` }}
+                      >
+                        <Stethoscope className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="relative min-w-0 flex-1">
+                        <p className="font-semibold text-white/85 text-sm truncate">{doc.name}</p>
+                        <p className="text-[11px] text-white/25 mt-0.5">{doc.specialty} &middot; {doc.doctor_id}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-white/15 group-hover:text-white/40 transition-colors shrink-0" />
+                    </motion.button>
+                  ))}
+                </motion.div>
+              )}
+
+              {error && <p className="text-red-400 text-sm text-center mt-4">{error}</p>}
             </motion.div>
           )}
 
