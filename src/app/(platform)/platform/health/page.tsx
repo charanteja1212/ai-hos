@@ -107,12 +107,15 @@ export default function SystemHealthPage() {
       results.push({ name: "Supabase DB", status: "down", latencyMs: null, details: "Connection failed" })
     }
 
-    // Check Supabase REST API
+    // Check Supabase REST API — query tenants table (lightweight) instead of HEAD on root
     try {
       const start = performance.now()
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/`, {
-        method: "HEAD",
-        headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "" },
+      const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/tenants?select=tenant_id&limit=1`, {
+        method: "GET",
+        headers: {
+          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""}`,
+        },
       })
       const latency = Math.round(performance.now() - start)
       results.push({

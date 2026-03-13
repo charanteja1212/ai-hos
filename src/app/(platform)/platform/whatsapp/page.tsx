@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { createBrowserClient } from "@/lib/supabase/client"
 import { SectionHeader } from "@/components/shared/section-header"
 import { PremiumDialog } from "@/components/shared/premium-dialog"
 import { Card, CardContent } from "@/components/ui/card"
@@ -92,15 +91,15 @@ export default function WhatsAppRoutingPage() {
   }, [user, router])
 
   const loadData = async () => {
-    const supabase = createBrowserClient()
-    const [routesRes, branchesRes, clientsRes] = await Promise.all([
-      supabase.from("wa_phone_routing").select("*").order("created_at", { ascending: false }),
-      supabase.from("tenants").select("tenant_id, hospital_name, client_id, wa_token").eq("status", "active"),
-      supabase.from("clients").select("client_id, name").eq("status", "active"),
-    ])
-    setRoutes(routesRes.data || [])
-    setBranches(branchesRes.data || [])
-    setClients(clientsRes.data || [])
+    try {
+      const res = await fetch("/api/platform?scope=whatsapp-routing")
+      const data = await res.json()
+      setRoutes(data.routes || [])
+      setBranches(data.branches || [])
+      setClients(data.clients || [])
+    } catch (e) {
+      console.error("Failed to load WhatsApp routing data:", e)
+    }
     setLoading(false)
   }
 
@@ -135,69 +134,52 @@ export default function WhatsAppRoutingPage() {
       return
     }
     setSaving(true)
-    const supabase = createBrowserClient()
 
-    const payload = {
-      phone_number_id: formPhoneId,
-      client_id: formClientId,
-      branch_id: formBranchId || null,
-      wa_access_token: formToken,
-      wa_display_name: formDisplayName || null,
-      status: "active",
-    }
-
-    if (editTarget) {
-      const { error } = await supabase
-        .from("wa_phone_routing")
-        .update(payload)
-        .eq("phone_number_id", editTarget.phone_number_id)
-      if (error) {
-        toast.error("Failed to update route", { description: error.message })
+    try {
+      const res = await fetch("/api/platform", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "saveWhatsAppRoute",
+          phone_number_id: formPhoneId,
+          client_id: formClientId,
+          branch_id: formBranchId || null,
+          wa_access_token: formToken,
+          wa_display_name: formDisplayName || null,
+          edit: !!editTarget,
+        }),
+      })
+      const result = await res.json()
+      if (!res.ok || result.error) {
+        toast.error("Failed to save", { description: result.error || "Unknown error" })
       } else {
-        toast.success("Route updated")
+        toast.success(editTarget ? "Route updated" : "Route created — tenant config updated automatically")
         setDialogOpen(false)
         loadData()
       }
-    } else {
-      const { error } = await supabase.from("wa_phone_routing").insert(payload)
-      if (error) {
-        toast.error("Failed to create route", { description: error.message })
-      } else {
-        toast.success("Route created")
-        setDialogOpen(false)
-        loadData()
-      }
-    }
-
-    // Also update the tenant record so the webhook can resolve it
-    if (formBranchId) {
-      const waApiUrl = `https://graph.facebook.com/v21.0/${formPhoneId}/messages`
-      const { error: tenantErr } = await supabase
-        .from("tenants")
-        .update({
-          whatsapp_phone_id: formPhoneId,
-          wa_token: formToken,
-          wa_api_url: waApiUrl,
-        })
-        .eq("tenant_id", formBranchId)
-      if (tenantErr) {
-        toast.error("Route saved but tenant update failed", { description: tenantErr.message })
-      } else {
-        toast.success("Tenant WhatsApp config updated")
-      }
+    } catch (e) {
+      toast.error("Failed to save", { description: String(e) })
     }
 
     setSaving(false)
   }
 
   const handleDelete = async (phoneId: string) => {
-    const supabase = createBrowserClient()
-    const { error } = await supabase.from("wa_phone_routing").delete().eq("phone_number_id", phoneId)
-    if (error) {
-      toast.error("Failed to delete", { description: error.message })
-    } else {
-      toast.success("Route removed")
-      loadData()
+    try {
+      const res = await fetch("/api/platform", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "deleteWhatsAppRoute", phone_number_id: phoneId }),
+      })
+      const result = await res.json()
+      if (!res.ok || result.error) {
+        toast.error("Failed to delete", { description: result.error || "Unknown error" })
+      } else {
+        toast.success("Route removed")
+        loadData()
+      }
+    } catch (e) {
+      toast.error("Failed to delete", { description: String(e) })
     }
   }
 

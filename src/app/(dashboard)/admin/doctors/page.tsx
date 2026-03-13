@@ -264,14 +264,20 @@ export default function DoctorsManagementPage() {
   const [formStatus, setFormStatus] = useState("active")
 
   const fetchDoctors = useCallback(async () => {
-    const supabase = createBrowserClient()
-    const { data } = await supabase
-      .from("doctors")
-      .select("*")
-      .eq("tenant_id", tenantId)
-      .order("name")
-    if (data) setDoctors(data as Doctor[])
-    setLoading(false)
+    try {
+      const supabase = createBrowserClient()
+      const { data, error } = await supabase
+        .from("doctors")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .order("name")
+      if (error) console.error("[doctors] fetch error:", error.message)
+      if (data) setDoctors(data as Doctor[])
+    } catch (e) {
+      console.error("[doctors] fetch failed:", e)
+    } finally {
+      setLoading(false)
+    }
   }, [tenantId])
 
   useEffect(() => { fetchDoctors() }, [fetchDoctors])

@@ -195,7 +195,7 @@ export default function AnalyticsPage() {
                   <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`} />
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={140} />
                   <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "12px", fontSize: "12px" }} formatter={(value) => [`₹${Number(value).toLocaleString("en-IN")}`, "Revenue"]} />
-                  <Bar dataKey="revenue" fill="hsl(var(--chart-1))" radius={[0, 6, 6, 0]} />
+                  <Bar dataKey="revenue" fill="#6366f1" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

@@ -17,6 +17,11 @@ export interface Patient {
   tenant_id?: string
   client_id?: string
   created_at?: string
+  // ABDM / ABHA fields
+  abha_number?: string        // 14-digit ABHA number (e.g. 91-1234-1234-1234)
+  abha_address?: string       // ABHA address (e.g. user@abdm)
+  abha_status?: "not_linked" | "linked" | "verified"
+  health_id_number?: string   // PHR address (legacy)
 }
 
 export interface Doctor {
@@ -98,7 +103,7 @@ export interface NursingNote {
   id: string
   timestamp: string
   author: string
-  type: "vitals" | "observation" | "medication" | "general"
+  type: "vitals" | "observation" | "medication" | "general" | "rounds"
   vitals?: {
     bp_systolic?: number
     bp_diastolic?: number
@@ -110,6 +115,13 @@ export interface NursingNote {
   observations?: string
   medications_given?: string[]
   note: string
+  rounds?: {
+    subjective?: string
+    objective?: string
+    assessment?: string
+    plan?: string
+  }
+  content?: string
 }
 
 export interface DischargeSummary {
@@ -249,6 +261,15 @@ export interface Invoice {
   payment_method?: string
   booking_id?: string
   admission_id?: string
+  // GST breakdown
+  cgst?: number
+  sgst?: number
+  igst?: number
+  gst_percentage?: number
+  discount_type?: "flat" | "percent"
+  discount_value?: number
+  gstin?: string
+  hsn_code?: string
   created_at?: string
 }
 
@@ -305,7 +326,41 @@ export interface Tenant {
   city?: string
   branch_code?: string
   ward_beds?: Record<string, WardConfig> | null
+  // GST configuration
+  gstin?: string
+  gst_percentage?: number
+  hsn_code?: string
+  enable_gst?: boolean
+  state_code?: string
+  // ABDM configuration
+  abdm_enabled?: boolean
+  abdm_facility_id?: string       // HFR (Health Facility Registry) ID
+  abdm_hip_id?: string            // Health Information Provider ID
+  abdm_hiu_id?: string            // Health Information User ID
+  abdm_client_id?: string         // ABDM gateway client ID
+  abdm_client_secret?: string     // ABDM gateway client secret
+  abdm_environment?: "sandbox" | "production"
   status: string
+  created_at?: string
+}
+
+export interface Document {
+  document_id: string
+  tenant_id: string
+  patient_phone: string
+  type: "xray" | "lab_report" | "prescription" | "discharge_summary" | "scan" | "consent" | "other"
+  title: string
+  description?: string
+  file_url: string
+  file_name: string
+  file_size?: number
+  mime_type?: string
+  uploaded_by?: string
+  uploaded_by_role?: string
+  booking_id?: string
+  lab_order_id?: string
+  prescription_id?: string
+  tags?: string[]
   created_at?: string
 }
 
@@ -369,4 +424,128 @@ export interface Notification {
   reference_type?: string
   is_read: boolean
   created_at: string
+}
+
+// ─── EMR Types ─────────────────────────────────────────────────────────────
+
+export interface Vitals {
+  id: number
+  patient_phone: string
+  tenant_id: string
+  booking_id?: string
+  recorded_by?: string
+  recorded_by_name?: string
+  recorded_at: string
+  bp_systolic?: number
+  bp_diastolic?: number
+  pulse?: number
+  temperature?: number
+  spo2?: number
+  weight?: number
+  height?: number
+  bmi?: number
+  respiratory_rate?: number
+  blood_sugar_fasting?: number
+  blood_sugar_pp?: number
+  notes?: string
+  client_id?: string
+}
+
+export interface ClinicalNote {
+  id: number
+  patient_phone: string
+  tenant_id: string
+  booking_id?: string
+  doctor_id?: string
+  doctor_name?: string
+  note_type: "consultation" | "follow_up" | "procedure" | "discharge" | "referral"
+  subjective?: string
+  objective?: string
+  assessment?: string
+  plan?: string
+  chief_complaint?: string
+  history_of_illness?: string
+  examination_findings?: Record<string, string>
+  created_at: string
+  updated_at?: string
+  client_id?: string
+}
+
+export interface MedicalCondition {
+  id: number
+  patient_phone: string
+  tenant_id: string
+  condition_name: string
+  icd_code?: string
+  category: "chronic" | "acute" | "resolved" | "surgical_history"
+  severity: "mild" | "moderate" | "severe"
+  onset_date?: string
+  resolved_date?: string
+  status: "active" | "resolved" | "managed"
+  diagnosed_by?: string
+  diagnosed_by_name?: string
+  notes?: string
+  created_at: string
+  client_id?: string
+}
+
+export interface Allergy {
+  id: number
+  patient_phone: string
+  tenant_id: string
+  allergen: string
+  allergy_type: "drug" | "food" | "environmental" | "other"
+  severity: "mild" | "moderate" | "severe" | "life_threatening"
+  reaction?: string
+  status: "active" | "resolved" | "suspected"
+  recorded_by?: string
+  recorded_by_name?: string
+  notes?: string
+  created_at: string
+  client_id?: string
+}
+
+// ─── ABDM / ABHA Types ──────────────────────────────────────────────────────
+
+export interface HealthConsent {
+  consent_id: string
+  tenant_id: string
+  patient_phone: string
+  patient_abha?: string
+  requester_name: string        // HIU name requesting data
+  requester_id?: string         // HIU ID
+  purpose: "CAREMGT" | "BTGACCESS" | "PUBHLTH" | "HPAYMT" | "DSRCH"
+  purpose_text?: string
+  hi_types: HealthInfoType[]    // Types of health info requested
+  date_range_from?: string
+  date_range_to?: string
+  expiry?: string
+  status: "REQUESTED" | "GRANTED" | "DENIED" | "EXPIRED" | "REVOKED"
+  granted_at?: string
+  denied_at?: string
+  revoked_at?: string
+  created_at?: string
+}
+
+export type HealthInfoType =
+  | "OPConsultation"
+  | "Prescription"
+  | "DischargeSummary"
+  | "DiagnosticReport"
+  | "ImmunizationRecord"
+  | "HealthDocumentRecord"
+  | "WellnessRecord"
+
+export interface HealthRecord {
+  record_id: string
+  tenant_id: string
+  patient_phone: string
+  patient_abha?: string
+  record_type: HealthInfoType
+  title: string
+  fhir_bundle?: Record<string, unknown>  // FHIR R4 Bundle JSON
+  source_id?: string            // booking_id, admission_id, prescription_id, etc.
+  source_type?: string
+  created_at?: string
+  shared_at?: string
 }

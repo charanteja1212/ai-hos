@@ -1,13 +1,17 @@
 "use client"
 
+import { PS } from "./print-layout"
 import type { Invoice } from "@/types/database"
 
 interface InvoicePrintProps {
   invoice: Invoice
+  hospitalName?: string
+  hospitalAddress?: string
+  hospitalPhone?: string
 }
 
 function formatCurrency(amount: number) {
-  return `Rs ${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function formatDate(dateStr: string) {
@@ -22,43 +26,68 @@ const TYPE_LABELS: Record<string, string> = {
   procedure: "Procedure",
 }
 
-export function InvoicePrint({ invoice }: InvoicePrintProps) {
+export function InvoicePrint({ invoice, hospitalName, hospitalAddress, hospitalPhone }: InvoicePrintProps) {
+  const hasGST = (invoice.gst_percentage || 0) > 0
+  const hasCGST = (invoice.cgst || 0) > 0
+  const hasSGST = (invoice.sgst || 0) > 0
+  const hasIGST = (invoice.igst || 0) > 0
+  const hasDiscount = (invoice.discount || 0) > 0
+
   return (
     <div style={{ fontSize: 12 }}>
-      {/* Invoice meta */}
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+      {/* Hospital Header (only when used standalone without PrintLayout) */}
+      {hospitalName && (
+        <div style={{ textAlign: "center", marginBottom: 14, borderBottom: "2px solid #1e293b", paddingBottom: 12 }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#0f172a" }}>{hospitalName}</h2>
+          {hospitalAddress && <p style={{ margin: "3px 0 0", fontSize: 10, color: "#64748b" }}>{hospitalAddress}</p>}
+          {hospitalPhone && <p style={{ margin: "1px 0 0", fontSize: 10, color: "#64748b" }}>Tel: {hospitalPhone}</p>}
+          {invoice.gstin && <p style={{ margin: "4px 0 0", fontSize: 10, fontWeight: 700, color: "#334155" }}>GSTIN: {invoice.gstin}</p>}
+        </div>
+      )}
+
+      {/* Tax Invoice Title */}
+      <div style={{ textAlign: "center", marginBottom: 14 }}>
+        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, textTransform: "uppercase", letterSpacing: 2, color: "#0f172a" }}>
+          {hasGST ? "Tax Invoice" : "Invoice"}
+        </h3>
+      </div>
+
+      {/* Invoice Meta */}
+      <div style={PS.infoRow}>
         <div>
-          <p style={{ margin: 0, fontWeight: 600 }}>{invoice.patient_name || "—"}</p>
-          <p style={{ margin: "2px 0 0", color: "#555", fontSize: 11 }}>{invoice.patient_phone}</p>
+          <p style={PS.sectionLabel}>Billed To</p>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: "#0f172a" }}>{invoice.patient_name || "—"}</p>
+          <p style={PS.muted}>{invoice.patient_phone}</p>
         </div>
         <div style={{ textAlign: "right" }}>
-          <p style={{ margin: 0, fontSize: 11, color: "#555" }}>Invoice: <strong>{invoice.invoice_id}</strong></p>
-          <p style={{ margin: "2px 0 0", fontSize: 11, color: "#555" }}>
-            Date: {invoice.created_at ? formatDate(invoice.created_at) : "—"}
-          </p>
-          <p style={{ margin: "2px 0 0", fontSize: 11, color: "#555" }}>
-            Type: {TYPE_LABELS[invoice.type] || invoice.type}
-          </p>
+          <p style={PS.sectionLabel}>Invoice Details</p>
+          <p style={{ margin: 0, fontSize: 11, fontWeight: 600 }}>{invoice.invoice_id}</p>
+          <p style={PS.muted}>Date: {invoice.created_at ? formatDate(invoice.created_at) : "—"}</p>
+          <p style={PS.muted}>Type: {TYPE_LABELS[invoice.type] || invoice.type}</p>
         </div>
       </div>
 
-      {/* Line items */}
-      <table className="print-table" style={{ borderCollapse: "collapse", width: "100%", marginBottom: 16 }}>
+      {/* Line Items */}
+      <table style={{ ...PS.table, marginBottom: 16 }}>
         <thead>
           <tr>
-            <th style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "left" }}>S.No</th>
-            <th style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "left" }}>Description</th>
-            <th style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "center" }}>Qty</th>
-            <th style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "right" }}>Amount</th>
+            <th style={{ ...PS.th, width: 32, textAlign: "center" }}>#</th>
+            <th style={PS.th}>Description</th>
+            {invoice.hsn_code && <th style={{ ...PS.th, textAlign: "center", width: 70 }}>HSN/SAC</th>}
+            <th style={{ ...PS.th, textAlign: "center", width: 40 }}>Qty</th>
+            <th style={{ ...PS.th, textAlign: "right", width: 80 }}>Rate</th>
+            <th style={{ ...PS.th, textAlign: "right", width: 90 }}>Amount</th>
           </tr>
         </thead>
         <tbody>
           {(invoice.items || []).map((item, i) => (
             <tr key={i}>
-              <td style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11 }}>{i + 1}</td>
-              <td style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11 }}>{item.description}</td>
-              <td style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, textAlign: "center" }}>{item.quantity}</td>
-              <td style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, textAlign: "right" }}>{formatCurrency(item.amount)}</td>
+              <td style={{ ...PS.td, textAlign: "center", color: "#94a3b8", fontSize: 10 }}>{i + 1}</td>
+              <td style={{ ...PS.td, fontWeight: 500 }}>{item.description}</td>
+              {invoice.hsn_code && <td style={{ ...PS.td, textAlign: "center", fontSize: 10, color: "#64748b" }}>{invoice.hsn_code}</td>}
+              <td style={{ ...PS.td, textAlign: "center" }}>{item.quantity}</td>
+              <td style={{ ...PS.td, textAlign: "right" }}>{formatCurrency(item.amount)}</td>
+              <td style={{ ...PS.td, textAlign: "right", fontWeight: 600 }}>{formatCurrency(item.amount * item.quantity)}</td>
             </tr>
           ))}
         </tbody>
@@ -66,42 +95,88 @@ export function InvoicePrint({ invoice }: InvoicePrintProps) {
 
       {/* Totals */}
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <div style={{ width: 240 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 11 }}>
-            <span>Subtotal</span>
-            <span>{formatCurrency(invoice.subtotal)}</span>
+        <div style={{ width: 300, border: "1px solid #e2e8f0", borderRadius: 4, overflow: "hidden" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 14px", fontSize: 11, borderBottom: "1px solid #e2e8f0" }}>
+            <span style={{ color: "#64748b" }}>Subtotal</span>
+            <span style={{ fontWeight: 600 }}>{formatCurrency(invoice.subtotal)}</span>
           </div>
-          {invoice.tax > 0 && (
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 11 }}>
-              <span>Tax</span>
+
+          {hasDiscount && (
+            <>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 14px", fontSize: 11, borderBottom: "1px solid #e2e8f0", color: "#16a34a" }}>
+                <span>
+                  Discount{invoice.discount_type === "percent" && invoice.discount_value ? ` (${invoice.discount_value}%)` : ""}
+                </span>
+                <span style={{ fontWeight: 600 }}>- {formatCurrency(invoice.discount)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 14px", fontSize: 11, borderBottom: "1px dashed #e2e8f0" }}>
+                <span style={{ color: "#64748b" }}>Taxable Amount</span>
+                <span style={{ fontWeight: 600 }}>{formatCurrency(invoice.subtotal - invoice.discount)}</span>
+              </div>
+            </>
+          )}
+
+          {hasCGST && (
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 14px", fontSize: 11, borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ color: "#64748b" }}>CGST ({((invoice.gst_percentage || 0) / 2).toFixed(1)}%)</span>
+              <span>{formatCurrency(invoice.cgst || 0)}</span>
+            </div>
+          )}
+          {hasSGST && (
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 14px", fontSize: 11, borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ color: "#64748b" }}>SGST ({((invoice.gst_percentage || 0) / 2).toFixed(1)}%)</span>
+              <span>{formatCurrency(invoice.sgst || 0)}</span>
+            </div>
+          )}
+          {hasIGST && (
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 14px", fontSize: 11, borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ color: "#64748b" }}>IGST ({(invoice.gst_percentage || 0).toFixed(1)}%)</span>
+              <span>{formatCurrency(invoice.igst || 0)}</span>
+            </div>
+          )}
+          {invoice.tax > 0 && !hasGST && (
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 14px", fontSize: 11, borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ color: "#64748b" }}>Tax</span>
               <span>{formatCurrency(invoice.tax)}</span>
             </div>
           )}
-          {invoice.discount > 0 && (
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 11 }}>
-              <span>Discount</span>
-              <span>- {formatCurrency(invoice.discount)}</span>
-            </div>
-          )}
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: 13, fontWeight: 700, borderTop: "2px solid #333", marginTop: 4 }}>
+
+          <div style={{
+            display: "flex", justifyContent: "space-between", padding: "8px 14px", fontSize: 14, fontWeight: 800,
+            backgroundColor: "#f1f5f9", color: "#0f172a",
+            WebkitPrintColorAdjust: "exact", printColorAdjust: "exact",
+          }}>
             <span>Total</span>
             <span>{formatCurrency(invoice.total)}</span>
           </div>
         </div>
       </div>
 
-      {/* Payment status */}
-      <div style={{ marginTop: 16, padding: "8px 12px", border: "1px solid #ddd", borderRadius: 4, fontSize: 11, display: "flex", justifyContent: "space-between" }}>
-        <span>Payment Status: <strong style={{ textTransform: "uppercase" }}>{invoice.payment_status}</strong></span>
-        {invoice.payment_method && <span>Method: {invoice.payment_method}</span>}
+      {/* Payment Status */}
+      <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 14px", border: "1px solid #e2e8f0", borderRadius: 4, fontSize: 11 }}>
+        <span>
+          Payment Status:{" "}
+          <strong style={{
+            textTransform: "uppercase",
+            color: invoice.payment_status === "paid" ? "#16a34a" : invoice.payment_status === "partial" ? "#d97706" : "#dc2626",
+          }}>
+            {invoice.payment_status}
+          </strong>
+        </span>
+        {invoice.payment_method && <span style={{ color: "#64748b" }}>Method: {invoice.payment_method}</span>}
       </div>
 
-      {invoice.booking_id && (
-        <p style={{ marginTop: 8, fontSize: 10, color: "#777" }}>Ref: {invoice.booking_id}</p>
-      )}
-      {invoice.admission_id && (
-        <p style={{ marginTop: 4, fontSize: 10, color: "#777" }}>Admission: {invoice.admission_id}</p>
-      )}
+      {/* Reference IDs */}
+      <div style={{ marginTop: 8, fontSize: 10, color: "#94a3b8" }}>
+        {invoice.booking_id && <p style={{ margin: "2px 0" }}>Booking Ref: {invoice.booking_id}</p>}
+        {invoice.admission_id && <p style={{ margin: "2px 0" }}>Admission Ref: {invoice.admission_id}</p>}
+      </div>
+
+      {/* Footer */}
+      <div style={{ marginTop: 20, textAlign: "center", fontSize: 9, color: "#94a3b8", borderTop: "1px solid #e2e8f0", paddingTop: 8 }}>
+        <p style={{ margin: 0 }}>This is a computer-generated invoice and does not require a signature.</p>
+        {invoice.gstin && <p style={{ margin: "2px 0 0" }}>GSTIN: {invoice.gstin}</p>}
+      </div>
     </div>
   )
 }

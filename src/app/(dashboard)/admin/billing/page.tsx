@@ -65,7 +65,10 @@ import { PrintButton } from "@/components/print/print-button"
 import { PrintLayout } from "@/components/print/print-layout"
 import { InvoicePrint } from "@/components/print/invoice-print"
 import { AnalyticsReportPrint } from "@/components/print/analytics-report-print"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import type { Invoice } from "@/types/database"
+import { calculateInvoiceTotals, type TenantTaxConfig } from "@/lib/billing/tax"
 
 // Badge color maps
 const TYPE_BADGE: Record<string, string> = {
@@ -135,6 +138,9 @@ export default function BillingPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkConfirm, setBulkConfirm] = useState(false)
   const [bulkAction, setBulkAction] = useState<string>("")
+  const [discountType, setDiscountType] = useState<"flat" | "percent">("flat")
+  const [discountValue, setDiscountValue] = useState("")
+  const [applyingDiscount, setApplyingDiscount] = useState(false)
 
   const { tenant } = useTenant(tenantId)
   const { from: fromDate, to: toDate } = useMemo(() => getDateRange(datePreset), [datePreset])
@@ -251,6 +257,64 @@ export default function BillingPage() {
     }
     setUpdatingPayment(false)
   }, [selectedInvoice, tenantId])
+
+  // Apply discount to invoice
+  const applyDiscount = useCallback(async () => {
+    if (!selectedInvoice || !discountValue) return
+    setApplyingDiscount(true)
+    const supabase = createBrowserClient()
+
+    // Fetch tenant GST config
+    const { data: tenantConfig } = await supabase
+      .from("tenants")
+      .select("enable_gst, gst_percentage, gstin, hsn_code, state_code")
+      .eq("tenant_id", tenantId)
+      .single()
+    const taxConfig: TenantTaxConfig | null = tenantConfig?.enable_gst
+      ? tenantConfig as TenantTaxConfig
+      : null
+
+    const totals = calculateInvoiceTotals(
+      selectedInvoice.items,
+      taxConfig,
+      { type: discountType, value: parseFloat(discountValue) || 0 }
+    )
+
+    const { error } = await supabase
+      .from("invoices")
+      .update({
+        subtotal: totals.subtotal,
+        tax: totals.tax,
+        discount: totals.discount,
+        total: totals.total,
+        cgst: totals.cgst,
+        sgst: totals.sgst,
+        igst: totals.igst,
+        gst_percentage: totals.gst_percentage,
+        discount_type: totals.discount_type,
+        discount_value: totals.discount_value,
+        gstin: totals.gstin || null,
+        hsn_code: totals.hsn_code || null,
+      })
+      .eq("invoice_id", selectedInvoice.invoice_id)
+      .eq("tenant_id", tenantId)
+
+    if (error) {
+      toast.error("Failed to apply discount")
+    } else {
+      toast.success("Discount applied successfully")
+      const updated = {
+        ...selectedInvoice,
+        ...totals,
+        discount_type: totals.discount_type as "flat" | "percent",
+      }
+      setSelectedInvoice(updated)
+      setInvoices(prev => prev.map(inv =>
+        inv.invoice_id === selectedInvoice.invoice_id ? updated : inv
+      ))
+    }
+    setApplyingDiscount(false)
+  }, [selectedInvoice, discountType, discountValue, tenantId])
 
   // Export CSV
   const exportCSV = useCallback(() => {
@@ -604,7 +668,7 @@ export default function BillingPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.02 }}
                     className={cn("group border-b border-border/50 hover:bg-accent/30 transition-colors cursor-pointer", selectedIds.has(inv.invoice_id) && "bg-primary/5")}
-                    onClick={() => setSelectedInvoice(inv)}
+                    onClick={() => { setSelectedInvoice(inv); setDiscountValue(String(inv.discount_value || "")); setDiscountType((inv.discount_type as "flat" | "percent") || "flat") }}
                   >
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <Checkbox
@@ -717,27 +781,89 @@ export default function BillingPage() {
               </Table>
             </div>
 
-            {/* Totals */}
+            {/* Totals with GST breakdown */}
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>{formatCurrency(selectedInvoice.subtotal)}</span>
               </div>
-              {(selectedInvoice.tax || 0) > 0 && (
+              {(selectedInvoice.discount || 0) > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    Discount
+                    {selectedInvoice.discount_type === "percent" && selectedInvoice.discount_value
+                      ? ` (${selectedInvoice.discount_value}%)`
+                      : ""}
+                  </span>
+                  <span className="text-green-600">-{formatCurrency(selectedInvoice.discount)}</span>
+                </div>
+              )}
+              {(selectedInvoice.cgst || 0) > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">CGST ({((selectedInvoice.gst_percentage || 0) / 2).toFixed(1)}%)</span>
+                  <span>{formatCurrency(selectedInvoice.cgst || 0)}</span>
+                </div>
+              )}
+              {(selectedInvoice.sgst || 0) > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">SGST ({((selectedInvoice.gst_percentage || 0) / 2).toFixed(1)}%)</span>
+                  <span>{formatCurrency(selectedInvoice.sgst || 0)}</span>
+                </div>
+              )}
+              {(selectedInvoice.igst || 0) > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">IGST ({(selectedInvoice.gst_percentage || 0).toFixed(1)}%)</span>
+                  <span>{formatCurrency(selectedInvoice.igst || 0)}</span>
+                </div>
+              )}
+              {(selectedInvoice.tax || 0) > 0 && !(selectedInvoice.gst_percentage || 0) && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Tax</span>
                   <span>{formatCurrency(selectedInvoice.tax)}</span>
                 </div>
               )}
-              {(selectedInvoice.discount || 0) > 0 && (
+              {selectedInvoice.gstin && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Discount</span>
-                  <span className="text-green-600">-{formatCurrency(selectedInvoice.discount)}</span>
+                  <span className="text-muted-foreground">GSTIN</span>
+                  <span className="font-mono text-xs">{selectedInvoice.gstin}</span>
                 </div>
               )}
               <div className="flex justify-between font-bold text-base pt-2 border-t border-border">
                 <span>Total</span>
                 <span>{formatCurrency(selectedInvoice.total)}</span>
+              </div>
+            </div>
+
+            {/* Discount Controls */}
+            <div className="rounded-xl border border-border p-4 space-y-3">
+              <Label className="text-sm font-medium">Apply Discount</Label>
+              <div className="flex items-center gap-2">
+                <Select value={discountType} onValueChange={(v) => setDiscountType(v as "flat" | "percent")}>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="flat">Flat (₹)</SelectItem>
+                    <SelectItem value="percent">Percent (%)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  placeholder={discountType === "flat" ? "Amount" : "Percentage"}
+                  value={discountValue}
+                  onChange={(e) => setDiscountValue(e.target.value)}
+                  className="flex-1"
+                  min="0"
+                  max={discountType === "percent" ? "100" : undefined}
+                />
+                <Button
+                  size="sm"
+                  onClick={applyDiscount}
+                  disabled={applyingDiscount || !discountValue}
+                  className="rounded-lg"
+                >
+                  {applyingDiscount ? <Loader2 className="w-3 h-3 animate-spin" /> : "Apply"}
+                </Button>
               </div>
             </div>
 
@@ -773,7 +899,12 @@ export default function BillingPage() {
                 className="w-full rounded-xl"
               >
                 <PrintLayout tenant={tenant} title="Invoice" subtitle={selectedInvoice.invoice_id}>
-                  <InvoicePrint invoice={selectedInvoice} />
+                  <InvoicePrint
+                    invoice={selectedInvoice}
+                    hospitalName={tenant?.hospital_name}
+                    hospitalAddress={tenant?.address}
+                    hospitalPhone={tenant?.phone}
+                  />
                 </PrintLayout>
               </PrintButton>
             </div>

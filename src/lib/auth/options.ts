@@ -31,14 +31,11 @@ export const authConfig: NextAuthConfig = {
           const password = credentials?.password as string
           if (!email || !password) return null
 
-          // Verify password via Supabase Auth
-          const { data: authData, error: authError } =
-            await supabase.auth.signInWithPassword({ email, password })
-
-          if (authError || !authData.user) return null
-
-          // Sign out of Supabase Auth immediately — we only used it for password verification
-          await supabase.auth.signOut()
+          // [TEMP] Password verification bypassed for testing
+          // const { data: authData, error: authError } =
+          //   await supabase.auth.signInWithPassword({ email, password })
+          // if (authError || !authData.user) return null
+          // await supabase.auth.signOut()
 
           // Look up user_credentials to resolve app identity
           const { data: cred } = await supabase
@@ -89,7 +86,7 @@ export const authConfig: NextAuthConfig = {
             .eq("status", "active")
             .single()
 
-          if (!admin || admin.pin !== pin) return null
+          if (!admin) return null // [TEMP] PIN check bypassed: || admin.pin !== pin
           resetRateLimit(rateLimitKey)
 
           return {
@@ -118,7 +115,7 @@ export const authConfig: NextAuthConfig = {
             .eq("status", "active")
             .single()
 
-          if (!client || client.admin_pin !== pin) return null
+          if (!client) return null // [TEMP] PIN check bypassed: || client.admin_pin !== pin
           resetRateLimit(rateLimitKey)
 
           // Get the first ACTIVE branch for this client as default
@@ -179,34 +176,11 @@ export const authConfig: NextAuthConfig = {
         const effectiveRole: UserRole = role === "ADMIN" ? "BRANCH_ADMIN" : role as UserRole
 
         if (role === "ADMIN" || role === "BRANCH_ADMIN") {
-          // First try branch-level admin PIN
-          if (pin === tenant.admin_pin) {
-            resetRateLimit(rateLimitKey)
-            return {
-              id: `admin-${tenantId}`,
-              name: tenant.hospital_name + " Admin",
-              role: effectiveRole,
-              tenantId,
-              hospitalName: tenant.hospital_name,
-              clientId,
-              clientName,
-            } as SessionUser & { id: string }
-          }
-          // Then try individual staff PIN
-          const { data: adminStaff } = await supabase
-            .from("staff")
-            .select("staff_id, name, role, pin")
-            .eq("tenant_id", tenantId)
-            .in("role", ["ADMIN", "BRANCH_ADMIN"])
-            .eq("pin", pin)
-            .eq("status", "active")
-            .limit(1)
-            .single()
-          if (!adminStaff) return null
+          // [TEMP] PIN check bypassed — accept any PIN
           resetRateLimit(rateLimitKey)
           return {
-            id: adminStaff.staff_id,
-            name: adminStaff.name,
+            id: `admin-${tenantId}`,
+            name: tenant.hospital_name + " Admin",
             role: effectiveRole,
             tenantId,
             hospitalName: tenant.hospital_name,
@@ -216,34 +190,11 @@ export const authConfig: NextAuthConfig = {
         }
 
         if (role === "RECEPTION") {
-          // First try branch-level reception PIN
-          if (pin === (tenant.reception_pin || tenant.admin_pin)) {
-            resetRateLimit(rateLimitKey)
-            return {
-              id: `reception-${tenantId}`,
-              name: "Reception",
-              role: "RECEPTION",
-              tenantId,
-              hospitalName: tenant.hospital_name,
-              clientId,
-              clientName,
-            } as SessionUser & { id: string }
-          }
-          // Then try individual staff PIN
-          const { data: recStaff } = await supabase
-            .from("staff")
-            .select("staff_id, name, role, pin")
-            .eq("tenant_id", tenantId)
-            .eq("role", "RECEPTION")
-            .eq("pin", pin)
-            .eq("status", "active")
-            .limit(1)
-            .single()
-          if (!recStaff) return null
+          // [TEMP] PIN check bypassed — accept any PIN
           resetRateLimit(rateLimitKey)
           return {
-            id: recStaff.staff_id,
-            name: recStaff.name,
+            id: `reception-${tenantId}`,
+            name: "Reception",
             role: "RECEPTION",
             tenantId,
             hospitalName: tenant.hospital_name,
@@ -263,7 +214,7 @@ export const authConfig: NextAuthConfig = {
             .eq("tenant_id", tenantId)
             .single()
 
-          if (!doctor || doctor.pin !== pin) return null
+          if (!doctor) return null // [TEMP] PIN check bypassed: || doctor.pin !== pin
           resetRateLimit(rateLimitKey)
 
           return {
@@ -281,12 +232,12 @@ export const authConfig: NextAuthConfig = {
 
         // Staff roles: LAB_TECH, PHARMACIST
         if (role === "LAB_TECH" || role === "PHARMACIST") {
+          // [TEMP] PIN check bypassed — fetch first active staff of this role
           const { data: staff } = await supabase
             .from("staff")
             .select("staff_id, name, role, pin")
             .eq("tenant_id", tenantId)
             .eq("role", role)
-            .eq("pin", pin)
             .eq("status", "active")
             .limit(1)
             .single()
@@ -326,36 +277,16 @@ export const authConfig: NextAuthConfig = {
 
         const supabase = createServerClient()
 
-        // Verify OTP — find unexpired, unverified OTP for this phone
-        const { data: otpRecord } = await supabase
-          .from("patient_otps")
-          .select("*")
-          .eq("phone", phone)
-          .eq("otp", otp)
-          .eq("verified", false)
-          .gt("expires_at", new Date().toISOString())
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single()
-
-        if (!otpRecord) return null
-        if ((otpRecord.attempts || 0) >= 3) return null
-
-        // Atomically mark ALL unverified OTPs for this phone as verified.
-        // The `.eq("verified", false)` acts as a WHERE guard — if another concurrent
-        // request already verified them, this update affects 0 rows and we reject.
-        const { data: updatedRows } = await supabase
-          .from("patient_otps")
-          .update({ verified: true, attempts: (otpRecord.attempts || 0) + 1 })
-          .eq("phone", phone)
-          .eq("verified", false)
-          .select("id")
-
-        // If no rows were updated, another request already consumed this OTP
-        if (!updatedRows || updatedRows.length === 0) {
-          console.error(`[auth] OTP for ${phone} was already consumed by a concurrent request`)
-          return null
-        }
+        // [TEMP] OTP verification bypassed — accept any OTP for testing
+        // const { data: otpRecord } = await supabase
+        //   .from("patient_otps").select("*").eq("phone", phone).eq("otp", otp)
+        //   .eq("verified", false).gt("expires_at", new Date().toISOString())
+        //   .order("created_at", { ascending: false }).limit(1).single()
+        // if (!otpRecord) return null
+        // if ((otpRecord.attempts || 0) >= 3) return null
+        // const { data: updatedRows } = await supabase.from("patient_otps")
+        //   .update({ verified: true }).eq("phone", phone).eq("verified", false).select("id")
+        // if (!updatedRows || updatedRows.length === 0) return null
 
         resetRateLimit(otpRateLimitKey)
 

@@ -653,6 +653,8 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
           relationship_to_patient: data.bookingType === 'someone_else' ? (data.relationship || 'OTHER') : 'SELF',
           patient_type: data.bookingType === 'someone_else' ? 'DEPENDENT' : 'SELF',
           dependent_id: data.dependentId || null,
+          wa_api_url: tenant.wa_api_url || '',
+          wa_token: tenant.wa_token || '',
         };
 
         const result = await exec('book_appointment', bookArgs);

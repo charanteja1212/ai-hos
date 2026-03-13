@@ -33,6 +33,8 @@ import {
   Calendar,
   Droplets,
 } from "lucide-react"
+import { AbhaCard } from "@/components/abdm/abha-card"
+import { AbhaLinkDialog } from "@/components/abdm/abha-link-dialog"
 import type { SessionUser } from "@/types/auth"
 
 export default function PatientProfilePage() {
@@ -174,6 +176,26 @@ export default function PatientProfilePage() {
             </div>
           </div>
         </Card>
+      </motion.div>
+
+      {/* ABHA Health ID */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+        <AbhaCard
+          abhaNumber={patient?.abha_number}
+          abhaAddress={patient?.abha_address}
+          abhaStatus={patient?.abha_status}
+          patientName={patient?.name}
+        />
+        <div className="mt-2 flex justify-end">
+          <AbhaLinkDialog
+            patientPhone={phone!}
+            tenantId={patient?.tenant_id || ""}
+            currentAbha={patient?.abha_number}
+            currentAbhaAddress={patient?.abha_address}
+            currentStatus={patient?.abha_status}
+            onUpdate={() => mutate()}
+          />
+        </div>
       </motion.div>
 
       {/* Editable Fields */}

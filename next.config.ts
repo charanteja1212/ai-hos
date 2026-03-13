@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  serverExternalPackages: ["bullmq", "ioredis"],
+  serverExternalPackages: ["bullmq", "ioredis", "nodemailer"],
   async headers() {
     return [
       {

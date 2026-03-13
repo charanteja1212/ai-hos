@@ -24,6 +24,7 @@ import {
   User,
   Shield,
   MessageSquare,
+  HeartPulse,
 } from "lucide-react"
 import type { UserRole } from "@/types/auth"
 import type { TierFeatures } from "@/lib/platform/features"
@@ -89,6 +90,7 @@ const branchAdminNav: RoleNavConfig = {
       label: "OVERVIEW",
       items: [
         { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+        { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
       ],
     },
     {
@@ -115,6 +117,7 @@ const branchAdminNav: RoleNavConfig = {
       items: [
         { label: "Pharmacy", href: "/pharmacy", icon: Pill, requiredFeature: "pharmacy_module" },
         { label: "Lab Orders", href: "/lab", icon: TestTube, requiredFeature: "lab_module" },
+        { label: "ABDM / ABHA", href: "/admin/abdm", icon: HeartPulse, requiredFeature: "abdm_integration" },
       ],
     },
     {

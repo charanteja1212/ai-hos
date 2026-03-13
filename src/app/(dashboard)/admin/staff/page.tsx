@@ -98,15 +98,21 @@ export default function StaffManagementPage() {
   const [formStatus, setFormStatus] = useState("active")
 
   const fetchStaff = useCallback(async () => {
-    const supabase = createBrowserClient()
-    const { data } = await supabase
-      .from("staff")
-      .select("*")
-      .eq("tenant_id", tenantId)
-      .order("name")
-      .limit(500)
-    if (data) setStaff(data as Staff[])
-    setLoading(false)
+    try {
+      const supabase = createBrowserClient()
+      const { data, error } = await supabase
+        .from("staff")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .order("name")
+        .limit(500)
+      if (error) console.error("[staff] fetch error:", error.message)
+      if (data) setStaff(data as Staff[])
+    } catch (e) {
+      console.error("[staff] fetch failed:", e)
+    } finally {
+      setLoading(false)
+    }
   }, [tenantId])
 
   useEffect(() => { fetchStaff() }, [fetchStaff])

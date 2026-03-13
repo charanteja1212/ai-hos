@@ -504,24 +504,44 @@ export async function savePatient(data: PatientData) {
   const supabase = createServerClient()
   const normalizedPhone = data.phone.replace(/\D/g, "")
 
-  const { error } = await supabase
+  // Check if patient already exists
+  const { data: existing } = await supabase
     .from("patients")
-    .upsert(
-      {
-        phone: normalizedPhone,
-        name: data.name,
-        age: data.age,
-        gender: data.gender,
-        email: data.email,
-        address: data.address,
-        tenant_id: data.tenant_id,
-      },
-      { onConflict: "phone" }
-    )
+    .select("phone")
+    .eq("phone", normalizedPhone)
+    .eq("tenant_id", data.tenant_id)
+    .maybeSingle()
+
+  const payload = {
+    phone: normalizedPhone,
+    name: data.name,
+    age: data.age,
+    gender: data.gender,
+    email: data.email,
+    address: data.address,
+    tenant_id: data.tenant_id,
+  }
+
+  let error
+  if (existing) {
+    // Update existing patient
+    const res = await supabase
+      .from("patients")
+      .update(payload)
+      .eq("phone", normalizedPhone)
+      .eq("tenant_id", data.tenant_id)
+    error = res.error
+  } else {
+    // Insert new patient
+    const res = await supabase
+      .from("patients")
+      .insert(payload)
+    error = res.error
+  }
 
   if (error) {
     console.error("[booking] savePatient error:", error.message)
-    return { error: "Failed to save patient" }
+    return { error: `Failed to save patient: ${error.message}` }
   }
 
   return { success: true, phone: normalizedPhone }

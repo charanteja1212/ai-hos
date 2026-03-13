@@ -156,6 +156,26 @@ export async function initRepeatableJobs() {
     }
   )
 
+  // Slot lock cleanup — every 2 minutes (replaces n8n VrzHF8t9CxVlnUlu)
+  await cleanupQueue.add(
+    "cleanup-slot-locks",
+    {},
+    {
+      repeat: { pattern: "*/2 * * * *" },
+      jobId: "cleanup-slot-locks",
+    }
+  )
+
+  // OP Pass expiry — daily at midnight IST (6:30 PM UTC previous day)
+  await cleanupQueue.add(
+    "expire-op-passes",
+    {},
+    {
+      repeat: { pattern: "30 18 * * *" },
+      jobId: "expire-op-passes",
+    }
+  )
+
   // Nightly revenue report — every day at 7 AM IST (1:30 AM UTC)
   await reportQueue.add(
     "daily-revenue-report",

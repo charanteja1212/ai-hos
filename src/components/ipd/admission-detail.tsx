@@ -19,6 +19,8 @@ import { useTenant } from "@/hooks/use-tenant"
 import { PrintButton } from "@/components/print/print-button"
 import { PrintLayout } from "@/components/print/print-layout"
 import { DischargeSummaryPrint } from "@/components/print/discharge-summary-print"
+import { VitalsChart } from "@/components/ipd/vitals-chart"
+import { RoundsPanel } from "@/components/ipd/rounds-panel"
 import type { Admission, DailyCharge, NursingNote, TransferRecord } from "@/types/database"
 
 interface AdmissionDetailProps {
@@ -96,6 +98,12 @@ export function AdmissionDetail({ admission, open, onClose, tenantId }: Admissio
             {notes.length > 0 && (
               <Badge variant="secondary" className="text-[9px] h-4 px-1 ml-0.5">{notes.length}</Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="vitals-trend" className="flex-1 text-xs gap-1">
+            <Activity className="w-3 h-3" /> Vitals
+          </TabsTrigger>
+          <TabsTrigger value="rounds" className="flex-1 text-xs gap-1">
+            <Stethoscope className="w-3 h-3" /> Rounds
           </TabsTrigger>
           <TabsTrigger value="charges" className="flex-1 text-xs gap-1">
             <Receipt className="w-3 h-3" /> Charges
@@ -195,6 +203,20 @@ export function AdmissionDetail({ admission, open, onClose, tenantId }: Admissio
               ))}
             </div>
           )}
+        </TabsContent>
+
+        {/* Vitals Trend */}
+        <TabsContent value="vitals-trend">
+          <VitalsChart notes={notes} />
+        </TabsContent>
+
+        {/* Rounds */}
+        <TabsContent value="rounds">
+          <RoundsPanel
+            admission={admission}
+            tenantId={tenantId || ""}
+            doctorName={admission.doctor_name}
+          />
         </TabsContent>
 
         {/* Charges */}

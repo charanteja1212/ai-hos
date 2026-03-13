@@ -745,7 +745,7 @@ export default function AdminPage() {
                     }}
                     formatter={(value) => [`₹${Number(value).toLocaleString("en-IN")}`, "Revenue"]}
                   />
-                  <Bar dataKey="revenue" fill="hsl(var(--chart-1))" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="revenue" fill="#6366f1" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

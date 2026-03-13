@@ -29,6 +29,7 @@ import {
 import type { SessionUser } from "@/types/auth"
 import { createNotification } from "@/lib/notifications"
 import type { PharmacyOrder } from "@/types/database"
+import { buildInvoiceData, type TenantTaxConfig } from "@/lib/billing/tax"
 import { humanizeStatus, statusColors, formatPhone } from "@/lib/utils/format"
 
 const PHARMACY_STEPS = ["Pending", "Preparing", "Ready", "Dispensed"]
@@ -102,19 +103,25 @@ export default function PharmacyPage() {
                 amount: order.total_amount / (order.items?.length || 1),
                 quantity: item.quantity ? parseInt(String(item.quantity)) || 1 : 1,
               }))
-              const { error: invError } = await supabase.from("invoices").insert({
+              // Fetch tenant GST config
+              const { data: tenantConfig } = await supabase
+                .from("tenants")
+                .select("enable_gst, gst_percentage, gstin, hsn_code, state_code")
+                .eq("tenant_id", tenantId)
+                .single()
+              const taxConfig: TenantTaxConfig | null = tenantConfig?.enable_gst
+                ? tenantConfig as TenantTaxConfig
+                : null
+              const pharmInvoice = buildInvoiceData({
                 invoice_id: invoiceId,
                 tenant_id: tenantId,
-                patient_phone: order.patient_phone,
+                patient_phone: order.patient_phone || "",
                 patient_name: order.patient_name,
                 type: "pharmacy",
                 items,
-                subtotal: order.total_amount,
-                tax: 0,
-                discount: 0,
-                total: order.total_amount,
                 payment_status: "unpaid",
-              })
+              }, taxConfig)
+              const { error: invError } = await supabase.from("invoices").insert(pharmInvoice)
               if (invError) {
                 console.error("Pharmacy invoice creation failed:", invError)
                 toast.error("Order dispensed but invoice creation failed")

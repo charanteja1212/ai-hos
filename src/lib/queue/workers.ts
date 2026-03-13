@@ -125,6 +125,83 @@ function createCleanupWorker() {
         return { cleaned: count }
       }
 
+      // Slot lock cleanup — every 2 min (replaces n8n VrzHF8t9CxVlnUlu)
+      if (job.name === "cleanup-slot-locks") {
+        const now = new Date().toISOString()
+        const errors: string[] = []
+
+        // 1. Delete expired slot locks
+        const { data: deletedLocks, error: lockErr } = await supabase
+          .from("slot_locks")
+          .delete()
+          .lt("expires_at", now)
+          .select("booking_id")
+
+        if (lockErr) errors.push(`slot_locks: ${lockErr.message}`)
+
+        // 2. Expire stale pending_payment appointments with expired locks
+        const { data: expiredAppts, error: apptErr } = await supabase
+          .from("appointments")
+          .update({ status: "expired", payment_status: "expired" })
+          .eq("status", "pending_payment")
+          .lt("locked_until", now)
+          .select("booking_id")
+
+        if (apptErr) errors.push(`appointments: ${apptErr.message}`)
+
+        const locksDeleted = deletedLocks?.length || 0
+        const apptsExpired = expiredAppts?.length || 0
+
+        if (locksDeleted > 0 || apptsExpired > 0) {
+          console.log(`[cleanup] Slot locks: ${locksDeleted} deleted, ${apptsExpired} appointments expired`)
+        }
+        if (errors.length > 0) {
+          console.error("[cleanup] Slot lock errors:", errors.join("; "))
+        }
+
+        return { deleted_locks: locksDeleted, expired_appointments: apptsExpired, errors }
+      }
+
+      // OP Pass expiry — daily midnight IST (replaces n8n MgEgaT6F7xmCEzss)
+      if (job.name === "expire-op-passes") {
+        // Calculate today in IST
+        const istMs = Date.now() + 5.5 * 3600000
+        const istDate = new Date(istMs)
+        const todayIST = `${istDate.getUTCFullYear()}-${String(istDate.getUTCMonth() + 1).padStart(2, "0")}-${String(istDate.getUTCDate()).padStart(2, "0")}`
+
+        const { data: expired, error } = await supabase
+          .from("op_passes")
+          .update({ status: "EXPIRED" })
+          .eq("status", "ACTIVE")
+          .lt("expiry_date", todayIST)
+          .select("op_pass_id")
+
+        const count = expired?.length || 0
+        if (error) {
+          console.error("[cleanup] OP pass expiry error:", error.message)
+        }
+
+        // Send admin alert
+        const adminPhone = process.env.ADMIN_ALERT_PHONE
+        if (adminPhone && (count > 0 || error)) {
+          const msg = [
+            `*OP Pass Expiry Report*`,
+            ``,
+            `Date: ${todayIST}`,
+            `Expired Passes: ${count}`,
+            error ? `Error: ${error.message}` : "",
+          ].filter(Boolean).join("\n")
+
+          await sendText(adminPhone, msg).catch(() => {})
+        }
+
+        if (count > 0) {
+          console.log(`[cleanup] Expired ${count} OP passes (date: ${todayIST})`)
+        }
+
+        return { expired_passes: count, date: todayIST }
+      }
+
       return { skipped: true }
     },
     {

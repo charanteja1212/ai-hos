@@ -200,10 +200,14 @@ export function BookingForm() {
   }
 
   const proceedFromPatient = useCallback(async () => {
-    const digits = phone.replace(/\D/g, "")
+    let digits = phone.replace(/\D/g, "")
     if (digits.length < 10) {
       toast.error("Enter a valid phone number")
       return
+    }
+    // Normalize to 12-digit format with country code
+    if (digits.length === 10) {
+      digits = "91" + digits
     }
     if (!patientName.trim()) {
       toast.error("Enter patient name")
@@ -227,6 +231,12 @@ export function BookingForm() {
           }),
           signal: AbortSignal.timeout(15000),
         })
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}))
+          toast.error(errData.error || `Save failed (${res.status})`)
+          setLoading(false)
+          return
+        }
         const data = await res.json()
         if (data.phone || data.success) {
           setPatient({
@@ -237,12 +247,12 @@ export function BookingForm() {
           } as Patient)
           toast.success("Patient saved")
         } else {
-          toast.error("Failed to save patient")
+          toast.error(data.error || "Failed to save patient")
           setLoading(false)
           return
         }
       } catch {
-        toast.error("Error saving patient")
+        toast.error("Error saving patient — check network")
         setLoading(false)
         return
       } finally {

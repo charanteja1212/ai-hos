@@ -58,6 +58,7 @@ import { PrintLayout } from "@/components/print/print-layout"
 import { LabReportPrint } from "@/components/print/lab-report-print"
 import { createNotification } from "@/lib/notifications"
 import type { LabOrder } from "@/types/database"
+import { buildInvoiceData, type TenantTaxConfig } from "@/lib/billing/tax"
 import type { ViewMode } from "@/components/ui/view-toggle"
 import { humanizeStatus, statusColors, formatPhone } from "@/lib/utils/format"
 
@@ -211,19 +212,25 @@ export default function LabPage() {
             .maybeSingle()
 
           if (!existingInv) {
-            const { error: invError } = await supabase.from("invoices").insert({
+            // Fetch tenant GST config
+            const { data: tenantConfig } = await supabase
+              .from("tenants")
+              .select("enable_gst, gst_percentage, gstin, hsn_code, state_code")
+              .eq("tenant_id", tenantId)
+              .single()
+            const taxConfig: TenantTaxConfig | null = tenantConfig?.enable_gst
+              ? tenantConfig as TenantTaxConfig
+              : null
+            const labInvoice = buildInvoiceData({
               invoice_id: invoiceId,
               tenant_id: tenantId,
               patient_phone: selectedOrder.patient_phone,
               patient_name: selectedOrder.patient_name,
               type: "lab",
               items: invoiceItems,
-              subtotal: labTotal,
-              tax: 0,
-              discount: 0,
-              total: labTotal,
               payment_status: "unpaid",
-            })
+            }, taxConfig)
+            const { error: invError } = await supabase.from("invoices").insert(labInvoice)
             if (invError) {
               console.error("Lab invoice creation failed:", invError)
               toast.error("Results saved but invoice creation failed")

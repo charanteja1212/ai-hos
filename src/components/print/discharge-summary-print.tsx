@@ -1,5 +1,6 @@
 "use client"
 
+import { PS } from "./print-layout"
 import type { Admission } from "@/types/database"
 
 interface DischargeSummaryPrintProps {
@@ -31,29 +32,38 @@ export function DischargeSummaryPrint({ admission }: DischargeSummaryPrintProps)
   return (
     <div style={{ fontSize: 12 }}>
       {/* Patient Info */}
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+      <div style={PS.infoRow}>
         <div>
-          <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>{admission.patient_name}</p>
-          <p style={{ margin: "2px 0 0", color: "#555", fontSize: 11 }}>{admission.patient_phone}</p>
+          <p style={PS.sectionLabel}>Patient</p>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#0f172a" }}>
+            {admission.patient_name}
+          </p>
+          <p style={PS.muted}>{admission.patient_phone}</p>
         </div>
         <div style={{ textAlign: "right" }}>
-          <p style={{ margin: 0, fontSize: 11, color: "#555" }}>Admission: <strong>{admission.admission_id}</strong></p>
+          <p style={PS.sectionLabel}>Admission</p>
+          <p style={{ margin: 0, fontSize: 11, fontWeight: 600 }}>{admission.admission_id}</p>
+          <p style={PS.muted}>
+            Status: <strong style={{ color: admission.status === "discharged" ? "#16a34a" : "#0f172a", textTransform: "capitalize" }}>{admission.status}</strong>
+          </p>
         </div>
       </div>
 
-      {/* Admission Details */}
-      <table style={{ borderCollapse: "collapse", width: "100%", marginBottom: 16 }}>
+      {/* Admission Details Grid */}
+      <h3 style={PS.sectionHeading}>Admission Details</h3>
+      <table style={PS.table}>
         <tbody>
           {[
-            ["Ward / Bed", `${admission.ward} — ${admission.bed_number}`],
-            ["Doctor", admission.doctor_name || "—"],
-            ["Admission Date", admission.admission_date ? formatDate(admission.admission_date) : admission.created_at ? formatDate(admission.created_at) : "—"],
-            ["Discharge Date", admission.actual_discharge ? formatDate(admission.actual_discharge) : "—"],
+            ["Ward / Bed", `${admission.ward || "—"} — ${admission.bed_number || "—"}`],
+            ["Attending Doctor", admission.doctor_name ? `Dr. ${admission.doctor_name}` : "—"],
+            ["Admitting Diagnosis", admission.diagnosis || "—"],
+            ["Date of Admission", admission.admission_date ? formatDate(admission.admission_date) : admission.created_at ? formatDate(admission.created_at) : "—"],
+            ["Date of Discharge", admission.actual_discharge ? formatDate(admission.actual_discharge) : "—"],
             ["Length of Stay", `${days} day${days !== 1 ? "s" : ""}`],
           ].map(([label, value], i) => (
             <tr key={i}>
-              <td style={{ border: "1px solid #ddd", padding: "6px 10px", fontSize: 11, fontWeight: 600, backgroundColor: "#f9f9f9", width: 160 }}>{label}</td>
-              <td style={{ border: "1px solid #ddd", padding: "6px 10px", fontSize: 11 }}>{value}</td>
+              <td style={{ ...PS.td, fontWeight: 600, backgroundColor: "#f8fafc", width: 180, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}>{label}</td>
+              <td style={PS.td}>{value}</td>
             </tr>
           ))}
         </tbody>
@@ -62,44 +72,43 @@ export function DischargeSummaryPrint({ admission }: DischargeSummaryPrintProps)
       {/* Discharge Summary */}
       {summary && (
         <>
-          <h3 style={{ fontSize: 13, fontWeight: 600, margin: "0 0 8px", borderBottom: "1px solid #ddd", paddingBottom: 4 }}>Discharge Summary</h3>
+          <h3 style={PS.sectionHeading}>Discharge Summary</h3>
 
           {summary.final_diagnosis && (
-            <div style={{ marginBottom: 10 }}>
-              <p style={{ margin: 0, fontSize: 10, fontWeight: 600, textTransform: "uppercase", color: "#777" }}>Final Diagnosis</p>
-              <p style={{ margin: "2px 0 0", fontSize: 11 }}>{summary.final_diagnosis}</p>
+            <div style={{ marginBottom: 12 }}>
+              <p style={PS.sectionLabel}>Final Diagnosis</p>
+              <p style={{ margin: "2px 0 0", fontSize: 12, fontWeight: 600, color: "#0f172a" }}>{summary.final_diagnosis}</p>
             </div>
           )}
 
           {summary.treatment_given && (
-            <div style={{ marginBottom: 10 }}>
-              <p style={{ margin: 0, fontSize: 10, fontWeight: 600, textTransform: "uppercase", color: "#777" }}>Treatment Given</p>
-              <p style={{ margin: "2px 0 0", fontSize: 11 }}>{summary.treatment_given}</p>
+            <div style={{ marginBottom: 12 }}>
+              <p style={PS.sectionLabel}>Treatment Summary</p>
+              <p style={{ margin: "2px 0 0", fontSize: 11, color: "#334155", lineHeight: 1.6 }}>{summary.treatment_given}</p>
             </div>
           )}
 
-          {/* Medications on Discharge */}
           {summary.medications_on_discharge && summary.medications_on_discharge.length > 0 && (
-            <div style={{ marginBottom: 12 }}>
-              <p style={{ margin: "0 0 6px", fontSize: 10, fontWeight: 600, textTransform: "uppercase", color: "#777" }}>Medications on Discharge</p>
-              <table style={{ borderCollapse: "collapse", width: "100%" }}>
+            <div style={{ marginBottom: 14 }}>
+              <p style={PS.sectionLabel}>Medications on Discharge</p>
+              <table style={{ ...PS.table, marginTop: 4 }}>
                 <thead>
                   <tr>
-                    <th style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "left", width: 24 }}>S.No</th>
-                    <th style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "left" }}>Medicine</th>
-                    <th style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "left" }}>Dosage</th>
-                    <th style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "left" }}>Frequency</th>
-                    <th style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "left" }}>Duration</th>
+                    <th style={{ ...PS.th, width: 28, textAlign: "center" }}>#</th>
+                    <th style={PS.th}>Medicine</th>
+                    <th style={{ ...PS.th, width: 80 }}>Dosage</th>
+                    <th style={{ ...PS.th, width: 100 }}>Frequency</th>
+                    <th style={{ ...PS.th, width: 80 }}>Duration</th>
                   </tr>
                 </thead>
                 <tbody>
                   {summary.medications_on_discharge.map((med, i) => (
                     <tr key={i}>
-                      <td style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10, textAlign: "center" }}>{i + 1}</td>
-                      <td style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10 }}>{med.medicine}</td>
-                      <td style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10 }}>{med.dosage}</td>
-                      <td style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10 }}>{med.frequency}</td>
-                      <td style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10 }}>{med.duration}</td>
+                      <td style={{ ...PS.td, textAlign: "center", color: "#94a3b8", fontSize: 10 }}>{i + 1}</td>
+                      <td style={{ ...PS.td, fontWeight: 600 }}>{med.medicine}</td>
+                      <td style={PS.td}>{med.dosage}</td>
+                      <td style={PS.td}>{med.frequency}</td>
+                      <td style={PS.td}>{med.duration}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -108,64 +117,68 @@ export function DischargeSummaryPrint({ admission }: DischargeSummaryPrintProps)
           )}
 
           {summary.follow_up_instructions && (
-            <div style={{ marginBottom: 10, padding: "8px 12px", border: "1px solid #dbeafe", borderRadius: 4, backgroundColor: "#eff6ff" }}>
-              <p style={{ margin: 0, fontSize: 10, fontWeight: 600, textTransform: "uppercase", color: "#777" }}>Follow-up Instructions</p>
-              <p style={{ margin: "2px 0 0", fontSize: 11 }}>{summary.follow_up_instructions}</p>
+            <div style={{ ...PS.highlightBox("blue"), marginBottom: 12 }}>
+              <p style={{ margin: 0, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Follow-up Instructions</p>
+              <p style={{ margin: "4px 0 0", fontSize: 11, lineHeight: 1.6 }}>{summary.follow_up_instructions}</p>
             </div>
           )}
 
           {summary.follow_up_date && (
-            <p style={{ margin: "0 0 10px", fontSize: 11 }}>
-              <strong>Follow-up Date:</strong> {formatDate(summary.follow_up_date)}
-            </p>
+            <div style={{ ...PS.highlightBox("green"), marginBottom: 12 }}>
+              <strong>Follow-up Date: </strong>{formatDate(summary.follow_up_date)}
+            </div>
           )}
         </>
       )}
 
       {/* Daily Charges */}
       {charges.length > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <h3 style={{ fontSize: 13, fontWeight: 600, margin: "0 0 8px", borderBottom: "1px solid #ddd", paddingBottom: 4 }}>Charges Summary</h3>
-          <table style={{ borderCollapse: "collapse", width: "100%" }}>
+        <>
+          <h3 style={PS.sectionHeading}>Charges Summary</h3>
+          <table style={PS.table}>
             <thead>
               <tr>
-                <th style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "left" }}>Date</th>
-                <th style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "left" }}>Description</th>
-                <th style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "left" }}>Category</th>
-                <th style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "right" }}>Amount</th>
+                <th style={PS.th}>Date</th>
+                <th style={PS.th}>Description</th>
+                <th style={{ ...PS.th, width: 80 }}>Category</th>
+                <th style={{ ...PS.th, textAlign: "right", width: 100 }}>Amount</th>
               </tr>
             </thead>
             <tbody>
               {charges.map((c, i) => (
                 <tr key={i}>
-                  <td style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10 }}>{c.date}</td>
-                  <td style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10 }}>{c.description}</td>
-                  <td style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10, textTransform: "capitalize" }}>{c.category}</td>
-                  <td style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 10, textAlign: "right" }}>{formatCurrency(c.amount)}</td>
+                  <td style={PS.td}>{c.date}</td>
+                  <td style={PS.td}>{c.description}</td>
+                  <td style={{ ...PS.td, textTransform: "capitalize" }}>{c.category}</td>
+                  <td style={{ ...PS.td, textAlign: "right", fontWeight: 600 }}>{formatCurrency(c.amount)}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={3} style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 11, fontWeight: 700, textAlign: "right" }}>Total</td>
-                <td style={{ border: "1px solid #ccc", padding: "5px 8px", fontSize: 11, fontWeight: 700, textAlign: "right" }}>{formatCurrency(chargesTotal)}</td>
+                <td colSpan={3} style={{ ...PS.td, fontWeight: 700, textAlign: "right", backgroundColor: "#f8fafc", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}>
+                  Total Charges
+                </td>
+                <td style={{ ...PS.td, fontWeight: 700, textAlign: "right", fontSize: 13, backgroundColor: "#f8fafc", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}>
+                  {formatCurrency(chargesTotal)}
+                </td>
               </tr>
             </tfoot>
           </table>
-        </div>
+        </>
       )}
 
-      {/* Discharged by */}
-      {summary?.discharged_by && (
-        <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
-          <div style={{ textAlign: "center", width: 200 }}>
-            <div style={{ borderTop: "1px solid #000", paddingTop: 6 }}>
-              <p style={{ margin: 0, fontSize: 11, fontWeight: 600 }}>{summary.discharged_by}</p>
-              <p style={{ margin: "2px 0 0", fontSize: 10, color: "#555" }}>Discharged By</p>
-            </div>
+      {/* Discharged By */}
+      <div style={PS.signatureBlock}>
+        <div style={PS.signatureInner}>
+          <div style={PS.signatureLine}>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: "#0f172a" }}>
+              {summary?.discharged_by || admission.doctor_name || "Attending Doctor"}
+            </p>
+            <p style={{ margin: "2px 0 0", fontSize: 9, color: "#94a3b8" }}>Discharged By — Signature & Stamp</p>
           </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }

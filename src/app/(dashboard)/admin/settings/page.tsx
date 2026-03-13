@@ -23,10 +23,12 @@ import {
   Save,
   Globe,
   Settings,
+  Receipt,
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { SectionHeader } from "@/components/shared/section-header"
 import { ConfirmDialog } from "@/components/shared/confirm-dialog"
+import { Switch } from "@/components/ui/switch"
 
 import type { Tenant, WardConfig } from "@/types/database"
 
@@ -69,6 +71,13 @@ export default function SettingsPage() {
   const [adminPin, setAdminPin] = useState("")
   const [receptionPin, setReceptionPin] = useState("")
 
+  // GST config
+  const [enableGst, setEnableGst] = useState(false)
+  const [gstPercentage, setGstPercentage] = useState("0")
+  const [gstin, setGstin] = useState("")
+  const [hsnCode, setHsnCode] = useState("")
+  const [stateCode, setStateCode] = useState("")
+
   // Ward config
   const [wardRows, setWardRows] = useState<WardRow[]>([])
   const [savingWards, setSavingWards] = useState(false)
@@ -93,6 +102,11 @@ export default function SettingsPage() {
           setTimezone(t.timezone || "Asia/Kolkata")
           setConsultationFee(String(t.consultation_fee || 200))
           setCurrency(t.currency || "INR")
+          setEnableGst(t.enable_gst || false)
+          setGstPercentage(String(t.gst_percentage || 0))
+          setGstin(t.gstin || "")
+          setHsnCode(t.hsn_code || "")
+          setStateCode(t.state_code || "")
           // Load ward config
           if (t.ward_beds) {
             const rows: WardRow[] = Object.entries(t.ward_beds).map(([name, config]) => ({
@@ -136,6 +150,11 @@ export default function SettingsPage() {
       timezone,
       consultation_fee: parseInt(consultationFee) || 200,
       currency,
+      enable_gst: enableGst,
+      gst_percentage: parseFloat(gstPercentage) || 0,
+      gstin: gstin || null,
+      hsn_code: hsnCode || null,
+      state_code: stateCode || null,
     }
 
     if (adminPin) updates.admin_pin = adminPin
@@ -157,7 +176,7 @@ export default function SettingsPage() {
     } finally {
       setSaving(false)
     }
-  }, [hospitalName, address, phone, timezone, consultationFee, currency, adminPin, receptionPin, tenantId])
+  }, [hospitalName, address, phone, timezone, consultationFee, currency, adminPin, receptionPin, enableGst, gstPercentage, gstin, hsnCode, stateCode, tenantId])
 
   const hasChanges = useMemo(() => {
     if (!tenant) return false
@@ -169,9 +188,14 @@ export default function SettingsPage() {
       consultationFee !== String(tenant.consultation_fee || 200) ||
       currency !== (tenant.currency || "INR") ||
       adminPin !== "" ||
-      receptionPin !== ""
+      receptionPin !== "" ||
+      enableGst !== (tenant.enable_gst || false) ||
+      gstPercentage !== String(tenant.gst_percentage || 0) ||
+      gstin !== (tenant.gstin || "") ||
+      hsnCode !== (tenant.hsn_code || "") ||
+      stateCode !== (tenant.state_code || "")
     )
-  }, [tenant, hospitalName, address, phone, timezone, consultationFee, currency, adminPin, receptionPin])
+  }, [tenant, hospitalName, address, phone, timezone, consultationFee, currency, adminPin, receptionPin, enableGst, gstPercentage, gstin, hsnCode, stateCode])
 
   if (loading) {
     return (
@@ -257,6 +281,50 @@ export default function SettingsPage() {
               <Input value={currency} onChange={(e) => setCurrency(e.target.value)} placeholder="INR" />
             </div>
           </div>
+        </CardContent>
+      </Card>
+      </motion.div>
+
+      {/* GST / Tax Configuration */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+      <Card className="card-hover">
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white"><Receipt className="w-3.5 h-3.5" /></div>
+            GST / Tax Configuration
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Enable GST on invoices</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">When enabled, GST will be calculated on all new invoices</p>
+            </div>
+            <Switch checked={enableGst} onCheckedChange={setEnableGst} />
+          </div>
+          {enableGst && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>GST Rate (%)</Label>
+                  <Input type="number" value={gstPercentage} onChange={(e) => setGstPercentage(e.target.value)} min="0" max="28" step="0.5" placeholder="18" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>State Code</Label>
+                  <Input value={stateCode} onChange={(e) => setStateCode(e.target.value)} placeholder="e.g. 36 (Telangana)" maxLength={2} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>GSTIN (15-digit)</Label>
+                <Input value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} placeholder="e.g. 36AABCT1332L1ZZ" maxLength={15} className="font-mono" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Default HSN/SAC Code</Label>
+                <Input value={hsnCode} onChange={(e) => setHsnCode(e.target.value)} placeholder="e.g. 9993 (Healthcare services)" />
+                <p className="text-xs text-muted-foreground">SAC 9993 = Healthcare services. Used on all invoices by default.</p>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
       </motion.div>

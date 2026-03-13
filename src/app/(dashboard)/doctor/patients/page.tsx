@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { useBranch } from "@/components/providers/branch-context"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { getTodayIST, formatDate, formatTime } from "@/lib/utils/date"
@@ -51,6 +52,7 @@ export default function DoctorPatientsPage() {
   const { data: session } = useSession()
   const user = session?.user as SessionUser | undefined
   const { activeTenantId: tenantId } = useBranch()
+  const router = useRouter()
   const doctorId = user?.doctorId || ""
   const today = getTodayIST()
 
@@ -428,6 +430,22 @@ export default function DoctorPatientsPage() {
                   </div>
                 </div>
               </div>
+
+              {/* EMR Link */}
+              {selectedPatient.patient?.phone && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => {
+                    setSelectedPatient(null)
+                    router.push(`/doctor/emr/${encodeURIComponent(selectedPatient.patient!.phone)}`)
+                  }}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  View Full EMR — Vitals, Conditions, Clinical Notes
+                </Button>
+              )}
 
               {/* Medical info */}
               {(selectedPatient.patient?.allergies || selectedPatient.patient?.chronic_diseases) && (

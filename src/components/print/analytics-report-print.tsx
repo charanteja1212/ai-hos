@@ -1,5 +1,6 @@
 "use client"
 
+import { PS } from "./print-layout"
 import type { Invoice } from "@/types/database"
 
 interface AnalyticsReportPrintProps {
@@ -9,7 +10,7 @@ interface AnalyticsReportPrintProps {
 }
 
 function formatCurrency(amount: number) {
-  return `Rs ${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -25,7 +26,6 @@ export function AnalyticsReportPrint({ invoices, fromDate, toDate }: AnalyticsRe
   const totalRevenue = paid.reduce((s, i) => s + (i.total || 0), 0)
   const unpaidTotal = invoices.filter(i => i.payment_status !== "paid").reduce((s, i) => s + (i.total || 0), 0)
 
-  // Revenue by type
   const types = ["consultation", "pharmacy", "lab", "admission", "procedure"] as const
   const typeBreakdown = types.map(type => {
     const typeInvoices = invoices.filter(i => i.type === type)
@@ -40,78 +40,110 @@ export function AnalyticsReportPrint({ invoices, fromDate, toDate }: AnalyticsRe
     }
   }).filter(t => t.count > 0)
 
+  const paidCount = invoices.filter(i => i.payment_status === "paid").length
+  const unpaidCount = invoices.filter(i => i.payment_status === "unpaid").length
+  const partialCount = invoices.filter(i => i.payment_status === "partial").length
+
   return (
     <div style={{ fontSize: 12 }}>
-      {/* Period */}
-      <p style={{ margin: "0 0 16px", fontSize: 11, color: "#555" }}>
-        Period: <strong>{fromDate}</strong> to <strong>{toDate}</strong> &nbsp;|&nbsp; Total Invoices: <strong>{invoices.length}</strong>
-      </p>
-
-      {/* Summary */}
-      <div style={{ display: "flex", gap: 16, marginBottom: 20 }}>
-        <div style={{ flex: 1, border: "1px solid #ddd", borderRadius: 4, padding: 12, textAlign: "center" }}>
-          <p style={{ margin: 0, fontSize: 10, color: "#777", textTransform: "uppercase" }}>Total Revenue (Paid)</p>
-          <p style={{ margin: "4px 0 0", fontSize: 18, fontWeight: 700 }}>{formatCurrency(totalRevenue)}</p>
+      {/* Period Info */}
+      <div style={PS.infoRow}>
+        <div>
+          <p style={PS.sectionLabel}>Report Period</p>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: "#0f172a" }}>
+            {fromDate} — {toDate}
+          </p>
+          <p style={PS.muted}>Total Invoices: {invoices.length}</p>
         </div>
-        <div style={{ flex: 1, border: "1px solid #ddd", borderRadius: 4, padding: 12, textAlign: "center" }}>
-          <p style={{ margin: 0, fontSize: 10, color: "#777", textTransform: "uppercase" }}>Outstanding</p>
-          <p style={{ margin: "4px 0 0", fontSize: 18, fontWeight: 700 }}>{formatCurrency(unpaidTotal)}</p>
-        </div>
-        <div style={{ flex: 1, border: "1px solid #ddd", borderRadius: 4, padding: 12, textAlign: "center" }}>
-          <p style={{ margin: 0, fontSize: 10, color: "#777", textTransform: "uppercase" }}>Avg Invoice Value</p>
-          <p style={{ margin: "4px 0 0", fontSize: 18, fontWeight: 700 }}>
-            {paid.length > 0 ? formatCurrency(totalRevenue / paid.length) : "—"}
+        <div style={{ textAlign: "right" }}>
+          <p style={PS.sectionLabel}>Generated</p>
+          <p style={{ margin: 0, fontSize: 11, fontWeight: 600 }}>
+            {new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
           </p>
         </div>
       </div>
 
-      {/* Revenue by Type */}
-      <h3 style={{ fontSize: 13, fontWeight: 600, margin: "0 0 8px" }}>Revenue by Department</h3>
-      <table style={{ borderCollapse: "collapse", width: "100%", marginBottom: 20 }}>
+      {/* Summary KPIs */}
+      <div style={{
+        display: "flex", gap: 0, marginBottom: 16, border: "1px solid #e2e8f0", borderRadius: 4, overflow: "hidden",
+        WebkitPrintColorAdjust: "exact", printColorAdjust: "exact",
+      }}>
+        {[
+          { label: "Total Revenue (Paid)", value: formatCurrency(totalRevenue), bg: "#f0fdf4" },
+          { label: "Outstanding", value: formatCurrency(unpaidTotal), bg: "#fef2f2" },
+          { label: "Avg Invoice Value", value: paid.length > 0 ? formatCurrency(totalRevenue / paid.length) : "—", bg: "#eff6ff" },
+          { label: "Collection Rate", value: invoices.length > 0 ? `${Math.round((paidCount / invoices.length) * 100)}%` : "—", bg: "#f8fafc" },
+        ].map((kpi, i) => (
+          <div key={i} style={{
+            flex: 1, padding: "10px 14px", textAlign: "center",
+            borderRight: i < 3 ? "1px solid #e2e8f0" : undefined,
+            backgroundColor: kpi.bg,
+          }}>
+            <p style={{ margin: 0, fontSize: 8, color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>{kpi.label}</p>
+            <p style={{ margin: "4px 0 0", fontSize: 16, fontWeight: 800, color: "#0f172a" }}>{kpi.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Revenue by Department */}
+      <h3 style={PS.sectionHeading}>Revenue by Department</h3>
+      <table style={{ ...PS.table, marginBottom: 16 }}>
         <thead>
           <tr>
-            <th style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "left" }}>Department</th>
-            <th style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "center" }}>Invoices</th>
-            <th style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "center" }}>Paid</th>
-            <th style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "right" }}>Revenue</th>
-            <th style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, fontWeight: 600, backgroundColor: "#f5f5f5", textAlign: "right" }}>Outstanding</th>
+            <th style={PS.th}>Department</th>
+            <th style={{ ...PS.th, textAlign: "center", width: 70 }}>Invoices</th>
+            <th style={{ ...PS.th, textAlign: "center", width: 70 }}>Paid</th>
+            <th style={{ ...PS.th, textAlign: "right", width: 110 }}>Revenue</th>
+            <th style={{ ...PS.th, textAlign: "right", width: 110 }}>Outstanding</th>
           </tr>
         </thead>
         <tbody>
           {typeBreakdown.map(t => (
             <tr key={t.type}>
-              <td style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11 }}>{t.label}</td>
-              <td style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, textAlign: "center" }}>{t.count}</td>
-              <td style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, textAlign: "center" }}>{t.paidCount}</td>
-              <td style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, textAlign: "right" }}>{formatCurrency(t.revenue)}</td>
-              <td style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, textAlign: "right" }}>{formatCurrency(t.outstanding)}</td>
+              <td style={{ ...PS.td, fontWeight: 600 }}>{t.label}</td>
+              <td style={{ ...PS.td, textAlign: "center" }}>{t.count}</td>
+              <td style={{ ...PS.td, textAlign: "center" }}>{t.paidCount}</td>
+              <td style={{ ...PS.td, textAlign: "right", fontWeight: 600 }}>{formatCurrency(t.revenue)}</td>
+              <td style={{ ...PS.td, textAlign: "right", color: t.outstanding > 0 ? "#dc2626" : "#64748b" }}>{formatCurrency(t.outstanding)}</td>
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr>
-            <td style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, fontWeight: 700 }}>Total</td>
-            <td style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, fontWeight: 700, textAlign: "center" }}>{invoices.length}</td>
-            <td style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, fontWeight: 700, textAlign: "center" }}>{paid.length}</td>
-            <td style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, fontWeight: 700, textAlign: "right" }}>{formatCurrency(totalRevenue)}</td>
-            <td style={{ border: "1px solid #ccc", padding: "6px 10px", fontSize: 11, fontWeight: 700, textAlign: "right" }}>{formatCurrency(unpaidTotal)}</td>
+            <td style={{ ...PS.td, fontWeight: 700, backgroundColor: "#f1f5f9", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}>Total</td>
+            <td style={{ ...PS.td, fontWeight: 700, textAlign: "center", backgroundColor: "#f1f5f9", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}>{invoices.length}</td>
+            <td style={{ ...PS.td, fontWeight: 700, textAlign: "center", backgroundColor: "#f1f5f9", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}>{paid.length}</td>
+            <td style={{ ...PS.td, fontWeight: 700, textAlign: "right", fontSize: 13, backgroundColor: "#f1f5f9", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}>{formatCurrency(totalRevenue)}</td>
+            <td style={{ ...PS.td, fontWeight: 700, textAlign: "right", fontSize: 13, backgroundColor: "#f1f5f9", color: "#dc2626", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}>{formatCurrency(unpaidTotal)}</td>
           </tr>
         </tfoot>
       </table>
 
-      {/* Payment Status Breakdown */}
-      <h3 style={{ fontSize: 13, fontWeight: 600, margin: "0 0 8px" }}>Payment Status Breakdown</h3>
-      <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
+      {/* Payment Status */}
+      <h3 style={PS.sectionHeading}>Payment Status Breakdown</h3>
+      <div style={{
+        display: "flex", gap: 0, marginBottom: 16, border: "1px solid #e2e8f0", borderRadius: 4, overflow: "hidden",
+        WebkitPrintColorAdjust: "exact", printColorAdjust: "exact",
+      }}>
         {[
-          { label: "Paid", count: invoices.filter(i => i.payment_status === "paid").length },
-          { label: "Unpaid", count: invoices.filter(i => i.payment_status === "unpaid").length },
-          { label: "Partial", count: invoices.filter(i => i.payment_status === "partial").length },
-        ].map(s => (
-          <div key={s.label} style={{ border: "1px solid #ddd", borderRadius: 4, padding: "8px 16px", fontSize: 11 }}>
-            <span style={{ color: "#777" }}>{s.label}: </span>
-            <strong>{s.count}</strong>
+          { label: "Paid", count: paidCount, color: "#16a34a", bg: "#f0fdf4" },
+          { label: "Unpaid", count: unpaidCount, color: "#dc2626", bg: "#fef2f2" },
+          { label: "Partial", count: partialCount, color: "#d97706", bg: "#fffbeb" },
+        ].map((s, i) => (
+          <div key={i} style={{
+            flex: 1, padding: "8px 16px", textAlign: "center",
+            borderRight: i < 2 ? "1px solid #e2e8f0" : undefined,
+            backgroundColor: s.bg,
+          }}>
+            <p style={{ margin: 0, fontSize: 9, color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>{s.label}</p>
+            <p style={{ margin: "2px 0 0", fontSize: 20, fontWeight: 800, color: s.color }}>{s.count}</p>
           </div>
         ))}
+      </div>
+
+      {/* Footer */}
+      <div style={{ marginTop: 20, textAlign: "center", fontSize: 9, color: "#94a3b8", borderTop: "1px solid #e2e8f0", paddingTop: 8 }}>
+        <p style={{ margin: 0 }}>This is a computer-generated financial report and does not require a signature.</p>
       </div>
     </div>
   )

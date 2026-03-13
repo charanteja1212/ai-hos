@@ -87,6 +87,19 @@ export async function GET(req: Request) {
     }
   }
 
+  if (scope === "whatsapp-routing") {
+    const [routesRes, branchesRes, clientsRes] = await Promise.all([
+      supabase.from("wa_phone_routing").select("*").order("created_at", { ascending: false }),
+      supabase.from("tenants").select("tenant_id, hospital_name, client_id, wa_token").eq("status", "active"),
+      supabase.from("clients").select("client_id, name").eq("status", "active"),
+    ])
+    return NextResponse.json({
+      routes: routesRes.data || [],
+      branches: branchesRes.data || [],
+      clients: clientsRes.data || [],
+    })
+  }
+
   return NextResponse.json({ error: "Invalid scope" }, { status: 400 })
 }
 
@@ -158,6 +171,71 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Failed to update branch." }, { status: 400 })
     }
     logAudit({ action: "update", entityType: "tenant", entityId: tenant_id, actorEmail: guard.user.email || "system", actorRole: guard.user.role || "SUPER_ADMIN", tenantId: tenant_id, details: updates })
+    return NextResponse.json({ success: true })
+  }
+
+  if (action === "saveWhatsAppRoute") {
+    const { phone_number_id, client_id, branch_id, wa_access_token, wa_display_name, edit } = payload
+    if (!phone_number_id || !client_id || !wa_access_token) {
+      return NextResponse.json({ error: "phone_number_id, client_id, and wa_access_token are required" }, { status: 400 })
+    }
+
+    const routePayload = {
+      phone_number_id,
+      client_id,
+      branch_id: branch_id || null,
+      wa_access_token,
+      wa_display_name: wa_display_name || null,
+      status: "active",
+    }
+
+    // 1. Save route (insert or update)
+    if (edit) {
+      const { error } = await supabase
+        .from("wa_phone_routing")
+        .update(routePayload)
+        .eq("phone_number_id", phone_number_id)
+      if (error) {
+        return NextResponse.json({ error: "Failed to update route: " + error.message }, { status: 400 })
+      }
+    } else {
+      const { error } = await supabase.from("wa_phone_routing").upsert(routePayload, { onConflict: "phone_number_id" })
+      if (error) {
+        return NextResponse.json({ error: "Failed to create route: " + error.message }, { status: 400 })
+      }
+    }
+
+    // 2. Auto-update tenant WhatsApp config
+    if (branch_id) {
+      const waApiUrl = `https://graph.facebook.com/v21.0/${phone_number_id}/messages`
+      const { error: tenantErr } = await supabase
+        .from("tenants")
+        .update({
+          whatsapp_phone_id: phone_number_id,
+          wa_token: wa_access_token,
+          wa_api_url: waApiUrl,
+        })
+        .eq("tenant_id", branch_id)
+      if (tenantErr) {
+        console.error("[platform] saveWhatsAppRoute tenant update error:", tenantErr.message)
+        return NextResponse.json({ error: "Route saved but tenant update failed: " + tenantErr.message }, { status: 400 })
+      }
+    }
+
+    logAudit({ action: edit ? "update" : "create", entityType: "wa_route", entityId: phone_number_id, actorEmail: guard.user.email || "system", actorRole: guard.user.role || "SUPER_ADMIN", tenantId: branch_id || undefined, details: { client_id, branch_id, wa_display_name } })
+    return NextResponse.json({ success: true })
+  }
+
+  if (action === "deleteWhatsAppRoute") {
+    const { phone_number_id } = payload
+    if (!phone_number_id) {
+      return NextResponse.json({ error: "phone_number_id required" }, { status: 400 })
+    }
+    const { error } = await supabase.from("wa_phone_routing").delete().eq("phone_number_id", phone_number_id)
+    if (error) {
+      return NextResponse.json({ error: "Failed to delete: " + error.message }, { status: 400 })
+    }
+    logAudit({ action: "delete", entityType: "wa_route", entityId: phone_number_id, actorEmail: guard.user.email || "system", actorRole: guard.user.role || "SUPER_ADMIN" })
     return NextResponse.json({ success: true })
   }
 

@@ -61,6 +61,7 @@ import { getVitalStatus, getVitalRingClass, getVitalDotClass } from "@/component
 import { printPrescription } from "@/lib/print-prescription"
 import type { SessionUser } from "@/types/auth"
 import type { Patient, Prescription, PrescriptionItem } from "@/types/database"
+import { buildInvoiceData, type TenantTaxConfig } from "@/lib/billing/tax"
 
 interface VitalsData {
   bp?: string
@@ -239,21 +240,29 @@ function ConsultPageContent() {
         if (error) throw error
         savedParts.push("prescription")
 
-        // Auto-generate consultation invoice
-        await supabase.from("invoices").insert({
+        // Fetch tenant GST config for invoice
+        const { data: tenantConfig } = await supabase
+          .from("tenants")
+          .select("enable_gst, gst_percentage, gstin, hsn_code, state_code")
+          .eq("tenant_id", tenantId)
+          .single()
+        const taxConfig: TenantTaxConfig | null = tenantConfig?.enable_gst
+          ? tenantConfig as TenantTaxConfig
+          : null
+
+        // Auto-generate consultation invoice with GST
+        const consultItems = [{ description: `Consultation — Dr. ${user?.name}`, amount: consultationFee, quantity: 1 }]
+        const consultInvoice = buildInvoiceData({
           invoice_id: `INV-C-${Date.now()}`,
           tenant_id: tenantId,
           patient_phone: patientPhone,
           patient_name: patient?.name,
           type: "consultation",
-          items: [{ description: `Consultation — Dr. ${user?.name}`, amount: consultationFee, quantity: 1 }],
-          subtotal: consultationFee,
-          tax: 0,
-          discount: 0,
-          total: consultationFee,
+          items: consultItems,
           payment_status: "unpaid",
           booking_id: bookingId,
-        })
+        }, taxConfig)
+        await supabase.from("invoices").insert(consultInvoice)
       }
 
       // Order lab tests
@@ -469,8 +478,29 @@ function ConsultPageContent() {
     )
   }
 
+  if (!patientPhone) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center space-y-4">
+        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+          <Stethoscope className="w-8 h-8 text-muted-foreground" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold">No patient selected</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Go to your dashboard and click &quot;Start Consult&quot; on a waiting patient.
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => router.push("/doctor")}>
+          Back to Dashboard
+        </Button>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-6 max-w-5xl pb-20">
+    <div className="flex flex-col h-full -m-4 sm:-m-6">
+    <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
+    <div className="space-y-6 max-w-5xl pb-4">
       {/* Header with gradient patient info strip */}
       <div className="rounded-2xl gradient-blue p-4 sm:p-5 text-white relative overflow-hidden">
         <div className="absolute inset-0 animate-shimmer rounded-2xl pointer-events-none" />
@@ -944,49 +974,53 @@ function ConsultPageContent() {
         />
       )}
 
-      {/* Floating Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
-        <div className="max-w-5xl mx-auto px-4 pb-4 pointer-events-auto">
-          <div className="glass rounded-2xl border border-border/50 p-3 flex items-center justify-between gap-3 shadow-lg">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Timer className="w-3.5 h-3.5 text-blue-500" />
-                <span>Session:</span>
-                <ElapsedTimer startTime={consultStartRef.current} warningMinutes={15} dangerMinutes={30} />
-              </div>
-              <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-muted-foreground/60">
-                <Keyboard className="w-3 h-3" />
-                <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono">Ctrl+Enter</kbd>
-                <span>save</span>
-              </div>
+    </div>
+    </div>
+
+    {/* Action Bar — pinned at bottom, outside scroll area */}
+    <div className="shrink-0 px-4 sm:px-6 py-3 border-t border-border/40 bg-background">
+      <div className="max-w-5xl">
+        <div className="glass rounded-2xl border border-border/50 p-3 flex items-center justify-between gap-3 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Timer className="w-3.5 h-3.5 text-blue-500" />
+              <span>Session:</span>
+              <ElapsedTimer startTime={consultStartRef.current} warningMinutes={15} dangerMinutes={30} />
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowAdmit(true)}
-                className="gap-1 hidden sm:flex"
-              >
-                <BedDouble className="w-3.5 h-3.5" />
-                Admit
-              </Button>
-              <Button
-                onClick={handleSave}
-                disabled={saving}
-                size="sm"
-                className="gap-1.5 gradient-blue hover:opacity-90 transition-opacity"
-              >
-                {saving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <CheckCircle2 className="w-4 h-4" />
-                )}
-                Save & Complete
-              </Button>
+            <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-muted-foreground/60">
+              <Keyboard className="w-3 h-3" />
+              <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono">Ctrl+Enter</kbd>
+              <span>save</span>
             </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAdmit(true)}
+              className="gap-1 hidden sm:flex"
+            >
+              <BedDouble className="w-3.5 h-3.5" />
+              Admit
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              size="sm"
+              className="gap-1.5 gradient-blue hover:opacity-90 transition-opacity"
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4" />
+              )}
+              Save & Complete
+            </Button>
           </div>
         </div>
       </div>
     </div>
+    </div>
   )
 }
+
