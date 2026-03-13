@@ -195,34 +195,61 @@ export default function LoginPage() {
   const [loginPassword, setLoginPassword] = useState("")
 
   // ---------------------------------------------------------------------------
-  // [TEMP] Auto-login as Admin — skips login UI entirely for testing
+  // [TEMP] Auto-submit when credentials step is reached — skips PIN entry
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    const autoLogin = async () => {
+    if (step !== "credentials" || !selectedRole || loading) return
+    const autoSubmit = async () => {
+      setLoading(true)
       try {
-        const res = await fetch("/api/auth/tenants")
-        if (!res.ok) return
-        const clientList = await res.json()
-        if (!clientList.length) return
-        const branchRes = await fetch(`/api/auth/tenants?clientId=${clientList[0].client_id}`)
-        if (!branchRes.ok) return
-        const branchList = await branchRes.json()
-        if (!branchList.length) return
-        const result = await signIn("hospital-login", {
-          redirect: false,
-          loginMode: "branch",
-          role: "ADMIN",
-          tenantId: branchList[0].tenant_id,
-          pin: "0000",
-        })
-        if (!result?.error) {
-          router.push("/admin")
-          router.refresh()
+        let result
+        if (selectedRole.loginMode === "super_admin") {
+          result = await signIn("hospital-login", {
+            redirect: false,
+            loginMode: "super_admin",
+            email: "",
+            pin: "0000",
+          })
+        } else if (selectedRole.loginMode === "client_admin") {
+          result = await signIn("hospital-login", {
+            redirect: false,
+            loginMode: "client_admin",
+            clientId: selectedClient?.client_id,
+            pin: "0000",
+          })
+        } else {
+          const signInRole = selectedRole.signInRole || selectedRole.id
+          result = await signIn("hospital-login", {
+            redirect: false,
+            loginMode: "branch",
+            role: signInRole,
+            tenantId: selectedBranch?.tenant_id,
+            pin: "0000",
+          })
         }
-      } catch { /* ignore */ }
+        if (!result?.error) {
+          const redirectMap: Record<string, string> = {
+            SUPER_ADMIN: "/platform",
+            CLIENT_ADMIN: "/admin",
+            BRANCH_ADMIN: "/admin",
+            ADMIN: "/admin",
+            DOCTOR: "/doctor",
+            RECEPTION: "/reception",
+            LAB_TECH: "/lab",
+            PHARMACIST: "/pharmacy",
+          }
+          router.push(redirectMap[selectedRole.id] || "/reception")
+          router.refresh()
+        } else {
+          setError("Auto-login failed")
+          setLoading(false)
+        }
+      } catch {
+        setLoading(false)
+      }
     }
-    autoLogin()
-  }, [router])
+    autoSubmit()
+  }, [step, selectedRole, selectedClient, selectedBranch, loading, router])
   // ---------------------------------------------------------------------------
 
   // ---------------------------------------------------------------------------
