@@ -22,6 +22,13 @@ function getTransporter() {
 }
 
 export async function POST(request: NextRequest) {
+  // Verify internal API key to prevent external abuse
+  const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || process.env.NEXTAUTH_SECRET || ""
+  const authHeader = request.headers.get("x-internal-key") || ""
+  if (!INTERNAL_API_KEY || authHeader !== INTERNAL_API_KEY) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   try {
     const body = await request.json()
     const {

@@ -4,6 +4,7 @@ import { isDuplicate } from "@/lib/whatsapp/dedup"
 import { loadSession, saveSession } from "@/lib/whatsapp/session"
 import { runAgent } from "@/lib/whatsapp/agent"
 import { sendReply } from "@/lib/whatsapp/send-reply"
+import { isRateLimited } from "@/lib/rate-limit"
 import type { TenantConfig } from "@/lib/whatsapp/types"
 
 const VERIFY_TOKEN = process.env.WA_VERIFY_TOKEN || "care_hospital_whatsapp_2026"
@@ -93,8 +94,12 @@ export async function POST(req: NextRequest) {
     // Step 1: Parse the message
     const parsed = parseWebhookPayload(body)
     if (!parsed || !parsed.messageBody) {
-      // No actionable message (could be a media message, etc.)
       return NextResponse.json({ status: "ok" })
+    }
+
+    // Step 1.5: Per-sender rate limit (30 messages per 5 minutes per user)
+    if (parsed.senderPhone && isRateLimited(`wa:${parsed.senderPhone}`, 30, 5 * 60 * 1000)) {
+      return NextResponse.json({ status: "rate_limited" })
     }
 
     // Step 2: Dedup check

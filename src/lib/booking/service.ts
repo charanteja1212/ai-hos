@@ -409,7 +409,7 @@ export async function cancelAppointment(params: CancelParams) {
   // 1. Verify booking exists and is cancellable
   const { data: booking, error: fetchError } = await supabase
     .from("appointments")
-    .select("booking_id, status, patient_phone, patient_name, doctor_name, date, time, tenant_id")
+    .select("booking_id, status, patient_phone, patient_name, doctor_id, doctor_name, date, time, tenant_id")
     .eq("booking_id", params.booking_id)
     .eq("tenant_id", params.tenant_id)
     .single()
@@ -441,7 +441,7 @@ export async function cancelAppointment(params: CancelParams) {
     await supabase
       .from("slot_locks")
       .delete()
-      .eq("doctor_id", booking.doctor_name) // TODO: needs doctor_id on appointments
+      .eq("doctor_id", booking.doctor_id)
       .eq("slot_date", booking.date)
       .eq("slot_time", booking.time)
   } catch { /* non-critical */ }

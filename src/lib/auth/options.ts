@@ -31,11 +31,10 @@ export const authConfig: NextAuthConfig = {
           const password = credentials?.password as string
           if (!email || !password) return null
 
-          // [TEMP] Password verification bypassed for testing
-          // const { data: authData, error: authError } =
-          //   await supabase.auth.signInWithPassword({ email, password })
-          // if (authError || !authData.user) return null
-          // await supabase.auth.signOut()
+          const { data: authData, error: authError } =
+            await supabase.auth.signInWithPassword({ email, password })
+          if (authError || !authData.user) return null
+          await supabase.auth.signOut()
 
           // Look up user_credentials to resolve app identity
           const { data: cred } = await supabase
@@ -86,7 +85,7 @@ export const authConfig: NextAuthConfig = {
             .eq("status", "active")
             .single()
 
-          if (!admin) return null // [TEMP] PIN check bypassed: || admin.pin !== pin
+          if (!admin || admin.pin !== pin) return null
           resetRateLimit(rateLimitKey)
 
           return {
@@ -115,7 +114,7 @@ export const authConfig: NextAuthConfig = {
             .eq("status", "active")
             .single()
 
-          if (!client) return null // [TEMP] PIN check bypassed: || client.admin_pin !== pin
+          if (!client || client.admin_pin !== pin) return null
           resetRateLimit(rateLimitKey)
 
           // Get the first ACTIVE branch for this client as default
@@ -176,7 +175,7 @@ export const authConfig: NextAuthConfig = {
         const effectiveRole: UserRole = role === "ADMIN" ? "BRANCH_ADMIN" : role as UserRole
 
         if (role === "ADMIN" || role === "BRANCH_ADMIN") {
-          // [TEMP] PIN check bypassed — accept any PIN
+          if (tenant.admin_pin !== pin) return null
           resetRateLimit(rateLimitKey)
           return {
             id: `admin-${tenantId}`,
@@ -190,7 +189,7 @@ export const authConfig: NextAuthConfig = {
         }
 
         if (role === "RECEPTION") {
-          // [TEMP] PIN check bypassed — accept any PIN
+          if (tenant.reception_pin !== pin) return null
           resetRateLimit(rateLimitKey)
           return {
             id: `reception-${tenantId}`,
@@ -214,7 +213,7 @@ export const authConfig: NextAuthConfig = {
             .eq("tenant_id", tenantId)
             .single()
 
-          if (!doctor) return null // [TEMP] PIN check bypassed: || doctor.pin !== pin
+          if (!doctor || doctor.pin !== pin) return null
           resetRateLimit(rateLimitKey)
 
           return {
@@ -232,17 +231,19 @@ export const authConfig: NextAuthConfig = {
 
         // Staff roles: LAB_TECH, PHARMACIST
         if (role === "LAB_TECH" || role === "PHARMACIST") {
-          // [TEMP] PIN check bypassed — fetch first active staff of this role
+          const staffId = credentials.identifier as string
+          if (!staffId) return null
+
           const { data: staff } = await supabase
             .from("staff")
             .select("staff_id, name, role, pin")
+            .eq("staff_id", staffId)
             .eq("tenant_id", tenantId)
             .eq("role", role)
             .eq("status", "active")
-            .limit(1)
             .single()
 
-          if (!staff) return null
+          if (!staff || staff.pin !== pin) return null
           resetRateLimit(rateLimitKey)
 
           return {
@@ -277,16 +278,15 @@ export const authConfig: NextAuthConfig = {
 
         const supabase = createServerClient()
 
-        // [TEMP] OTP verification bypassed — accept any OTP for testing
-        // const { data: otpRecord } = await supabase
-        //   .from("patient_otps").select("*").eq("phone", phone).eq("otp", otp)
-        //   .eq("verified", false).gt("expires_at", new Date().toISOString())
-        //   .order("created_at", { ascending: false }).limit(1).single()
-        // if (!otpRecord) return null
-        // if ((otpRecord.attempts || 0) >= 3) return null
-        // const { data: updatedRows } = await supabase.from("patient_otps")
-        //   .update({ verified: true }).eq("phone", phone).eq("verified", false).select("id")
-        // if (!updatedRows || updatedRows.length === 0) return null
+        const { data: otpRecord } = await supabase
+          .from("patient_otps").select("*").eq("phone", phone).eq("otp", otp)
+          .eq("verified", false).gt("expires_at", new Date().toISOString())
+          .order("created_at", { ascending: false }).limit(1).single()
+        if (!otpRecord) return null
+        if ((otpRecord.attempts || 0) >= 3) return null
+        const { data: updatedRows } = await supabase.from("patient_otps")
+          .update({ verified: true }).eq("phone", phone).eq("verified", false).select("id")
+        if (!updatedRows || updatedRows.length === 0) return null
 
         resetRateLimit(otpRateLimitKey)
 

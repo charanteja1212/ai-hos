@@ -4,10 +4,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const RAZORPAY_AUTH = 'Basic ' + (process.env.RAZORPAY_AUTH || '');
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || '';
 const sbHeaders = {
   'apikey': SUPABASE_KEY,
   'Authorization': 'Bearer ' + SUPABASE_KEY,
@@ -74,6 +76,21 @@ export async function GET(req: NextRequest) {
     return new NextResponse(errorPage('Payment not completed. Status: ' + paymentLinkStatus), {
       status: 200, headers: { 'Content-Type': 'text/html' },
     });
+  }
+
+  // Verify Razorpay payment signature
+  const razorpaySignature = params.get('razorpay_signature') || '';
+  if (RAZORPAY_KEY_SECRET && razorpaySignature) {
+    const expectedSignature = crypto
+      .createHmac('sha256', RAZORPAY_KEY_SECRET)
+      .update(paymentLinkId + '|' + params.get('razorpay_payment_link_reference_id') + '|' + paymentLinkStatus + '|' + params.get('razorpay_payment_link_reference_id'))
+      .digest('hex');
+    if (razorpaySignature !== expectedSignature) {
+      console.error('[payment-callback] Signature verification failed');
+      return new NextResponse(errorPage('Payment verification failed. Please contact the hospital.'), {
+        status: 200, headers: { 'Content-Type': 'text/html' },
+      });
+    }
   }
 
   // Idempotency check

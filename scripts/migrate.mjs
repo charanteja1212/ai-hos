@@ -8,11 +8,18 @@ import pg from "pg";
 const { Client } = pg;
 
 const client = new Client({
-  host: "db.pbevoxnglfbtxwgbbncp.supabase.co",
-  port: 5432,
-  database: "postgres",
-  user: "postgres",
-  password: "Tejas@#3478",
+  connectionString: process.env.DATABASE_URL || (() => {
+    const host = process.env.DB_HOST || "db.pbevoxnglfbtxwgbbncp.supabase.co";
+    const port = process.env.DB_PORT || "5432";
+    const db = process.env.DB_NAME || "postgres";
+    const user = process.env.DB_USER || "postgres";
+    const pass = process.env.DB_PASSWORD;
+    if (!pass) {
+      console.error("ERROR: DB_PASSWORD environment variable is required.\nUsage: DB_PASSWORD=yourpassword node scripts/migrate.mjs");
+      process.exit(1);
+    }
+    return `postgresql://${user}:${encodeURIComponent(pass)}@${host}:${port}/${db}?sslmode=require`;
+  })(),
   ssl: { rejectUnauthorized: false },
 });
 

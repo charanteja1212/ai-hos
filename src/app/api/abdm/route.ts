@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { apiGuard, isGuardError } from "@/lib/auth/api-guard"
 import { getGatewayToken, requestAbhaOtp, verifyAbhaOtp } from "@/lib/abdm/abha"
 import { buildConsentArtifact, generateConsentId } from "@/lib/abdm/consent"
 import {
@@ -36,9 +37,15 @@ async function getAbdmConfig(tenantId: string): Promise<AbdmConfig | null> {
 }
 
 export async function POST(req: NextRequest) {
+  // Auth check — only DOCTOR, ADMIN, BRANCH_ADMIN can access ABDM
+  const guard = await apiGuard({ allowedRoles: ["DOCTOR", "BRANCH_ADMIN", "SUPER_ADMIN", "CLIENT_ADMIN"] })
+  if (isGuardError(guard)) return guard
+
   try {
     const body = await req.json()
-    const { action, tenantId } = body
+    const { action } = body
+    // Use tenant from session, not from request body (prevents cross-tenant access)
+    const tenantId = guard.tenantId
 
     if (!tenantId) {
       return NextResponse.json({ error: "tenantId required" }, { status: 400 })

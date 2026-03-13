@@ -2,16 +2,28 @@ import { NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase/server"
 import { randomInt } from "crypto"
 import { sendOTP } from "@/lib/whatsapp/sender"
+import { isRateLimited } from "@/lib/rate-limit"
+import { normalizePhone, phoneVariants } from "@/lib/utils/phone"
 
 export async function POST(req: Request) {
   try {
+    // IP-based rate limit: max 10 OTP requests per IP per 15 minutes
+    const forwarded = req.headers.get("x-forwarded-for")
+    const ip = forwarded?.split(",")[0]?.trim() || "unknown"
+    if (isRateLimited(`otp-ip:${ip}`, 10, 15 * 60 * 1000)) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      )
+    }
+
     const { phone } = await req.json()
     if (!phone) {
       return NextResponse.json({ error: "Phone number is required" }, { status: 400 })
     }
 
     // Normalize phone to digits only
-    const normalizedPhone = phone.replace(/\D/g, "")
+    const normalizedPhone = normalizePhone(phone)
     if (normalizedPhone.length < 10) {
       return NextResponse.json({ error: "Invalid phone number" }, { status: 400 })
     }
@@ -19,18 +31,13 @@ export async function POST(req: Request) {
     const supabase = createServerClient()
 
     // Build phone variants to handle mixed storage formats (with/without 91 prefix)
-    const phoneVariants: string[] = [normalizedPhone]
-    if (normalizedPhone.startsWith("91") && normalizedPhone.length === 12) {
-      phoneVariants.push(normalizedPhone.slice(2)) // 10-digit without prefix
-    } else if (normalizedPhone.length === 10) {
-      phoneVariants.push(`91${normalizedPhone}`) // 12-digit with prefix
-    }
+    const variants = phoneVariants(phone)
 
     // Check patient exists (try all phone variants)
     const { data: patients } = await supabase
       .from("patients")
       .select("phone, name")
-      .in("phone", phoneVariants)
+      .in("phone", variants)
       .limit(1)
 
     const patient = patients?.[0]
@@ -49,7 +56,7 @@ export async function POST(req: Request) {
     const { count } = await supabase
       .from("patient_otps")
       .select("*", { count: "exact", head: true })
-      .in("phone", phoneVariants)
+      .in("phone", variants)
       .gte("created_at", fifteenMinAgo)
 
     if ((count || 0) >= 3) {

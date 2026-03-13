@@ -56,6 +56,32 @@ export async function POST(req: NextRequest) {
 
     // ── book-appointment ──────────────────────────────────────────────────
     if (action === "book-appointment") {
+      // Validate required fields
+      const errors: string[] = []
+
+      if (!params.doctor_id || typeof params.doctor_id !== "string" || !params.doctor_id.trim()) {
+        errors.push("doctor_id is required")
+      }
+      if (!params.doctor_name || typeof params.doctor_name !== "string" || !params.doctor_name.trim()) {
+        errors.push("doctor_name is required")
+      }
+      if (!params.patient_name || typeof params.patient_name !== "string" || !params.patient_name.trim()) {
+        errors.push("patient_name is required")
+      }
+      if (!params.date || !/^\d{4}-\d{2}-\d{2}$/.test(params.date)) {
+        errors.push("date must be in YYYY-MM-DD format")
+      }
+      if (!params.time || !/^\d{2}:\d{2}$/.test(params.time)) {
+        errors.push("time must be in HH:MM 24-hour format")
+      }
+      if (!params.patient_phone || !/\d{10,}/.test(params.patient_phone.replace(/\D/g, ""))) {
+        errors.push("patient_phone must have at least 10 digits")
+      }
+
+      if (errors.length > 0) {
+        return NextResponse.json({ error: "Validation failed", details: errors }, { status: 400 })
+      }
+
       const result = await bookAppointment({
         tenant_id,
         patient_phone: params.patient_phone,
