@@ -24,6 +24,9 @@ export const metadata: Metadata = {
   title: "AI-HOS | Hospital Operating System",
   description: "Next-generation AI-powered Hospital Operating System",
   manifest: "/manifest.json",
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
