@@ -77,8 +77,7 @@ export async function showLocalNotification(title: string, body: string, url?: s
     icon: "/icons/icon.svg",
     badge: "/icons/icon.svg",
     data: { url: url || "/" },
-    vibrate: [200, 100, 200],
-  })
+  } as NotificationOptions)
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
