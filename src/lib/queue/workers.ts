@@ -112,7 +112,7 @@ function createCleanupWorker() {
           .from("appointments")
           .update({ status: "cancelled" })
           .eq("status", "pending_payment")
-          .lt("created_at", twoHoursAgo)
+          .lt("booked_at", twoHoursAgo)
           .select("booking_id")
 
         const count = data?.length || 0

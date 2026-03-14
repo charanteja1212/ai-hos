@@ -45,6 +45,8 @@ services:
       - traefik.http.routers.bullboard.rule=Host(`jobs.ainewworld.in`)
       - traefik.http.routers.bullboard.tls=true
       - traefik.http.routers.bullboard.entrypoints=web,websecure
+      - traefik.http.routers.bullboard.middlewares=bullboard-auth
+      - traefik.http.middlewares.bullboard-auth.basicauth.users=admin:$$2b$$12$$2HuikdtTaG3ZyrvoeKAoge/AVFpPopDf6SqxP7P52cg24ksv7dDF.
       - traefik.http.services.bullboard.loadbalancer.server.port=3000
     networks:
       - n8n_default
