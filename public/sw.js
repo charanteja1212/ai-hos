@@ -68,3 +68,42 @@ self.addEventListener("fetch", (event) => {
       .catch(() => caches.match(request))
   )
 })
+
+// ─── Push Notifications ─────────────────────────────────────────────────────
+
+self.addEventListener("push", (event) => {
+  if (!event.data) return
+
+  const data = event.data.json()
+  const { title, body, url, tag } = data
+
+  event.waitUntil(
+    self.registration.showNotification(title || "AI-HOS", {
+      body: body || "",
+      icon: "/icons/icon.svg",
+      badge: "/icons/icon.svg",
+      tag: tag || "default",
+      data: { url: url || "/" },
+      vibrate: [200, 100, 200],
+    })
+  )
+})
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close()
+  const url = event.notification.data?.url || "/"
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      // Focus existing window if open
+      for (const client of clients) {
+        if (client.url.includes(self.location.origin) && "focus" in client) {
+          client.navigate(url)
+          return client.focus()
+        }
+      }
+      // Open new window
+      return self.clients.openWindow(url)
+    })
+  )
+})
