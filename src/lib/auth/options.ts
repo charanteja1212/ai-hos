@@ -4,6 +4,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { buildSessionUser } from "@/lib/auth/build-session-user"
 import { signSupabaseJWT } from "@/lib/supabase/sign-jwt"
 import { isRateLimited, resetRateLimit } from "@/lib/rate-limit"
+import { normalizePhone, phoneVariants as getPhoneVariants } from "@/lib/utils/phone"
 import type { UserRole, SessionUser } from "@/types/auth"
 
 export const authConfig: NextAuthConfig = {
@@ -268,9 +269,12 @@ export const authConfig: NextAuthConfig = {
         otp: { label: "OTP", type: "text" },
       },
       async authorize(credentials) {
-        const phone = (credentials?.phone as string)?.replace(/\D/g, "")
+        const rawPhone = (credentials?.phone as string)?.replace(/\D/g, "")
         const otp = credentials?.otp as string
-        if (!phone || !otp) return null
+        if (!rawPhone || !otp) return null
+
+        const phone = normalizePhone(rawPhone)
+        const variants = getPhoneVariants(rawPhone)
 
         // Rate limit: 5 OTP verification attempts per phone in 15 minutes
         const otpRateLimitKey = `otp:verify:${phone}`
@@ -279,24 +283,19 @@ export const authConfig: NextAuthConfig = {
         const supabase = createServerClient()
 
         const { data: otpRecord } = await supabase
-          .from("patient_otps").select("*").eq("phone", phone).eq("otp", otp)
+          .from("patient_otps").select("*").in("phone", variants).eq("otp", otp)
           .eq("verified", false).gt("expires_at", new Date().toISOString())
           .order("created_at", { ascending: false }).limit(1).single()
         if (!otpRecord) return null
         if ((otpRecord.attempts || 0) >= 3) return null
         const { data: updatedRows } = await supabase.from("patient_otps")
-          .update({ verified: true }).eq("phone", phone).eq("verified", false).select("id")
+          .update({ verified: true }).in("phone", variants).eq("verified", false).select("id")
         if (!updatedRows || updatedRows.length === 0) return null
 
         await resetRateLimit(otpRateLimitKey)
 
         // Lookup patient — handle both phone formats (with/without 91 prefix)
-        const phoneVariants: string[] = [phone]
-        if (phone.startsWith("91") && phone.length === 12) {
-          phoneVariants.push(phone.slice(2))
-        } else if (phone.length === 10) {
-          phoneVariants.push(`91${phone}`)
-        }
+        const phoneVariants: string[] = variants
 
         const { data: patients } = await supabase
           .from("patients")
