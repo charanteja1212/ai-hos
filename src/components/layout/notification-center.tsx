@@ -26,6 +26,10 @@ import {
   VolumeX,
   Filter,
   X,
+  MessageSquare,
+  CalendarPlus,
+  CreditCard,
+  FileText,
 } from "lucide-react"
 import type { SessionUser } from "@/types/auth"
 import type { Notification } from "@/types/database"
@@ -44,6 +48,10 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
   patient_discharged: LogOut,
   patient_transferred: ArrowRightLeft,
   invoice_created: Receipt,
+  live_chat_request: MessageSquare,
+  new_booking: CalendarPlus,
+  payment_received: CreditCard,
+  prescription_created: FileText,
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -56,6 +64,10 @@ const TYPE_COLORS: Record<string, string> = {
   patient_discharged: "text-green-500",
   patient_transferred: "text-blue-500",
   invoice_created: "text-amber-500",
+  live_chat_request: "text-red-500",
+  new_booking: "text-indigo-500",
+  payment_received: "text-emerald-500",
+  prescription_created: "text-cyan-500",
 }
 
 function timeAgo(dateStr: string): string {
@@ -122,6 +134,10 @@ const TYPE_LABELS: Record<string, string> = {
   patient_discharged: "Discharged",
   patient_transferred: "Transfer",
   invoice_created: "Invoice",
+  live_chat_request: "Live Chat",
+  new_booking: "Booking",
+  payment_received: "Payment",
+  prescription_created: "Prescription",
 }
 
 type TabFilter = "all" | "unread"

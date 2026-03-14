@@ -37,7 +37,11 @@ export type BotState =
   | 'RESCHED_DATE'
   | 'RESCHED_PERIOD'
   | 'RESCHED_SLOT'
-  | 'RESCHED_CONFIRM_NEW';
+  | 'RESCHED_CONFIRM_NEW'
+  | 'FEEDBACK_RATING'
+  | 'FEEDBACK_COMMENT'
+  | 'PRESCRIPTION_LIST'
+  | 'LIVE_AGENT';
 
 export interface SessionData {
   _state?: BotState;
@@ -91,6 +95,17 @@ export interface SessionData {
   newSelectedDate?: string;
   newSelectedPeriod?: string;
   newSelectedTime?: string;
+  // Feedback
+  feedbackBookingId?: string;
+  feedbackDoctorId?: string;
+  feedbackDoctorName?: string;
+  feedbackSpecialty?: string;
+  feedbackRating?: number;
+  // Prescriptions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  prescriptionsData?: any[];
+  // Live agent
+  liveChatId?: string;
 }
 
 export interface ConvoMessage {

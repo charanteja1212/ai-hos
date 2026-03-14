@@ -149,25 +149,27 @@ export async function POST(req: NextRequest) {
       convoMessages: session.convoMessages,
     })
 
-    // Step 6: Send reply
+    // Step 6: Send reply (skip if empty — live agent mode)
     const waToken = tenantConfig.wa_token || WA_TOKEN_DEFAULT
     const waApiUrl = tenantConfig.wa_api_url || WA_API_URL_DEFAULT
 
-    const sendResult = await sendReply({
-      senderPhone: cleanPhone,
-      messageId: parsed.messageId,
-      aiReply: result.reply,
-      language: result.language,
-      waToken,
-      waApiUrl,
-      tenantConfig: {
-        flow_registration_id: tenantConfig.flow_registration_id || null,
-        flow_dependent_id: tenantConfig.flow_dependent_id || null,
-      },
-    })
+    if (result.reply) {
+      const sendResult = await sendReply({
+        senderPhone: cleanPhone,
+        messageId: parsed.messageId,
+        aiReply: result.reply,
+        language: result.language,
+        waToken,
+        waApiUrl,
+        tenantConfig: {
+          flow_registration_id: tenantConfig.flow_registration_id || null,
+          flow_dependent_id: tenantConfig.flow_dependent_id || null,
+        },
+      })
 
-    if (!sendResult.success) {
-      console.error("[webhook] Send failed:", sendResult.error)
+      if (!sendResult.success) {
+        console.error("[webhook] Send failed:", sendResult.error)
+      }
     }
 
     // Step 7: Save session

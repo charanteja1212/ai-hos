@@ -167,6 +167,36 @@ export default function AppointmentsPage() {
   const filtered = appointments
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
+  // Stats counts (total across all pages, not just current page)
+  const [statCounts, setStatCounts] = useState({ confirmed: 0, completed: 0, cancelled: 0 })
+  const fetchStats = useCallback(async () => {
+    const supabase = createBrowserClient()
+    const buildQuery = (status: string) => {
+      let q = supabase.from("appointments").select("*", { count: "exact", head: true }).eq("tenant_id", tenantId).eq("status", status)
+      if (fromDate) q = q.gte("date", fromDate)
+      if (toDate) q = q.lte("date", toDate)
+      if (doctorFilter !== "all") q = q.eq("doctor_id", doctorFilter)
+      if (searchQuery) {
+        const s = searchQuery.trim()
+        const norm = s.replace(/\D/g, "")
+        if (s.toUpperCase().startsWith("BK")) q = q.ilike("booking_id", `%${s}%`)
+        else if (norm.length >= 7) q = q.like("patient_phone", `%${norm}%`)
+        else q = q.ilike("patient_name", `%${s}%`)
+      }
+      return q
+    }
+    const [c1, c2, c3] = await Promise.all([
+      buildQuery("confirmed"), buildQuery("completed"), buildQuery("cancelled"),
+    ])
+    setStatCounts({
+      confirmed: c1.count || 0,
+      completed: c2.count || 0,
+      cancelled: c3.count || 0,
+    })
+  }, [tenantId, fromDate, toDate, doctorFilter, searchQuery])
+
+  useEffect(() => { fetchStats() }, [fetchStats])
+
   const handleCancel = useCallback(
     async (bookingId: string) => {
       try {
@@ -242,12 +272,12 @@ export default function AppointmentsPage() {
     setExporting(false)
   }, [filtered, fromDate, toDate])
 
-  // Stats (based on current page data + total count)
+  // Stats (total counts across all pages)
   const stats = {
     total: totalCount,
-    confirmed: appointments.filter((a) => a.status === "confirmed").length,
-    completed: appointments.filter((a) => a.status === "completed").length,
-    cancelled: appointments.filter((a) => a.status === "cancelled").length,
+    confirmed: statCounts.confirmed,
+    completed: statCounts.completed,
+    cancelled: statCounts.cancelled,
   }
 
   return (

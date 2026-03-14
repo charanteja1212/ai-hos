@@ -133,6 +133,7 @@ const branchAdminNav: RoleNavConfig = {
       id: "settings",
       label: "SETTINGS",
       items: [
+        { label: "Patient Feedback", href: "/admin/feedback", icon: MessageSquare },
         { label: "Hospital Settings", href: "/admin/settings", icon: Settings },
         { label: "Activity Log", href: "/admin/activity", icon: FileText },
       ],
@@ -150,6 +151,7 @@ const receptionNav: RoleNavConfig = {
         { label: "Queue Board", href: "/reception", icon: LayoutDashboard },
         { label: "Walk-in Booking", href: "/reception/book", icon: CalendarPlus },
         { label: "Appointments", href: "/reception/appointments", icon: CalendarDays },
+        { label: "Live Chat", href: "/reception/chat", icon: MessageSquare },
       ],
     },
     {

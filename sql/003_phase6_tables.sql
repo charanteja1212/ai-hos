@@ -93,13 +93,15 @@ CREATE TABLE IF NOT EXISTS notifications (
   title TEXT NOT NULL,
   message TEXT,
   type TEXT NOT NULL DEFAULT 'info',
-  read BOOLEAN NOT NULL DEFAULT false,
+  is_read BOOLEAN NOT NULL DEFAULT false,
+  reference_id TEXT,
+  reference_type TEXT,
   action_url TEXT,
   metadata JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_notifications_tenant_role ON notifications(tenant_id, target_role, read, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_tenant_role ON notifications(tenant_id, target_role, is_read, created_at DESC);
 
 -- ─── 6. Ensure client_configs exists (from 002 migration) ───────────────────
 -- This is idempotent — will skip if already created

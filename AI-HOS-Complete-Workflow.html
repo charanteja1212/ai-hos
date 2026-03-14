@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI-HOS | Complete System Workflow</title>
+<style>
+  @page { size: A4; margin: 20mm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1a1a2e; line-height: 1.6; padding: 40px; max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 28px; color: #007AFF; border-bottom: 3px solid #007AFF; padding-bottom: 10px; margin-bottom: 5px; }
+  .subtitle { font-size: 14px; color: #666; margin-bottom: 30px; }
+  h2 { font-size: 20px; color: #1a1a2e; margin: 30px 0 15px; padding: 8px 15px; background: #f0f7ff; border-left: 4px solid #007AFF; page-break-after: avoid; }
+  h3 { font-size: 16px; color: #333; margin: 20px 0 10px; }
+  h4 { font-size: 14px; color: #007AFF; margin: 15px 0 8px; }
+  p { margin: 8px 0; font-size: 13px; }
+  ul, ol { margin: 8px 0 8px 25px; font-size: 13px; }
+  li { margin: 4px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 20px; font-size: 12px; }
+  th { background: #007AFF; color: white; padding: 8px 12px; text-align: left; }
+  td { padding: 7px 12px; border: 1px solid #e0e0e0; }
+  tr:nth-child(even) { background: #f8f9fa; }
+  .flow { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin: 10px 0; font-size: 13px; }
+  .flow-arrow { color: #007AFF; font-weight: bold; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-blue { background: #e3f2fd; color: #1565c0; }
+  .badge-green { background: #e8f5e9; color: #2e7d32; }
+  .badge-orange { background: #fff3e0; color: #e65100; }
+  .badge-purple { background: #f3e5f5; color: #7b1fa2; }
+  .badge-red { background: #fce4ec; color: #c62828; }
+  .section-icon { margin-right: 8px; }
+  .toc { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin: 20px 0; }
+  .toc a { color: #007AFF; text-decoration: none; }
+  .toc ol { counter-reset: toc; list-style: none; margin-left: 0; }
+  .toc li { counter-increment: toc; margin: 6px 0; }
+  .toc li::before { content: counter(toc) ". "; font-weight: bold; color: #007AFF; }
+  .page-break { page-break-before: always; }
+  .header-meta { display: flex; justify-content: space-between; margin: 10px 0 30px; font-size: 12px; color: #888; }
+  .arch-box { display: inline-block; padding: 6px 14px; margin: 4px; border: 2px solid #007AFF; border-radius: 6px; font-size: 12px; font-weight: 600; }
+  .arch-arrow { font-size: 18px; color: #007AFF; margin: 0 5px; }
+  .highlight { background: #fffde7; border-left: 3px solid #ffc107; padding: 10px 15px; margin: 10px 0; font-size: 13px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; }
+  .stat-box { background: #f0f7ff; border-radius: 8px; padding: 12px; text-align: center; }
+  .stat-number { font-size: 24px; font-weight: 700; color: #007AFF; }
+  .stat-label { font-size: 11px; color: #666; }
+</style>
+</head>
+<body>
+
+<h1>AI-HOS | Hospital Operating System</h1>
+<p class="subtitle">Complete System Workflow & Architecture Document</p>
+<div class="header-meta">
+  <span>Version 2.0 | Production</span>
+  <span>Generated: March 14, 2026</span>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-box"><div class="stat-number">52</div><div class="stat-label">Pages</div></div>
+  <div class="stat-box"><div class="stat-number">103</div><div class="stat-label">Components</div></div>
+  <div class="stat-box"><div class="stat-number">18</div><div class="stat-label">API Endpoints</div></div>
+  <div class="stat-box"><div class="stat-number">8</div><div class="stat-label">User Roles</div></div>
+</div>
+
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ol>
+    <li><a href="#arch">System Architecture</a></li>
+    <li><a href="#roles">User Roles & Access Control</a></li>
+    <li><a href="#auth">Authentication Workflows</a></li>
+    <li><a href="#reception">Reception & Queue Management</a></li>
+    <li><a href="#doctor">Doctor Consultation Workflow</a></li>
+    <li><a href="#pharmacy">Pharmacy Module</a></li>
+    <li><a href="#lab">Lab Module</a></li>
+    <li><a href="#ipd">Inpatient (IPD) Module</a></li>
+    <li><a href="#billing">Billing & Payments</a></li>
+    <li><a href="#patient">Patient Portal</a></li>
+    <li><a href="#platform">Platform Administration</a></li>
+    <li><a href="#whatsapp">WhatsApp AI Agent</a></li>
+    <li><a href="#abdm">ABDM / ABHA Integration</a></li>
+    <li><a href="#telemedicine">Telemedicine</a></li>
+    <li><a href="#notifications">Notifications & Reminders</a></li>
+    <li><a href="#infra">Infrastructure & Deployment</a></li>
+    <li><a href="#api">API Reference</a></li>
+    <li><a href="#db">Database Schema Overview</a></li>
+  </ol>
+</div>
+
+<!-- ==================== SECTION 1 ==================== -->
+<h2 id="arch">1. System Architecture</h2>
+
+<h3>Tech Stack</h3>
+<table>
+  <tr><th>Layer</th><th>Technology</th></tr>
+  <tr><td>Frontend</td><td>Next.js 15, React 19, TypeScript, Tailwind CSS, shadcn/ui</td></tr>
+  <tr><td>Backend</td><td>Next.js API Routes, Server Actions</td></tr>
+  <tr><td>Database</td><td>Supabase (PostgreSQL) with Row Level Security</td></tr>
+  <tr><td>Authentication</td><td>NextAuth.js v5 (JWT strategy, 12h sessions)</td></tr>
+  <tr><td>Queue System</td><td>BullMQ + Redis (separate worker container)</td></tr>
+  <tr><td>Caching</td><td>Redis (rate limiting, sessions)</td></tr>
+  <tr><td>WhatsApp</td><td>Meta Cloud API (direct integration)</td></tr>
+  <tr><td>AI</td><td>Claude API (WhatsApp AI agent)</td></tr>
+  <tr><td>Deployment</td><td>Docker + Traefik + Cloudflare</td></tr>
+  <tr><td>PWA</td><td>Service Worker, Web Manifest, VAPID Push</td></tr>
+</table>
+
+<h3>Multi-Tenancy Hierarchy</h3>
+<div class="flow">
+  <span class="arch-box">Platform (Super Admin)</span>
+  <span class="arch-arrow">&rarr;</span>
+  <span class="arch-box">Client (Hospital Group)</span>
+  <span class="arch-arrow">&rarr;</span>
+  <span class="arch-box">Branch (Individual Hospital)</span>
+  <span class="arch-arrow">&rarr;</span>
+  <span class="arch-box">Users (Doctors, Staff, Patients)</span>
+</div>
+<p>Every database row is isolated by <code>tenant_id</code> using Supabase RLS policies. A Client Admin manages multiple branches. Super Admin manages all clients.</p>
+
+<h3>Subscription Tiers</h3>
+<table>
+  <tr><th>Feature</th><th>Basic</th><th>Medium</th><th>Enterprise</th></tr>
+  <tr><td>OPD Queue & Appointments</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td>Pharmacy Module</td><td>-</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td>Lab Module</td><td>-</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td>IPD (Inpatient)</td><td>-</td><td>-</td><td>Yes</td></tr>
+  <tr><td>Telemedicine (Video)</td><td>-</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td>ABDM / ABHA</td><td>-</td><td>-</td><td>Yes</td></tr>
+  <tr><td>WhatsApp AI Agent</td><td>-</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td>Advanced Analytics</td><td>-</td><td>-</td><td>Yes</td></tr>
+</table>
+
+<!-- ==================== SECTION 2 ==================== -->
+<h2 id="roles" class="page-break">2. User Roles & Access Control</h2>
+
+<table>
+  <tr><th>Role</th><th>Login Method</th><th>Access Areas</th><th>Key Capabilities</th></tr>
+  <tr>
+    <td><span class="badge badge-red">SUPER_ADMIN</span></td>
+    <td>Email + PIN</td>
+    <td>/platform/*</td>
+    <td>Manage all clients, branches, subscriptions, platform settings, WhatsApp routing, system health</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-purple">CLIENT_ADMIN</span></td>
+    <td>Client ID + PIN</td>
+    <td>/admin/*, /reception/*, /doctor/*, /pharmacy/*, /lab/*</td>
+    <td>Manage all branches under a client, switch branches, manage doctors/staff/patients</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-blue">BRANCH_ADMIN</span></td>
+    <td>Tenant ID + PIN</td>
+    <td>/admin/*, /reception/*, /doctor/*, /pharmacy/*, /lab/*</td>
+    <td>Manage single branch: doctors, patients, staff, billing, settings, analytics</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-green">RECEPTION</span></td>
+    <td>Tenant ID + PIN</td>
+    <td>/reception/*</td>
+    <td>Queue board, walk-in booking, appointments, patient search, check-in, admissions</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-blue">DOCTOR</span></td>
+    <td>Doctor ID + PIN</td>
+    <td>/doctor/*</td>
+    <td>Dashboard, consult patients, prescriptions, EMR, video consult, schedule</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-orange">PHARMACIST</span></td>
+    <td>Staff ID + PIN</td>
+    <td>/pharmacy/*</td>
+    <td>Prescription orders (Kanban), inventory management</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-orange">LAB_TECH</span></td>
+    <td>Staff ID + PIN</td>
+    <td>/lab/*</td>
+    <td>Lab order Kanban (Pending &rarr; In Progress &rarr; Completed), result entry</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-green">PATIENT</span></td>
+    <td>Phone + WhatsApp OTP</td>
+    <td>/patient/*</td>
+    <td>Dashboard, book appointments, view prescriptions, lab results, OP passes, invoices, profile</td>
+  </tr>
+</table>
+
+<!-- ==================== SECTION 3 ==================== -->
+<h2 id="auth">3. Authentication Workflows</h2>
+
+<h4>Hospital Staff Login (PIN-based)</h4>
+<div class="flow">
+  <strong>User</strong> selects role &amp; branch
+  <span class="flow-arrow">&rarr;</span> Enters PIN
+  <span class="flow-arrow">&rarr;</span> Server validates PIN against tenant record
+  <span class="flow-arrow">&rarr;</span> Rate limit: 5 attempts / 15 min (Redis)
+  <span class="flow-arrow">&rarr;</span> JWT issued (12h expiry)
+  <span class="flow-arrow">&rarr;</span> Custom Supabase JWT for RLS
+  <span class="flow-arrow">&rarr;</span> Redirect to role dashboard
+</div>
+
+<h4>Hospital Staff Login (Password-based)</h4>
+<div class="flow">
+  <strong>User</strong> enters email + password
+  <span class="flow-arrow">&rarr;</span> Supabase Auth validates credentials
+  <span class="flow-arrow">&rarr;</span> Lookup user_credentials table for role mapping
+  <span class="flow-arrow">&rarr;</span> Verify tenant is active
+  <span class="flow-arrow">&rarr;</span> JWT issued with role/tenant
+</div>
+
+<h4>Patient Login (OTP via WhatsApp)</h4>
+<div class="flow">
+  <strong>Patient</strong> enters phone number
+  <span class="flow-arrow">&rarr;</span> API checks patient exists (phone variants: 10-digit + 91-prefixed)
+  <span class="flow-arrow">&rarr;</span> Rate limit: 3 OTPs / phone / 15 min + 10 OTPs / IP / 15 min
+  <span class="flow-arrow">&rarr;</span> 6-digit OTP generated &amp; stored in patient_otps table
+  <span class="flow-arrow">&rarr;</span> OTP sent via WhatsApp Cloud API
+  <span class="flow-arrow">&rarr;</span> Patient enters OTP (5 min validity)
+  <span class="flow-arrow">&rarr;</span> Server verifies OTP (both phone formats matched)
+  <span class="flow-arrow">&rarr;</span> JWT issued with PATIENT role
+  <span class="flow-arrow">&rarr;</span> Redirect to /patient dashboard
+</div>
+
+<!-- ==================== SECTION 4 ==================== -->
+<h2 id="reception" class="page-break">4. Reception & Queue Management</h2>
+
+<h4>Walk-in Patient Booking</h4>
+<div class="flow">
+  <strong>Reception</strong> opens /reception/book
+  <span class="flow-arrow">&rarr;</span> Search existing patient or create new
+  <span class="flow-arrow">&rarr;</span> Select doctor &amp; time slot
+  <span class="flow-arrow">&rarr;</span> Booking created with token number
+  <span class="flow-arrow">&rarr;</span> Patient added to queue (status: WAITING)
+  <span class="flow-arrow">&rarr;</span> WhatsApp confirmation sent to patient
+  <span class="flow-arrow">&rarr;</span> Token receipt printable
+</div>
+
+<h4>Queue Board (/reception)</h4>
+<ul>
+  <li><strong>Real-time stats banner</strong>: Total waiting, in-consultation, completed, avg wait time</li>
+  <li><strong>Queue cards</strong>: Token #, patient name, doctor, wait time (elapsed timer)</li>
+  <li><strong>Status flow</strong>: WAITING &rarr; CHECKED_IN &rarr; IN_CONSULTATION &rarr; COMPLETED</li>
+  <li><strong>Quick actions</strong>: Check-in, Mark arrived, Cancel, Reschedule</li>
+  <li><strong>Real-time updates</strong>: Supabase realtime subscriptions</li>
+</ul>
+
+<h4>Appointment Management (/reception/appointments)</h4>
+<ul>
+  <li>Calendar view of all appointments</li>
+  <li>Filter by doctor, date range, status</li>
+  <li>Reschedule and cancel with WhatsApp notification</li>
+  <li>Pending arrivals panel with quick check-in</li>
+</ul>
+
+<h4>Patient Search (/reception/patients)</h4>
+<ul>
+  <li>Search by name, phone, patient ID</li>
+  <li>View patient history, past visits, documents</li>
+  <li>Quick book appointment from patient record</li>
+</ul>
+
+<!-- ==================== SECTION 5 ==================== -->
+<h2 id="doctor">5. Doctor Consultation Workflow</h2>
+
+<h4>Doctor Dashboard (/doctor)</h4>
+<ul>
+  <li>Today's queue: patients waiting, in consultation</li>
+  <li>Stats: total patients today, completed, pending</li>
+  <li>Quick access to current patient</li>
+</ul>
+
+<h4>Consultation Flow (/doctor/consult)</h4>
+<div class="flow">
+  <strong>Doctor</strong> opens consult page
+  <span class="flow-arrow">&rarr;</span> Sees queue of checked-in patients
+  <span class="flow-arrow">&rarr;</span> Clicks patient to start consultation
+  <span class="flow-arrow">&rarr;</span> Records: Chief complaints, diagnosis, vitals, clinical notes
+  <span class="flow-arrow">&rarr;</span> Writes prescription (medicine combobox with templates)
+  <span class="flow-arrow">&rarr;</span> Orders lab tests (if needed)
+  <span class="flow-arrow">&rarr;</span> Admits to IPD (if needed)
+  <span class="flow-arrow">&rarr;</span> Video call button (telemedicine, feature-gated)
+  <span class="flow-arrow">&rarr;</span> Marks consultation complete
+  <span class="flow-arrow">&rarr;</span> Post-consultation notification sent via WhatsApp
+  <span class="flow-arrow">&rarr;</span> Prescription printable / PDF exportable
+</div>
+
+<h4>EMR - Electronic Medical Record (/doctor/emr/[phone])</h4>
+<ul>
+  <li>Complete patient history by phone number</li>
+  <li>Past consultations, prescriptions, lab results, vitals timeline</li>
+  <li>Document gallery (uploaded reports, images)</li>
+</ul>
+
+<h4>Prescription Management</h4>
+<ul>
+  <li>Medicine combobox with auto-complete</li>
+  <li>Prescription templates (save & reuse common prescriptions)</li>
+  <li>Print prescription (branded hospital letterhead)</li>
+  <li>Download as PDF</li>
+</ul>
+
+<h4>Doctor Schedule (/doctor/schedule)</h4>
+<ul>
+  <li>Set weekly availability (day + time slots)</li>
+  <li>Block specific dates</li>
+  <li>Visible to patients during booking</li>
+</ul>
+
+<!-- ==================== SECTION 6 ==================== -->
+<h2 id="pharmacy" class="page-break">6. Pharmacy Module</h2>
+<p><span class="badge badge-orange">Feature-gated: Medium & Enterprise tiers</span></p>
+
+<h4>Prescription Orders (/pharmacy)</h4>
+<div class="flow">
+  <strong>Doctor</strong> writes prescription
+  <span class="flow-arrow">&rarr;</span> Order appears in Pharmacy Kanban
+  <span class="flow-arrow">&rarr;</span> <strong>Pharmacist</strong> sees: Pending &rarr; Preparing &rarr; Ready &rarr; Dispensed
+  <span class="flow-arrow">&rarr;</span> Pharmacist moves cards through columns
+  <span class="flow-arrow">&rarr;</span> Patient notified when ready for pickup
+</div>
+
+<h4>Inventory Management (/pharmacy/inventory)</h4>
+<ul>
+  <li>Medicine stock tracking</li>
+  <li>Low stock alerts</li>
+  <li>Batch and expiry tracking</li>
+  <li>Add/edit/delete medicines</li>
+</ul>
+
+<!-- ==================== SECTION 7 ==================== -->
+<h2 id="lab">7. Lab Module</h2>
+<p><span class="badge badge-orange">Feature-gated: Medium & Enterprise tiers</span></p>
+
+<h4>Lab Order Workflow (/lab)</h4>
+<div class="flow">
+  <strong>Doctor</strong> orders lab test during consultation
+  <span class="flow-arrow">&rarr;</span> Order appears in Lab Kanban board
+  <span class="flow-arrow">&rarr;</span> <strong>Lab Tech</strong> sees: Pending &rarr; Sample Collected &rarr; In Progress &rarr; Completed
+  <span class="flow-arrow">&rarr;</span> Lab Tech enters results with normal range indicators
+  <span class="flow-arrow">&rarr;</span> Results visible to Doctor in EMR
+  <span class="flow-arrow">&rarr;</span> Results visible to Patient in portal
+  <span class="flow-arrow">&rarr;</span> Lab report printable with normal ranges
+</div>
+
+<!-- ==================== SECTION 8 ==================== -->
+<h2 id="ipd">8. Inpatient (IPD) Module</h2>
+<p><span class="badge badge-red">Feature-gated: Enterprise tier only</span></p>
+
+<h4>Admission Flow</h4>
+<div class="flow">
+  <strong>Doctor/Reception</strong> initiates admission from consult
+  <span class="flow-arrow">&rarr;</span> Admit dialog: select bed, ward, admission notes
+  <span class="flow-arrow">&rarr;</span> Patient status changes to ADMITTED
+  <span class="flow-arrow">&rarr;</span> Appears on Inpatient board (/reception/admissions)
+</div>
+
+<h4>IPD Components</h4>
+<table>
+  <tr><th>Component</th><th>Purpose</th></tr>
+  <tr><td>Bed Map</td><td>Visual ward/bed occupancy view</td></tr>
+  <tr><td>Admission Detail</td><td>Full inpatient record</td></tr>
+  <tr><td>Vitals Chart</td><td>Temperature, BP, pulse over time</td></tr>
+  <tr><td>Nursing Notes</td><td>Shift-wise nursing documentation</td></tr>
+  <tr><td>Rounds Panel</td><td>Doctor rounds notes & orders</td></tr>
+  <tr><td>Daily Charges</td><td>Room charges, procedures, consumables</td></tr>
+  <tr><td>Transfer Dialog</td><td>Transfer between wards/beds</td></tr>
+  <tr><td>Discharge Dialog</td><td>Discharge summary + final billing</td></tr>
+</table>
+
+<h4>Discharge Flow</h4>
+<div class="flow">
+  <strong>Doctor</strong> initiates discharge
+  <span class="flow-arrow">&rarr;</span> Discharge summary (diagnosis, treatment, follow-up)
+  <span class="flow-arrow">&rarr;</span> Final bill generated (all daily charges + procedures)
+  <span class="flow-arrow">&rarr;</span> Discharge summary printable
+  <span class="flow-arrow">&rarr;</span> Bed freed on bed map
+</div>
+
+<!-- ==================== SECTION 9 ==================== -->
+<h2 id="billing" class="page-break">9. Billing & Payments</h2>
+
+<h4>Billing Workflow (/admin/billing)</h4>
+<div class="flow">
+  <strong>Consultation completed</strong>
+  <span class="flow-arrow">&rarr;</span> Invoice auto-generated (consultation fee + lab + pharmacy + procedures)
+  <span class="flow-arrow">&rarr;</span> GST/tax calculation (lib/billing/tax.ts)
+  <span class="flow-arrow">&rarr;</span> Payment: Cash / Razorpay (online)
+  <span class="flow-arrow">&rarr;</span> Razorpay callback verifies payment
+  <span class="flow-arrow">&rarr;</span> Invoice printable / PDF
+  <span class="flow-arrow">&rarr;</span> Payment receipt sent via email
+</div>
+
+<h4>Invoice Print Components</h4>
+<ul>
+  <li>Invoice with hospital branding, GST, itemized charges</li>
+  <li>OP consultation summary print</li>
+  <li>Patient card print</li>
+  <li>All printable via PrintButton or DownloadPdfButton</li>
+</ul>
+
+<!-- ==================== SECTION 10 ==================== -->
+<h2 id="patient">10. Patient Portal</h2>
+
+<h4>Patient Dashboard (/patient)</h4>
+<ul>
+  <li>Upcoming appointments with countdown</li>
+  <li>Recent prescriptions and lab results</li>
+  <li>Quick book appointment button</li>
+</ul>
+
+<h4>Patient Features</h4>
+<table>
+  <tr><th>Page</th><th>Functionality</th></tr>
+  <tr><td>/patient/book</td><td>Book new appointment: select doctor, date, time slot</td></tr>
+  <tr><td>/patient/appointments</td><td>View upcoming & past appointments, cancel/reschedule</td></tr>
+  <tr><td>/patient/prescriptions</td><td>View all prescriptions, print/download PDF</td></tr>
+  <tr><td>/patient/lab</td><td>View lab results with normal range indicators</td></tr>
+  <tr><td>/patient/op-pass</td><td>OP (outpatient) pass with QR verification</td></tr>
+  <tr><td>/patient/invoices</td><td>View and download invoices</td></tr>
+  <tr><td>/patient/profile</td><td>View/edit personal details, ABHA linkage</td></tr>
+</table>
+
+<h4>OP Pass Verification</h4>
+<div class="flow">
+  <strong>Patient</strong> books appointment
+  <span class="flow-arrow">&rarr;</span> OP Pass generated with unique ID
+  <span class="flow-arrow">&rarr;</span> QR code on pass
+  <span class="flow-arrow">&rarr;</span> Reception scans QR at /verify/[id]
+  <span class="flow-arrow">&rarr;</span> Patient verified &amp; checked in
+</div>
+
+<!-- ==================== SECTION 11 ==================== -->
+<h2 id="platform" class="page-break">11. Platform Administration (Super Admin)</h2>
+
+<h4>Platform Dashboard (/platform)</h4>
+<ul>
+  <li>Global stats: total clients, branches, doctors, patients, revenue</li>
+  <li>System health monitoring</li>
+</ul>
+
+<h4>Platform Management Pages</h4>
+<table>
+  <tr><th>Page</th><th>Purpose</th></tr>
+  <tr><td>/platform/clients</td><td>Manage hospital groups (create, edit, activate/deactivate)</td></tr>
+  <tr><td>/platform/clients/[id]</td><td>Client detail: branches, subscription, settings</td></tr>
+  <tr><td>/platform/branches</td><td>All branches across all clients</td></tr>
+  <tr><td>/platform/doctors</td><td>All doctors across platform</td></tr>
+  <tr><td>/platform/patients</td><td>All patients across platform</td></tr>
+  <tr><td>/platform/plans</td><td>Subscription plan management (Basic/Medium/Enterprise)</td></tr>
+  <tr><td>/platform/analytics</td><td>Global analytics and trends</td></tr>
+  <tr><td>/platform/settings</td><td>Platform-wide configuration</td></tr>
+  <tr><td>/platform/logs</td><td>Audit log viewer</td></tr>
+  <tr><td>/platform/health</td><td>System health: DB, Redis, API status</td></tr>
+  <tr><td>/platform/whatsapp</td><td>WhatsApp routing: per-tenant phone number assignment</td></tr>
+</table>
+
+<h4>Client Onboarding Wizard</h4>
+<div class="flow">
+  <strong>Super Admin</strong> clicks "New Client"
+  <span class="flow-arrow">&rarr;</span> Onboarding wizard: Client name, contact, subscription tier
+  <span class="flow-arrow">&rarr;</span> Create first branch (hospital name, address, PINs)
+  <span class="flow-arrow">&rarr;</span> Configure features based on tier
+  <span class="flow-arrow">&rarr;</span> Client Admin credentials generated
+  <span class="flow-arrow">&rarr;</span> Client ready to use
+</div>
+
+<!-- ==================== SECTION 12 ==================== -->
+<h2 id="whatsapp">12. WhatsApp AI Agent</h2>
+<p><span class="badge badge-purple">Feature-gated: Medium & Enterprise tiers</span></p>
+
+<h4>Architecture</h4>
+<div class="flow">
+  <strong>Patient</strong> sends WhatsApp message
+  <span class="flow-arrow">&rarr;</span> Meta Webhook &rarr; /api/whatsapp/webhook
+  <span class="flow-arrow">&rarr;</span> Message deduplication
+  <span class="flow-arrow">&rarr;</span> Session management (conversation context)
+  <span class="flow-arrow">&rarr;</span> Claude AI Agent processes message
+  <span class="flow-arrow">&rarr;</span> Tool calls: book appointment, check status, get prescriptions, etc.
+  <span class="flow-arrow">&rarr;</span> Response sent back via WhatsApp Cloud API
+</div>
+
+<h4>AI Agent Tools</h4>
+<table>
+  <tr><th>Tool</th><th>What it does</th></tr>
+  <tr><td>book_appointment</td><td>Book appointment with doctor</td></tr>
+  <tr><td>check_appointment_status</td><td>Check upcoming appointments</td></tr>
+  <tr><td>cancel_appointment</td><td>Cancel an existing appointment</td></tr>
+  <tr><td>get_prescriptions</td><td>Retrieve recent prescriptions</td></tr>
+  <tr><td>get_lab_results</td><td>Retrieve lab test results</td></tr>
+  <tr><td>get_doctors</td><td>List available doctors & specialties</td></tr>
+  <tr><td>get_available_slots</td><td>Check doctor availability</td></tr>
+  <tr><td>get_queue_status</td><td>Check current queue position</td></tr>
+</table>
+
+<h4>Multi-language Support</h4>
+<p>The WhatsApp agent responds in the language the patient uses (English, Hindi, Telugu). Translation layer in lib/whatsapp/translations.ts.</p>
+
+<!-- ==================== SECTION 13 ==================== -->
+<h2 id="abdm" class="page-break">13. ABDM / ABHA Integration</h2>
+<p><span class="badge badge-red">Feature-gated: Enterprise tier only</span></p>
+
+<h4>ABHA (Ayushman Bharat Health Account)</h4>
+<ul>
+  <li><strong>ABHA Card</strong>: Display patient's ABHA ID and QR code</li>
+  <li><strong>ABHA Link Dialog</strong>: Link existing ABHA to patient record</li>
+  <li><strong>Consent Manager</strong>: Manage health data sharing consents</li>
+  <li><strong>Health Record Export</strong>: Export records in FHIR format</li>
+</ul>
+
+<h4>FHIR Integration (lib/abdm/fhir.ts)</h4>
+<p>Converts hospital records to FHIR R4 format for interoperability with national health systems.</p>
+
+<!-- ==================== SECTION 14 ==================== -->
+<h2 id="telemedicine">14. Telemedicine</h2>
+<p><span class="badge badge-orange">Feature-gated: Medium & Enterprise tiers</span></p>
+
+<h4>Video Consultation Flow</h4>
+<div class="flow">
+  <strong>Doctor</strong> clicks "Video Call" during consultation
+  <span class="flow-arrow">&rarr;</span> Jitsi Meet room created (unique per appointment)
+  <span class="flow-arrow">&rarr;</span> Full-screen video dialog opens in browser
+  <span class="flow-arrow">&rarr;</span> "Copy Link for Patient" copies Jitsi URL
+  <span class="flow-arrow">&rarr;</span> Link sent to patient via WhatsApp API
+  <span class="flow-arrow">&rarr;</span> Patient joins from their phone/computer
+  <span class="flow-arrow">&rarr;</span> Doctor can consult, share screen
+  <span class="flow-arrow">&rarr;</span> No API keys needed (Jitsi is free/open source)
+</div>
+
+<!-- ==================== SECTION 15 ==================== -->
+<h2 id="notifications">15. Notifications & Reminders</h2>
+
+<h4>WhatsApp Notifications (via Meta Cloud API)</h4>
+<table>
+  <tr><th>Event</th><th>Notification</th></tr>
+  <tr><td>Appointment booked</td><td>Booking confirmation with doctor, date, time</td></tr>
+  <tr><td>Appointment cancelled</td><td>Cancellation confirmation</td></tr>
+  <tr><td>24h before appointment</td><td>Reminder notification</td></tr>
+  <tr><td>2h before appointment</td><td>Final reminder</td></tr>
+  <tr><td>Consultation completed</td><td>Post-consultation summary</td></tr>
+  <tr><td>Queue update</td><td>Your turn is approaching</td></tr>
+  <tr><td>OTP for login</td><td>6-digit verification code</td></tr>
+</table>
+
+<h4>Push Notifications (VAPID / Service Worker)</h4>
+<ul>
+  <li>Browser push notifications for PWA users</li>
+  <li>Subscription stored in Supabase</li>
+  <li>Triggered by BullMQ workers</li>
+</ul>
+
+<h4>BullMQ Background Workers</h4>
+<table>
+  <tr><th>Worker</th><th>Purpose</th></tr>
+  <tr><td>reminder-worker</td><td>Send appointment reminders (24h and 2h before)</td></tr>
+  <tr><td>notification-worker</td><td>Process WhatsApp message queue</td></tr>
+  <tr><td>cleanup-worker</td><td>Clean expired OTPs, old sessions</td></tr>
+  <tr><td>report-worker</td><td>Generate daily/weekly summary reports</td></tr>
+</table>
+
+<!-- ==================== SECTION 16 ==================== -->
+<h2 id="infra" class="page-break">16. Infrastructure & Deployment</h2>
+
+<h4>Docker Architecture</h4>
+<table>
+  <tr><th>Container</th><th>Image</th><th>Purpose</th></tr>
+  <tr><td>ai-hos-ai-hos-1</td><td>Next.js standalone</td><td>Main app (web + API)</td></tr>
+  <tr><td>ai-hos-ai-hos-worker-1</td><td>Node.js Alpine</td><td>BullMQ workers (reminders, notifications)</td></tr>
+  <tr><td>ai-hos-bullboard-1</td><td>BullBoard</td><td>Queue monitoring dashboard</td></tr>
+  <tr><td>redis</td><td>Redis</td><td>Rate limiting, BullMQ, caching</td></tr>
+  <tr><td>traefik</td><td>Traefik</td><td>Reverse proxy, SSL termination</td></tr>
+</table>
+
+<h4>PWA Features</h4>
+<ul>
+  <li>Service Worker with stale-while-revalidate caching</li>
+  <li>Installable on desktop, Android, iOS</li>
+  <li>PNG icons (192px, 512px, Apple touch icon)</li>
+  <li>Push notification support</li>
+  <li>App shortcuts: Queue Board, Book Appointment</li>
+</ul>
+
+<h4>i18n (Internationalization)</h4>
+<ul>
+  <li>3 languages: English, Hindi, Telugu</li>
+  <li>95 translation keys across all modules</li>
+  <li>Language switcher in sidebar</li>
+  <li>Persisted in localStorage</li>
+</ul>
+
+<h4>Security</h4>
+<ul>
+  <li>Redis rate limiting on all auth endpoints</li>
+  <li>Supabase RLS for tenant data isolation</li>
+  <li>Custom JWT for client-side Supabase access</li>
+  <li>Security headers: HSTS, X-Frame-Options: DENY, CSP</li>
+  <li>OTP anti-enumeration (generic error messages)</li>
+  <li>PIN brute-force protection (5 attempts / 15 min)</li>
+</ul>
+
+<!-- ==================== SECTION 17 ==================== -->
+<h2 id="api">17. API Reference</h2>
+
+<table>
+  <tr><th>Endpoint</th><th>Method</th><th>Purpose</th></tr>
+  <tr><td>/api/auth/[...nextauth]</td><td>GET/POST</td><td>NextAuth.js authentication handler</td></tr>
+  <tr><td>/api/auth/tenants</td><td>GET</td><td>List available tenants for login</td></tr>
+  <tr><td>/api/auth/forgot-password</td><td>POST</td><td>Send password reset email</td></tr>
+  <tr><td>/api/auth/create-password</td><td>POST</td><td>Set new password</td></tr>
+  <tr><td>/api/patient-auth/send-otp</td><td>POST</td><td>Send OTP via WhatsApp</td></tr>
+  <tr><td>/api/booking</td><td>POST</td><td>Create staff-side booking</td></tr>
+  <tr><td>/api/patient-booking</td><td>POST</td><td>Create patient-side booking</td></tr>
+  <tr><td>/api/patient-appointment</td><td>GET/PATCH</td><td>Patient appointment management</td></tr>
+  <tr><td>/api/queue/notify</td><td>POST</td><td>Send queue position notification</td></tr>
+  <tr><td>/api/notifications/post-consultation</td><td>POST</td><td>Send post-consultation summary</td></tr>
+  <tr><td>/api/payment/callback</td><td>POST</td><td>Razorpay payment verification</td></tr>
+  <tr><td>/api/payment/send-emails</td><td>POST</td><td>Send payment receipt emails</td></tr>
+  <tr><td>/api/telemedicine/send-link</td><td>POST</td><td>Send video call link via WhatsApp</td></tr>
+  <tr><td>/api/push/subscribe</td><td>POST</td><td>Store push notification subscription</td></tr>
+  <tr><td>/api/whatsapp/webhook</td><td>GET/POST</td><td>WhatsApp webhook (verify + receive messages)</td></tr>
+  <tr><td>/api/abdm</td><td>POST</td><td>ABDM integration operations</td></tr>
+  <tr><td>/api/platform</td><td>GET/POST</td><td>Platform admin operations</td></tr>
+  <tr><td>/api/verify/[id]</td><td>GET</td><td>OP Pass QR verification</td></tr>
+</table>
+
+<!-- ==================== SECTION 18 ==================== -->
+<h2 id="db" class="page-break">18. Database Schema Overview</h2>
+
+<h4>Core Tables</h4>
+<table>
+  <tr><th>Table</th><th>Purpose</th><th>Key Columns</th></tr>
+  <tr><td>clients</td><td>Hospital groups</td><td>client_id, name, admin_pin, status</td></tr>
+  <tr><td>tenants</td><td>Individual branches</td><td>tenant_id, client_id, hospital_name, admin_pin, reception_pin, status</td></tr>
+  <tr><td>tenant_features</td><td>Feature flags per branch</td><td>tenant_id, feature_key, enabled</td></tr>
+  <tr><td>doctors</td><td>Doctor records</td><td>doctor_id, tenant_id, name, specialty, pin</td></tr>
+  <tr><td>staff</td><td>Non-doctor staff</td><td>staff_id, tenant_id, name, role, pin</td></tr>
+  <tr><td>patients</td><td>Patient records</td><td>phone, name, tenant_id, dob, gender</td></tr>
+  <tr><td>platform_admins</td><td>Super admin accounts</td><td>admin_id, email, name, pin</td></tr>
+  <tr><td>user_credentials</td><td>Email/password login mapping</td><td>email, role, entity_table, entity_id, tenant_id</td></tr>
+</table>
+
+<h4>Clinical Tables</h4>
+<table>
+  <tr><th>Table</th><th>Purpose</th></tr>
+  <tr><td>appointments / bookings</td><td>Appointment records with status tracking</td></tr>
+  <tr><td>consultations</td><td>Consultation notes, diagnosis, vitals</td></tr>
+  <tr><td>prescriptions</td><td>Prescription records with medicines</td></tr>
+  <tr><td>lab_orders</td><td>Lab test orders with results</td></tr>
+  <tr><td>pharmacy_orders</td><td>Pharmacy dispensing orders</td></tr>
+  <tr><td>admissions</td><td>IPD admission records</td></tr>
+  <tr><td>invoices</td><td>Billing and payment records</td></tr>
+</table>
+
+<h4>System Tables</h4>
+<table>
+  <tr><th>Table</th><th>Purpose</th></tr>
+  <tr><td>patient_otps</td><td>OTP storage for patient login</td></tr>
+  <tr><td>audit_logs</td><td>System-wide audit trail</td></tr>
+  <tr><td>push_subscriptions</td><td>Web push notification subscriptions</td></tr>
+  <tr><td>whatsapp_sessions</td><td>AI agent conversation context</td></tr>
+  <tr><td>whatsapp_routes</td><td>Per-tenant WhatsApp phone number routing</td></tr>
+</table>
+
+<div class="highlight" style="margin-top: 40px;">
+  <strong>Document generated for AI-HOS v2.0</strong><br>
+  Production URL: https://app.ainewworld.in<br>
+  VPS: 72.61.238.6 | Docker containers: 3 (app + worker + bullboard)<br>
+  All data isolated by tenant_id with Supabase Row Level Security.
+</div>
+
+</body>
+</html>

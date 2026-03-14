@@ -427,8 +427,8 @@ export async function bookAppointment(args: any): Promise<any> {
     return { success: false, error: 'Could not verify patient: ' + e.message };
   }
 
-  const bookingId = 'BK' + Date.now();
-  const lockId = 'LOCK' + Date.now();
+  const bookingId = 'BK' + Date.now() + Math.random().toString(36).substring(2, 6);
+  const lockId = 'LOCK' + Date.now() + Math.random().toString(36).substring(2, 6);
   const lockExpiry = new Date(Date.now() + 15 * 60 * 1000);
 
   // Lock slot
@@ -924,15 +924,21 @@ export async function rescheduleAppointment(args: any): Promise<any> {
       }
     }
 
-    // Check OP Pass
+    // Check OP Pass (optional — allow paid reschedule without OP Pass)
     const opPassId = old.op_pass_id || '';
-    if (!opPassId) return { success: false, error: 'Rescheduling requires an active OP Pass. Please cancel and book a new appointment.' };
-
-    const passResult = await checkOpPass({ op_pass_id: opPassId });
-    if (!passResult.valid) return { success: false, error: 'OP Pass is not valid: ' + (passResult.message || 'Expired or inactive') };
-
+    let hasValidOpPass = false;
     const rescheduleCount = old.reschedule_count || 0;
-    if (rescheduleCount >= 5) return { success: false, error: 'Maximum 5 reschedules reached. Please cancel and book a new appointment.' };
+
+    if (opPassId) {
+      const passResult = await checkOpPass({ op_pass_id: opPassId });
+      if (passResult.valid) {
+        hasValidOpPass = true;
+      }
+    }
+
+    if (hasValidOpPass && rescheduleCount >= 5) {
+      return { success: false, error: 'Maximum 5 reschedules reached. Please cancel and book a new appointment.' };
+    }
 
     // Book new slot (reuse bookAppointment with exclude)
     const bookResult = await bookAppointment({
@@ -951,19 +957,29 @@ export async function rescheduleAppointment(args: any): Promise<any> {
     const newBookingId = bookResult.booking_id;
     const newRescheduleCount = rescheduleCount + 1;
 
-    // Confirm new appointment with OP pass
-    try {
-      await sbPatch('/appointments?booking_id=eq.' + encodeURIComponent(newBookingId), {
-        status: 'confirmed', payment_status: 'paid', payment_id: 'OP_PASS_RESCHED',
-        op_pass_id: opPassId, reschedule_count: newRescheduleCount,
-      });
-    } catch { /* ok */ }
+    if (hasValidOpPass) {
+      // OP Pass path: auto-confirm, no payment needed
+      try {
+        await sbPatch('/appointments?booking_id=eq.' + encodeURIComponent(newBookingId), {
+          status: 'confirmed', payment_status: 'paid', payment_id: 'OP_PASS_RESCHED',
+          op_pass_id: opPassId, reschedule_count: newRescheduleCount,
+        });
+      } catch { /* ok */ }
 
-    // Release new lock
-    try { await sbDelete('/slot_locks?booking_id=eq.' + encodeURIComponent(newBookingId)); } catch { /* ok */ }
+      // Release new lock (confirmed, no lock needed)
+      try { await sbDelete('/slot_locks?booking_id=eq.' + encodeURIComponent(newBookingId)); } catch { /* ok */ }
 
-    // Update OP pass to point to new booking
-    try { await sbPatch('/op_passes?op_pass_id=eq.' + encodeURIComponent(opPassId), { booking_id: newBookingId }); } catch { /* ok */ }
+      // Update OP pass to point to new booking
+      try { await sbPatch('/op_passes?op_pass_id=eq.' + encodeURIComponent(opPassId), { booking_id: newBookingId }); } catch { /* ok */ }
+    } else {
+      // No OP Pass: leave as pending_payment, patient must pay consultation fee
+      // bookAppointment already created a Razorpay payment link
+      try {
+        await sbPatch('/appointments?booking_id=eq.' + encodeURIComponent(newBookingId), {
+          status: 'pending_payment', reschedule_count: newRescheduleCount,
+        });
+      } catch { /* ok */ }
+    }
 
     // Cancel old appointment
     try { await sbPatch('/appointments?booking_id=eq.' + encodeURIComponent(oldBookingId), { status: 'cancelled' }); } catch { /* ok */ }
@@ -972,11 +988,17 @@ export async function rescheduleAppointment(args: any): Promise<any> {
 
     return {
       success: true, old_booking_id: oldBookingId, new_booking_id: newBookingId,
-      op_pass_id: opPassId, reschedule_count: newRescheduleCount,
-      reschedules_remaining: 5 - newRescheduleCount,
+      op_pass_id: opPassId || null,
+      payment_status: hasValidOpPass ? 'paid' : 'pending_payment',
+      payment_link: hasValidOpPass ? '' : (bookResult.payment_link || ''),
+      consultation_fee: bookResult.consultation_fee || 0,
+      reschedule_count: newRescheduleCount,
+      reschedules_remaining: hasValidOpPass ? (5 - newRescheduleCount) : 0,
       date: bookResult.date, time: bookResult.time,
       doctor_name: newDoctorName, specialty: newSpecialty,
-      message: 'Appointment rescheduled successfully. Reschedules remaining: ' + (5 - newRescheduleCount),
+      message: hasValidOpPass
+        ? 'Appointment rescheduled successfully. Reschedules remaining: ' + (5 - newRescheduleCount)
+        : 'Appointment rescheduled. Please complete the consultation fee payment to confirm.',
     };
   } catch (e: any) {
     return { success: false, error: 'Reschedule failed: ' + (e.message || 'Unknown') };
@@ -1002,5 +1024,58 @@ export async function saveDependent(args: any): Promise<any> {
     const msg = e.message || '';
     if (msg.includes('23503')) return { success: false, message: 'Primary patient must be registered first.' };
     return { success: false, message: 'Failed to save dependent: ' + msg };
+  }
+}
+
+// ==================== 11. SAVE FEEDBACK ====================
+
+/**
+ * List prescriptions for a patient phone number (most recent first, max 10)
+ */
+export async function listPrescriptions(args: any): Promise<any> {
+  const phone = normalizePhone(args.phone || '');
+  const tenantId = args.tenant_id || 'T001';
+  if (!phone) return { prescriptions: [] };
+
+  try {
+    const data = await sbGet(
+      '/prescriptions?patient_phone=eq.' + phone +
+      '&tenant_id=eq.' + tenantId +
+      '&select=prescription_id,doctor_name,diagnosis,items,created_at,follow_up_date' +
+      '&order=created_at.desc&limit=10'
+    );
+    return { prescriptions: data || [] };
+  } catch {
+    return { prescriptions: [] };
+  }
+}
+
+export async function saveFeedback(args: any): Promise<any> {
+  const bookingId = args.booking_id || '';
+  const patientPhone = normalizePhone(args.patient_phone || '');
+  const rating = parseInt(args.rating, 10) || 0;
+  const tenantId = args.tenant_id || 'T001';
+
+  if (!bookingId) return { success: false, error: 'booking_id is required' };
+  if (rating < 1 || rating > 5) return { success: false, error: 'Rating must be between 1 and 5' };
+
+  try {
+    await sbPost('/feedback', {
+      booking_id: bookingId,
+      patient_phone: patientPhone,
+      patient_name: args.patient_name || '',
+      doctor_id: args.doctor_id || '',
+      doctor_name: args.doctor_name || '',
+      specialty: args.specialty || '',
+      rating,
+      comment: args.comment || '',
+      source: 'whatsapp',
+      tenant_id: tenantId,
+    });
+    return { success: true, message: 'Feedback saved successfully' };
+  } catch (e: any) {
+    const msg = e.message || '';
+    if (msg.includes('23505')) return { success: true, message: 'Feedback already submitted for this booking' };
+    return { success: false, error: 'Failed to save feedback: ' + msg };
   }
 }

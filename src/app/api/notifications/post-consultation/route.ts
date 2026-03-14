@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { createServerClient } from "@/lib/supabase/server"
 import { sendText, getTenantWhatsAppConfig } from "@/lib/whatsapp/sender"
+import { createServerNotifications } from "@/lib/notifications-server"
 
 /**
  * POST /api/notifications/post-consultation
@@ -80,7 +81,61 @@ export async function POST(req: NextRequest) {
   const waConfig = await getTenantWhatsAppConfig(tenant_id, supabase)
   const result = await sendText(patient_phone, message, waConfig)
 
-  // 4. Schedule follow-up reminder if date provided
+  // 3.5 In-app notifications for pharmacy + reception
+  const notifications = [
+    {
+      tenantId: tenant_id,
+      type: "prescription_created" as const,
+      title: "New Prescription",
+      message: `Dr. ${doctor_name || "Doctor"} prescribed for ${patient_name || "Patient"}${diagnosis ? ` (${diagnosis})` : ""}`,
+      targetRole: "PHARMACY",
+      referenceId: prescription_id || booking_id,
+      referenceType: "prescription",
+    },
+  ]
+
+  if (lab_tests?.length) {
+    notifications.push({
+      tenantId: tenant_id,
+      type: "prescription_created" as const,
+      title: "Lab Tests Ordered",
+      message: `Dr. ${doctor_name || "Doctor"} ordered ${lab_tests.length} test(s) for ${patient_name || "Patient"}`,
+      targetRole: "LAB",
+      referenceId: prescription_id || booking_id,
+      referenceType: "prescription",
+    })
+  }
+
+  createServerNotifications(notifications)
+
+  // 4. Schedule feedback request (30 min after consultation)
+  if (booking_id && patient_phone) {
+    try {
+      const { getNotificationQueue } = await import("@/lib/queue/queues")
+      const queue = getNotificationQueue()
+      await queue.add(
+        "feedback-request",
+        {
+          booking_id,
+          patient_phone,
+          patient_name: patient_name || "Patient",
+          doctor_name: doctor_name || "",
+          doctor_id: body.doctor_id || "",
+          specialty: body.specialty || "",
+          tenant_id,
+          hospital_name: hospitalName,
+        },
+        {
+          delay: 30 * 60 * 1000, // 30 minutes
+          jobId: `feedback-${booking_id}`,
+        }
+      )
+    } catch {
+      // Queue not available — non-critical
+    }
+  }
+
+  // 5. Schedule follow-up reminder if date provided
   if (follow_up_date && booking_id) {
     try {
       const { scheduleReminders } = await import("@/lib/queue/queues")

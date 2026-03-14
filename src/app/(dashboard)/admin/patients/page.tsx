@@ -114,11 +114,24 @@ export default function PatientsPage() {
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
-  const stats = useMemo(() => {
-    const withAllergies = patients.filter((p) => p.allergies).length
-    const withChronic = patients.filter((p) => p.chronic_diseases).length
-    return { total: totalCount, withAllergies, withChronic }
-  }, [patients, totalCount])
+  const [statCounts, setStatCounts] = useState({ withAllergies: 0, withChronic: 0 })
+  const fetchStatCounts = useCallback(async () => {
+    const supabase = createBrowserClient()
+    const buildQ = (filter: string) => {
+      let q = supabase.from("patients").select("*", { count: "exact", head: true }).eq("tenant_id", tenantId).neq(filter, "")
+      if (debouncedSearch.trim()) {
+        const s = debouncedSearch.trim()
+        if (s.replace(/\D/g, "").length >= 7) q = q.like("phone", `%${s.replace(/\D/g, "")}%`)
+        else q = q.ilike("name", `%${s}%`)
+      }
+      return q
+    }
+    const [a, c] = await Promise.all([buildQ("allergies"), buildQ("chronic_diseases")])
+    setStatCounts({ withAllergies: a.count || 0, withChronic: c.count || 0 })
+  }, [tenantId, debouncedSearch])
+  useEffect(() => { fetchStatCounts() }, [fetchStatCounts])
+
+  const stats = { total: totalCount, withAllergies: statCounts.withAllergies, withChronic: statCounts.withChronic }
 
   const openPatientDetail = useCallback(async (patient: Patient) => {
     setSelectedPatient(patient)

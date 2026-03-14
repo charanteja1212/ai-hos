@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { createServerNotifications } from '@/lib/notifications-server';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -210,6 +211,37 @@ export async function GET(req: NextRequest) {
 
       // Release slot lock
       try { await sbDelete('/slot_locks?booking_id=eq.' + encodeURIComponent(referenceId)); } catch { /* ok */ }
+
+      // Notify reception + admin about payment
+      createServerNotifications([
+        {
+          tenantId,
+          type: 'payment_received',
+          title: 'Payment Received',
+          message: `${patientName} paid ₹${amountPaid} for Dr. ${cleanDrName} (${referenceId})`,
+          targetRole: 'RECEPTION',
+          referenceId,
+          referenceType: 'appointment',
+        },
+        {
+          tenantId,
+          type: 'new_booking',
+          title: 'New Booking Confirmed',
+          message: `${patientName} booked with Dr. ${cleanDrName} on ${appointmentDate} ${appointmentTime}`,
+          targetRole: 'RECEPTION',
+          referenceId,
+          referenceType: 'appointment',
+        },
+        {
+          tenantId,
+          type: 'payment_received',
+          title: 'Payment Received',
+          message: `₹${amountPaid} from ${patientName} for appointment ${referenceId}`,
+          targetRole: 'ADMIN',
+          referenceId,
+          referenceType: 'appointment',
+        },
+      ]);
 
       // Create reminders
       try {

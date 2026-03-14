@@ -342,6 +342,25 @@ export const MSGS: Record<string, TranslationEntry> = {
     te: 'ఫర్వాలేదు! మీ అసలు అపాయింట్\u200Cమెంట్ మారలేదు.\n\nమీకు ఇంకేమైనా సహాయం కావాలా?\n[BUTTONS:mainmenu]',
   },
 
+  // --- Prescriptions ---
+  no_prescriptions: {
+    en: 'You don\'t have any prescriptions yet.\n\nIs there anything else I can help you with?\n[BUTTONS:mainmenu]',
+    hi: 'आपके पास अभी कोई प्रिस्क्रिप्शन नहीं है।\n\nक्या और कुछ मदद चाहिए?\n[BUTTONS:mainmenu]',
+    te: 'మీకు ఇంకా ఏ ప్రిస్క్రిప్షన్లు లేవు.\n\nమీకు ఇంకేమైనా సహాయం కావాలా?\n[BUTTONS:mainmenu]',
+  },
+
+  // --- Live Agent ---
+  live_agent_connected: {
+    en: 'You are now connected to a live agent. A staff member will assist you shortly.\n\nType *end chat* to return to the bot menu.',
+    hi: 'अब आप लाइव एजेंट से जुड़ गए हैं। एक स्टाफ सदस्य जल्द ही आपकी सहायता करेगा।\n\nबॉट मेनू पर लौटने के लिए *end chat* टाइप करें।',
+    te: 'మీరు ఇప్పుడు లైవ్ ఏజెంట్\u200Cతో కనెక్ట్ అయ్యారు. ఒక సిబ్బంది సభ్యుడు త్వరలో మీకు సహాయం చేస్తారు.\n\nబోట్ మెనూకు తిరిగి రావడానికి *end chat* టైప్ చేయండి.',
+  },
+  live_agent_ended: {
+    en: 'Your live chat session has ended. Thank you for reaching out!\n\nIs there anything else I can help you with?\n[BUTTONS:mainmenu]',
+    hi: 'आपकी लाइव चैट समाप्त हो गई। संपर्क करने के लिए धन्यवाद!\n\nक्या और कुछ मदद चाहिए?\n[BUTTONS:mainmenu]',
+    te: 'మీ లైవ్ చాట్ సెషన్ ముగిసింది. సంప్రదించినందుకు ధన్యవాదాలు!\n\nమీకు ఇంకేమైనా సహాయం కావాలా?\n[BUTTONS:mainmenu]',
+  },
+
   // --- Fallback ---
   fallback: {
     en: 'I\'m here to help! Please select an option below:\n[BUTTONS:mainmenu]',
@@ -376,6 +395,10 @@ export const T: Record<string, TranslationEntry> = {
   reschedule_desc: { en: 'Change appointment date/time', hi: 'अपॉइंटमेंट तारीख/समय बदलें', te: 'తేదీ/సమయం మార్చండి' },
   cancel: { en: 'Cancel Appointment', hi: 'रद्द करें', te: 'రద్దు చేయండి' },
   cancel_desc: { en: 'Cancel an existing appointment', hi: 'मौजूदा अपॉइंटमेंट रद्द करें', te: 'ఇప్పటి అపాయింట్\u200Cమెంట్ రద్దు చేయండి' },
+  my_prescriptions: { en: 'My Prescriptions', hi: 'मेरे प्रिस्क्रिप्शन', te: 'నా ప్రిస్క్రిప్షన్లు' },
+  my_prescriptions_desc: { en: 'View & download prescriptions', hi: 'प्रिस्क्रिप्शन देखें और डाउनलोड करें', te: 'ప్రిస్క్రిప్షన్లు చూడండి & డౌన్\u200Cలోడ్' },
+  talk_to_human: { en: 'Talk to Staff', hi: 'स्टाफ से बात करें', te: 'సిబ్బందితో మాట్లాడండి' },
+  talk_to_human_desc: { en: 'Connect with reception staff', hi: 'रिसेप्शन स्टाफ से जुड़ें', te: 'రిసెప్షన్ సిబ్బందితో కనెక్ట్' },
 
   // Yes/No
   yes: { en: 'Yes', hi: 'हाँ', te: 'అవును' },

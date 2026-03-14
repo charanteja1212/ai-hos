@@ -16,6 +16,8 @@ import {
   checkOpPass,
   rescheduleAppointment,
   saveDependent,
+  saveFeedback,
+  listPrescriptions,
 } from './tool-handlers';
 
 const TOOL_HANDLERS: Record<string, (args: any) => Promise<any>> = {
@@ -29,6 +31,8 @@ const TOOL_HANDLERS: Record<string, (args: any) => Promise<any>> = {
   check_op_pass: checkOpPass,
   reschedule_appointment: rescheduleAppointment,
   save_dependent: saveDependent,
+  save_feedback: saveFeedback,
+  list_prescriptions: listPrescriptions,
 };
 
 /**

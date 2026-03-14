@@ -37,6 +37,7 @@ export default auth((req) => {
     pathname.startsWith("/reset-password") ||
     pathname.startsWith("/unauthorized") ||
     pathname.startsWith("/queue/") ||
+    pathname.startsWith("/rx/") ||
     pathname.startsWith("/api/") ||
     pathname.startsWith("/_next/") ||
     pathname === "/favicon.ico"

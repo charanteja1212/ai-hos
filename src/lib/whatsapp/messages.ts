@@ -200,7 +200,26 @@ export function buildMessagePayloads(
           { id: 'menu_view_appts', title: t('view_appts', lang), description: t('view_appts_desc', lang) },
           { id: 'menu_reschedule', title: t('reschedule', lang), description: t('reschedule_desc', lang) },
           { id: 'menu_cancel', title: t('cancel', lang), description: t('cancel_desc', lang) },
+          { id: 'menu_prescriptions', title: t('my_prescriptions', lang), description: t('my_prescriptions_desc', lang) },
+          { id: 'menu_talk_human', title: t('talk_to_human', lang), description: t('talk_to_human_desc', lang) },
         ]));
+        sentType = 'list';
+        break;
+      }
+      case 'prescriptionlist': {
+        const prescriptions = markerData.split('|').filter(p => p.trim());
+        const rows = prescriptions.map((p) => {
+          const parts = p.trim().split('~');
+          const rxId = parts[0] || '';
+          const doctor = parts[1] || '';
+          const date = parts[2] || '';
+          return {
+            id: 'rx_' + rxId,
+            title: 'Dr. ' + truncate(doctor, 18),
+            description: truncate(date + ' - ' + rxId, 72),
+          };
+        });
+        payloads.push(buildListMessage(toPhone, bodyText, 'View List', 'Prescriptions', rows));
         sentType = 'list';
         break;
       }
@@ -225,6 +244,25 @@ export function buildMessagePayloads(
           { id: 'gender_male', title: t('male', lang) },
           { id: 'gender_female', title: t('female', lang) },
           { id: 'gender_other', title: t('other', lang) },
+        ]));
+        sentType = 'buttons';
+        break;
+      }
+      case 'rating': {
+        const rows = [
+          { id: 'rating_5', title: '⭐⭐⭐⭐⭐ Excellent' },
+          { id: 'rating_4', title: '⭐⭐⭐⭐ Good' },
+          { id: 'rating_3', title: '⭐⭐⭐ Average' },
+          { id: 'rating_2', title: '⭐⭐ Poor' },
+          { id: 'rating_1', title: '⭐ Very Poor' },
+        ];
+        payloads.push(buildListMessage(toPhone, bodyText, 'Rate Now', 'Select Rating', rows));
+        sentType = 'list';
+        break;
+      }
+      case 'skip': {
+        payloads.push(buildReplyButtons(toPhone, bodyText, [
+          { id: 'skip_feedback', title: 'Skip' },
         ]));
         sentType = 'buttons';
         break;

@@ -21,6 +21,35 @@ function createReminderWorker() {
   return new Worker(
     "reminder",
     async (job: Job) => {
+      // Follow-up reminder (1 day before follow-up date)
+      if (job.name === "follow-up-reminder") {
+        const { patient_phone, patient_name, doctor_name, follow_up_date, booking_id, hospital_name, tenant_id } = job.data
+        console.log(`[reminder] Sending follow-up reminder for ${booking_id}, date: ${follow_up_date}`)
+
+        const followDate = new Date(follow_up_date + "T00:00:00+05:30")
+        const dateStr = followDate.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+
+        const message = `*${hospital_name || "Hospital"}*\n\n` +
+          `Dear ${patient_name || "Patient"},\n\n` +
+          `This is a reminder that you have a follow-up appointment scheduled with Dr. ${doctor_name} on *${dateStr}*.\n\n` +
+          `Please book your follow-up appointment through this chat by sending "Hi" and selecting "Book for Self".\n\n` +
+          `If you've already booked or no longer need the follow-up, you can ignore this message.\n\n` +
+          `Regards,\n${hospital_name || "Hospital"}`
+
+        const result = await sendText(patient_phone, message)
+
+        const supabase = createServerClient()
+        await supabase.from("reminders").upsert({
+          booking_id,
+          type: "follow-up",
+          sent: result.success ? "yes" : "failed",
+          sent_at: new Date().toISOString(),
+        }, { onConflict: "booking_id,type" })
+
+        return result
+      }
+
+      // Regular appointment reminders (24h / 2h)
       const {
         patient_phone,
         patient_name,
@@ -80,6 +109,60 @@ function createNotificationWorker() {
   return new Worker(
     "notification",
     async (job: Job) => {
+      // Feedback request — sent 30 min after consultation
+      if (job.name === "feedback-request") {
+        const { patient_phone, patient_name, doctor_name, booking_id, hospital_name } = job.data
+
+        // Check if feedback already exists
+        const supabase = createServerClient()
+        const { data: existing } = await supabase
+          .from("feedback")
+          .select("id")
+          .eq("booking_id", booking_id)
+          .maybeSingle()
+
+        if (existing) {
+          console.log(`[notification] Feedback already exists for ${booking_id}, skipping`)
+          return { skipped: true }
+        }
+
+        // Set session state to FEEDBACK_RATING so next message triggers feedback flow
+        const phone = patient_phone.replace(/\D/g, "")
+        await supabase
+          .from("chat_sessions")
+          .update({
+            booking_state: {
+              state: "FEEDBACK_RATING",
+              data: {
+                feedbackBookingId: booking_id,
+                feedbackDoctorId: job.data.doctor_id || "",
+                feedbackDoctorName: doctor_name || "",
+                feedbackSpecialty: job.data.specialty || "",
+                patientName: patient_name || "",
+              },
+            },
+          })
+          .eq("phone", phone)
+          .eq("tenant_id", job.data.tenant_id || "T001")
+
+        // Send feedback request via sendReply to get interactive buttons
+        const { sendReply } = await import("@/lib/whatsapp/send-reply")
+        const { getTenantWhatsAppConfig } = await import("@/lib/whatsapp/sender")
+        const waConfig = await getTenantWhatsAppConfig(job.data.tenant_id || "T001", supabase)
+
+        const feedbackMsg = `*${hospital_name || "Hospital"}*\n\nDear ${patient_name || "Patient"},\n\nThank you for visiting us today! We hope your consultation with Dr. ${doctor_name} was helpful.\n\nWe'd love to hear your feedback. Please rate your experience:\n[BUTTONS:rating]`
+
+        return await sendReply({
+          senderPhone: patient_phone,
+          messageId: "",
+          aiReply: feedbackMsg,
+          language: "en",
+          waToken: waConfig.accessToken || "",
+          waApiUrl: `https://graph.facebook.com/v21.0/${waConfig.phoneNumberId}/messages`,
+          tenantConfig: {},
+        })
+      }
+
       const { phone, message, type } = job.data
 
       if (type === "whatsapp" || !type) {

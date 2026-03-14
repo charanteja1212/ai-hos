@@ -7,6 +7,7 @@
 import type { BotState, SessionData, ConvoMessage, Language, TenantConfig } from './types';
 import { msg } from './translations';
 import { callTool, saveDependentRecord } from './tools';
+import { createServerNotification } from '@/lib/notifications-server';
 
 /** Strip "Dr." prefix */
 function drName(name: string): string {
@@ -117,6 +118,9 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
   const isCancel = lowerMsg === 'cancel appointment' || lowerMsg === 'cancel' || lowerMsg === 'cancel booking' || lowerMsg === 'menu_cancel';
   const isReschedule = lowerMsg === 'reschedule' || lowerMsg === 'reschedule appointment' || lowerMsg === 'menu_reschedule';
   const isViewAppts = lowerMsg === 'view appointments' || lowerMsg === 'my appointments' || lowerMsg === 'menu_view_appts';
+  const isPrescriptions = lowerMsg === 'my prescriptions' || lowerMsg === 'prescriptions' || lowerMsg === 'prescription' || lowerMsg === 'menu_prescriptions';
+  const isTalkToHuman = lowerMsg === 'talk to human' || lowerMsg === 'talk to staff' || lowerMsg === 'human' || lowerMsg === 'agent' || lowerMsg === 'help me' || lowerMsg === 'menu_talk_human';
+  const isEndChat = lowerMsg === 'end chat' || lowerMsg === 'end' || lowerMsg === 'close chat' || lowerMsg === 'exit chat';
 
   // Go Back
   if (isGoBack && state !== 'IDLE' && state !== 'LANG_SELECT' && state !== 'MAIN_MENU') {
@@ -169,6 +173,14 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
   if (isViewAppts) {
     state = 'VIEW_APPOINTMENTS';
     data = { _state: 'VIEW_APPOINTMENTS' };
+  }
+  if (isPrescriptions) {
+    state = 'PRESCRIPTION_LIST';
+    data = { _state: 'PRESCRIPTION_LIST' };
+  }
+  if (isTalkToHuman && state !== 'LIVE_AGENT') {
+    state = 'LIVE_AGENT';
+    data = { _state: 'LIVE_AGENT' };
   }
 
   // ===== STATE HANDLERS =====
@@ -339,6 +351,8 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
       if (phoneDigits.length >= 10) {
         let patientPhone = phoneDigits;
         if (patientPhone.length === 10) patientPhone = '91' + patientPhone;
+        else if (patientPhone.length === 11 && patientPhone.startsWith('0')) patientPhone = '91' + patientPhone.substring(1);
+        else if (patientPhone.length > 12 && patientPhone.startsWith('91')) patientPhone = patientPhone.substring(0, 12);
         data.patientPhone = patientPhone;
         reply = msg('phone_saved', language);
         nextState = 'RELATIONSHIP';
@@ -770,7 +784,7 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     }
 
     case 'CANCEL_SELECT': {
-      const bkMatch = messageBody.match(/\b(BK\d{10,})\b/);
+      const bkMatch = messageBody.match(/(BK[A-Za-z0-9]{10,})/);
       if (bkMatch) {
         data.selectedBookingId = bkMatch[1];
         const appt = (data.appointmentsData || []).find((a: { booking_id: string }) => a.booking_id === bkMatch[1]);
@@ -848,7 +862,7 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     }
 
     case 'RESCHED_SELECT': {
-      const bkMatch = messageBody.match(/\b(BK\d{10,})\b/);
+      const bkMatch = messageBody.match(/(BK[A-Za-z0-9]{10,})/);
       if (bkMatch) {
         data.oldBookingId = bkMatch[1];
         const appt = (data.appointmentsData || []).find((a: { booking_id: string }) => a.booking_id === bkMatch[1]);
@@ -874,19 +888,20 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     case 'RESCHED_CONFIRM_OLD': {
       if (lowerMsg === 'yes' || lowerMsg === 'confirm_yes' || lowerMsg === 'हाँ' || lowerMsg === 'అవును') {
         const opResult = await exec('check_op_pass', { phone: cleanPhone });
+        const specResult = await exec('list_specialties', {});
+        data.specialtiesData = specResult;
+        const names = extractSpecNames(specResult);
+
         if (opResult && opResult.valid && opResult.reschedules_remaining > 0) {
           data.opPassValid = true;
           data.reschedulesRemaining = opResult.reschedules_remaining;
-
-          const specResult = await exec('list_specialties', {});
-          data.specialtiesData = specResult;
-          const names = extractSpecNames(specResult);
           reply = 'Your OP Pass is valid with *' + data.reschedulesRemaining + ' reschedule(s) remaining*. No additional payment will be required.\n\nPlease select the department for your new appointment:\n[BUTTONS:specialty:' + names.join('|') + ']';
-          nextState = 'RESCHED_SPECIALTY';
         } else {
-          reply = 'We\'re sorry, but you don\'t have a valid OP Pass or you\'ve exhausted all reschedule attempts.\n\nIs there anything else I can help you with?\n[BUTTONS:mainmenu]';
-          nextState = 'MAIN_MENU';
+          data.opPassValid = false;
+          data.reschedulesRemaining = 0;
+          reply = 'You don\'t have a valid OP Pass, so this reschedule will require a new consultation fee payment.\n\nPlease select the department for your new appointment:\n[BUTTONS:specialty:' + names.join('|') + ']';
         }
+        nextState = 'RESCHED_SPECIALTY';
       } else if (lowerMsg === 'no' || lowerMsg === 'confirm_no' || lowerMsg === 'नहीं' || lowerMsg === 'కాదు') {
         reply = msg('resched_declined', language);
         nextState = 'MAIN_MENU';
@@ -1121,10 +1136,19 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
         });
 
         if (result && !result.error) {
+          let paymentNote = '';
+          if (result.payment_status === 'pending_payment') {
+            if (result.payment_link) {
+              paymentNote = '\n\n💳 *Payment Required:* Consultation fee is Rs ' + (result.consultation_fee || '') + '.\nPay here: ' + result.payment_link + '\n\n_Link expires in 20 minutes._';
+            } else {
+              paymentNote = '\n\n⚠️ *Payment Required:* Please complete the consultation fee payment at the counter to confirm your appointment.';
+            }
+          }
           reply = 'Your appointment has been rescheduled successfully!\n\n' +
+            '*New Booking ID:* ' + (result.new_booking_id || '') + '\n' +
             '*New Date:* ' + data.newSelectedDate + '\n' +
             '*New Time:* ' + data.newSelectedTime + '\n' +
-            '*Doctor:* Dr. ' + drName(data.newDoctorName || '') + '\n\n' +
+            '*Doctor:* Dr. ' + drName(data.newDoctorName || '') + paymentNote + '\n\n' +
             'We look forward to seeing you. Is there anything else I can help you with?\n[BUTTONS:mainmenu]';
         } else {
           reply = 'We apologize, but the reschedule could not be completed.\n\n*Reason:* ' + ((result && result.error) || 'Unknown error') + '\n\nPlease try again or contact us directly.\n[BUTTONS:mainmenu]';
@@ -1139,6 +1163,224 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
         reply = msg('resched_new_yesno_retry', language);
         nextState = 'RESCHED_CONFIRM_NEW';
       }
+      break;
+    }
+
+    // ----- LIVE AGENT HANDOFF -----
+    case 'LIVE_AGENT': {
+      // End chat requested by patient
+      if (isEndChat) {
+        // Close the live chat in DB
+        if (data.liveChatId) {
+          try {
+            const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1';
+            const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+            await fetch(sbUrl + '/live_chats?id=eq.' + data.liveChatId, {
+              method: 'PATCH',
+              headers: { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'closed', closed_at: new Date().toISOString() }),
+            });
+          } catch { /* non-critical */ }
+        }
+        reply = msg('live_agent_ended', language);
+        nextState = 'MAIN_MENU';
+        data = {};
+        break;
+      }
+
+      // First entry — create live_chats record
+      if (!data.liveChatId) {
+        try {
+          const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1';
+          const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+          // Look up patient name
+          const patientResult = await exec('lookup_patient', { phone: cleanPhone });
+          const patientName = patientResult?.name || '';
+
+          const res = await fetch(sbUrl + '/live_chats', {
+            method: 'POST',
+            headers: {
+              'apikey': sbKey,
+              'Authorization': 'Bearer ' + sbKey,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=representation',
+            },
+            body: JSON.stringify({
+              phone: cleanPhone,
+              patient_name: patientName,
+              tenant_id: tenantId,
+              status: 'active',
+              messages: [{ role: 'system', content: 'Patient connected to live agent', ts: new Date().toISOString() }],
+            }),
+          });
+
+          if (res.ok) {
+            const rows = await res.json();
+            if (Array.isArray(rows) && rows.length > 0) {
+              data.liveChatId = rows[0].id;
+            }
+          }
+
+          // Notify reception staff about new live chat request
+          createServerNotification({
+            tenantId,
+            type: 'live_chat_request',
+            title: 'New Live Chat Request',
+            message: `${patientName || cleanPhone} wants to talk to staff`,
+            targetRole: 'RECEPTION',
+            referenceId: data.liveChatId || undefined,
+            referenceType: 'live_chat',
+            actionUrl: '/reception/chat',
+          });
+        } catch { /* non-critical */ }
+
+        reply = msg('live_agent_connected', language);
+        nextState = 'LIVE_AGENT';
+        break;
+      }
+
+      // Subsequent messages — forward to live_chats and don't auto-reply from bot
+      try {
+        const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1';
+        const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+        // Append message to live_chats
+        const chatRes = await fetch(sbUrl + '/live_chats?id=eq.' + data.liveChatId + '&select=messages', {
+          headers: { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey },
+        });
+
+        if (chatRes.ok) {
+          const chats = await chatRes.json();
+          if (Array.isArray(chats) && chats.length > 0) {
+            const existingMessages = chats[0].messages || [];
+            existingMessages.push({ role: 'patient', content: messageBody, ts: new Date().toISOString() });
+            await fetch(sbUrl + '/live_chats?id=eq.' + data.liveChatId, {
+              method: 'PATCH',
+              headers: { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ messages: existingMessages, updated_at: new Date().toISOString() }),
+            });
+          }
+        }
+      } catch { /* non-critical */ }
+
+      // Don't send bot reply — reception staff will reply manually
+      reply = '';
+      nextState = 'LIVE_AGENT';
+      break;
+    }
+
+    // ----- PRESCRIPTION LIST -----
+    case 'PRESCRIPTION_LIST': {
+      // Handle selection if user tapped a prescription from the list
+      if (data.prescriptionsData && data.prescriptionsData.length > 0 && messageBody.startsWith('rx_')) {
+        const selectedRxId = messageBody.replace('rx_', '');
+        const selectedRx = data.prescriptionsData.find(
+          (rx: { prescription_id: string }) => rx.prescription_id === selectedRxId
+        );
+
+        if (selectedRx) {
+          const doc = selectedRx.doctor_name || 'Doctor';
+          const dateStr = selectedRx.created_at
+            ? new Date(selectedRx.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+            : '';
+          const diagnosis = selectedRx.diagnosis || '';
+          const items = selectedRx.items || [];
+          const medList = items.length > 0
+            ? items.map((m: { medicine_name: string; dosage?: string; frequency?: string; duration?: string }, i: number) =>
+              `  ${i + 1}. ${m.medicine_name}${m.dosage ? ' - ' + m.dosage : ''}${m.frequency ? ' (' + m.frequency + ')' : ''}${m.duration ? ' for ' + m.duration : ''}`
+            ).join('\n')
+            : '  None';
+
+          let summary = `*Prescription Details*\n\n`;
+          summary += `*Rx ID:* ${selectedRxId}\n`;
+          summary += `*Doctor:* Dr. ${doc}\n`;
+          summary += `*Date:* ${dateStr}\n`;
+          if (diagnosis) summary += `*Diagnosis:* ${diagnosis}\n`;
+          summary += `\n*Medicines:*\n${medList}\n`;
+          if (selectedRx.follow_up_date) {
+            summary += `\n*Follow-up:* ${new Date(selectedRx.follow_up_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}\n`;
+          }
+
+          // Generate secure view link
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://app.ainewworld.in';
+          const token = Buffer.from(selectedRxId + ':' + (selectedRx.created_at || '').slice(0, 10)).toString('base64url');
+          const viewUrl = baseUrl + '/rx/' + token;
+
+          summary += `\nView & print your prescription:\n[PAYLINK:${viewUrl}]`;
+          reply = summary;
+          nextState = 'MAIN_MENU';
+          break;
+        }
+      }
+
+      // First entry — fetch and show prescription list
+      const result = await exec('list_prescriptions', { phone: cleanPhone });
+      const rxList = result?.prescriptions || [];
+
+      if (rxList.length > 0) {
+        data.prescriptionsData = rxList;
+
+        const entries = rxList.map((rx: { prescription_id: string; doctor_name?: string; created_at?: string }) => {
+          const rxId = rx.prescription_id || '';
+          const doc = drName(rx.doctor_name || 'Doctor');
+          const dateStr = rx.created_at ? new Date(rx.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+          return rxId + '~' + doc + '~' + dateStr;
+        });
+
+        reply = 'Here are your recent prescriptions. Select one to view details and get a download link:\n\n[BUTTONS:prescriptionlist:' + entries.join('|') + ']';
+        nextState = 'PRESCRIPTION_LIST';
+      } else {
+        reply = msg('no_prescriptions', language);
+        nextState = 'MAIN_MENU';
+      }
+
+      break;
+    }
+
+    // ----- FEEDBACK -----
+    case 'FEEDBACK_RATING': {
+      // Accept rating_X from list, or plain number 1-5
+      const ratingIdMatch = messageBody.match(/rating_(\d)/);
+      const ratingPlain = messageBody.match(/^(\d)$/);
+      const rating = ratingIdMatch ? parseInt(ratingIdMatch[1], 10) : (ratingPlain ? parseInt(ratingPlain[1], 10) : 0);
+      if (rating >= 1 && rating <= 5) {
+        data.feedbackRating = rating;
+        const stars = '⭐'.repeat(rating);
+        reply = 'Thank you for your rating: ' + stars + '\n\nWould you like to add any comments about your experience? Type your comment or tap *Skip* to finish.\n[BUTTONS:skip]';
+        nextState = 'FEEDBACK_COMMENT';
+      } else {
+        reply = 'Please rate your experience from 1 to 5:\n[BUTTONS:rating]';
+        nextState = 'FEEDBACK_RATING';
+      }
+      break;
+    }
+
+    case 'FEEDBACK_COMMENT': {
+      let comment = '';
+      if (lowerMsg === 'skip' || lowerMsg === 'skip_feedback') {
+        comment = '';
+      } else {
+        comment = messageBody.trim();
+      }
+
+      // Save feedback
+      try {
+        await exec('save_feedback', {
+          booking_id: data.feedbackBookingId || '',
+          patient_phone: cleanPhone,
+          patient_name: data.patientName || '',
+          doctor_id: data.feedbackDoctorId || '',
+          doctor_name: data.feedbackDoctorName || '',
+          specialty: data.feedbackSpecialty || '',
+          rating: data.feedbackRating || 0,
+          comment,
+        });
+      } catch { /* non-critical */ }
+
+      reply = 'Thank you for your feedback! Your rating helps us improve our services.\n\nIs there anything else I can help you with?\n[BUTTONS:mainmenu]';
+      nextState = 'MAIN_MENU';
+      data = {};
       break;
     }
 

@@ -130,11 +130,32 @@ export default function DoctorPatientsPage() {
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
-  // Stats
+  // Stats (total counts across all pages)
+  const [statCounts, setStatCounts] = useState({ confirmed: 0, completed: 0, cancelled: 0 })
+  const fetchStatCounts = useCallback(async () => {
+    if (!doctorId) return
+    const supabase = createBrowserClient()
+    const buildQ = (status: string) => {
+      let q = supabase.from("appointments").select("*", { count: "exact", head: true }).eq("tenant_id", tenantId).eq("doctor_id", doctorId).eq("status", status)
+      if (fromDate) q = q.gte("date", fromDate)
+      if (toDate) q = q.lte("date", toDate)
+      if (searchQuery.trim()) {
+        const s = searchQuery.trim().replace(/[^a-zA-Z0-9\s\-\.]/g, "")
+        const isPhone = s.replace(/\D/g, "").length >= 7
+        if (isPhone) q = q.like("patient_phone", `%${s.replace(/\D/g, "")}%`)
+        else q = q.ilike("patient_name", `%${s}%`)
+      }
+      return q
+    }
+    const [c1, c2, c3] = await Promise.all([buildQ("confirmed"), buildQ("completed"), buildQ("cancelled")])
+    setStatCounts({ confirmed: c1.count || 0, completed: c2.count || 0, cancelled: c3.count || 0 })
+  }, [doctorId, tenantId, fromDate, toDate, searchQuery])
+  useEffect(() => { fetchStatCounts() }, [fetchStatCounts])
+
   const totalPatients = new Set(appointments.map((a) => a.patient_phone)).size
-  const confirmed = appointments.filter((a) => a.status === "confirmed").length
-  const completedCount = appointments.filter((a) => a.status === "completed").length
-  const cancelled = appointments.filter((a) => a.status === "cancelled").length
+  const confirmed = statCounts.confirmed
+  const completedCount = statCounts.completed
+  const cancelled = statCounts.cancelled
 
   // Quick date buttons
   const setToday = () => { setFromDate(today); setToDate(today) }
