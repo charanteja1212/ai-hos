@@ -22,6 +22,7 @@ import { getNavForRole } from "./sidebar-nav-config"
 import type { NavItem, NavSection } from "./sidebar-nav-config"
 import type { UserRole } from "@/types/auth"
 import { useFeatures } from "@/components/providers/features-context"
+import { LanguageSwitcher } from "@/components/shared/language-switcher"
 
 interface SidebarProps {
   role: UserRole
@@ -150,8 +151,13 @@ export function Sidebar({ role, hospitalName, userName, clientId = "" }: Sidebar
         </div>
       )}
 
+      {/* ── Language Switcher ── */}
+      <div className="border-t border-border/40 px-2 pt-2 shrink-0">
+        <LanguageSwitcher compact={collapsed} />
+      </div>
+
       {/* ── Collapse Toggle ── */}
-      <div className="border-t border-border/40 p-2 shrink-0">
+      <div className="px-2 pb-2 shrink-0">
         <Button
           variant="ghost"
           size="sm"

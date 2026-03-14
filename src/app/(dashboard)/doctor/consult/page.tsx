@@ -59,6 +59,7 @@ import { PrescriptionTemplates } from "@/components/doctor/prescription-template
 import { ElapsedTimer } from "@/components/ui/elapsed-timer"
 import { getVitalStatus, getVitalRingClass, getVitalDotClass } from "@/components/ui/normal-range-indicator"
 import { printPrescription } from "@/lib/print-prescription"
+import { StartCallButton } from "@/components/telemedicine/start-call-button"
 import type { SessionUser } from "@/types/auth"
 import type { Patient, Prescription, PrescriptionItem } from "@/types/database"
 import { buildInvoiceData, type TenantTaxConfig } from "@/lib/billing/tax"
@@ -523,6 +524,14 @@ function ConsultPageContent() {
             </div>
           </div>
           <div className="flex gap-2 shrink-0 self-end sm:self-center">
+            {patient && tenantId && queueId && (
+              <StartCallButton
+                tenantId={tenantId}
+                appointmentId={queueId}
+                patientName={patient.name || "Patient"}
+                doctorName={user?.name || "Doctor"}
+              />
+            )}
             <Button variant="ghost" size="sm" onClick={() => setShowAdmit(true)} className="text-white hover:bg-white/20 border border-white/20 hidden sm:flex">
               <BedDouble className="w-4 h-4 mr-2" /> Admit
             </Button>

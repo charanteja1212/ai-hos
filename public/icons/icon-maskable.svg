@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Maskable: safe zone is inner 80%, so add padding -->
+  <rect width="512" height="512" fill="#007AFF"/>
+  <g transform="translate(256,240)">
+    <path d="M0-90 C-45-90 -82-52 -82-15 C-82 30 -30 68 0 98 C30 68 82 30 82-15 C82-52 45-90 0-90Z" fill="white" opacity="0.95"/>
+    <rect x="-11" y="-60" width="22" height="90" rx="5" fill="#007AFF"/>
+    <rect x="-45" y="-26" width="90" height="22" rx="5" fill="#007AFF"/>
+    <circle cx="-52" cy="75" r="6" fill="white" opacity="0.6"/>
+    <circle cx="-26" cy="86" r="4.5" fill="white" opacity="0.4"/>
+    <circle cx="0" cy="75" r="6" fill="white" opacity="0.6"/>
+    <circle cx="26" cy="86" r="4.5" fill="white" opacity="0.4"/>
+    <circle cx="52" cy="75" r="6" fill="white" opacity="0.6"/>
+  </g>
+</svg>

@@ -3,6 +3,9 @@ import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google"
 import { ThemeProvider } from "next-themes"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
+import { RegisterSW } from "@/components/pwa/register-sw"
+import { InstallPrompt } from "@/components/pwa/install-prompt"
+import { LanguageProvider } from "@/components/providers/language-context"
 import "./globals.css"
 
 const jakarta = Plus_Jakarta_Sans({
@@ -21,6 +24,11 @@ export const metadata: Metadata = {
   title: "AI-HOS | Hospital Operating System",
   description: "Next-generation AI-powered Hospital Operating System",
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "AI-HOS",
+  },
 }
 
 export const viewport: Viewport = {
@@ -47,10 +55,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TooltipProvider>
-            {children}
-          </TooltipProvider>
+          <LanguageProvider>
+            <TooltipProvider>
+              {children}
+            </TooltipProvider>
+          </LanguageProvider>
           <Toaster richColors position="top-right" />
+          <RegisterSW />
+          <InstallPrompt />
         </ThemeProvider>
       </body>
     </html>

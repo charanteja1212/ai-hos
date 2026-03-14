@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#007AFF"/>
+  <g transform="translate(256,256)">
+    <!-- Heart cross -->
+    <path d="M0-120 C-60-120 -110-70 -110-20 C-110 40 -40 90 0 130 C40 90 110 40 110-20 C110-70 60-120 0-120Z" fill="white" opacity="0.95"/>
+    <rect x="-15" y="-80" width="30" height="120" rx="6" fill="#007AFF"/>
+    <rect x="-60" y="-35" width="120" height="30" rx="6" fill="#007AFF"/>
+    <!-- AI dots -->
+    <circle cx="-70" cy="100" r="8" fill="white" opacity="0.6"/>
+    <circle cx="-35" cy="115" r="6" fill="white" opacity="0.4"/>
+    <circle cx="0" cy="100" r="8" fill="white" opacity="0.6"/>
+    <circle cx="35" cy="115" r="6" fill="white" opacity="0.4"/>
+    <circle cx="70" cy="100" r="8" fill="white" opacity="0.6"/>
+  </g>
+</svg>

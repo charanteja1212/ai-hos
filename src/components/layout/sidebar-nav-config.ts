@@ -25,6 +25,7 @@ import {
   Shield,
   MessageSquare,
   HeartPulse,
+  Video,
 } from "lucide-react"
 import type { UserRole } from "@/types/auth"
 import type { TierFeatures } from "@/lib/platform/features"
@@ -179,6 +180,13 @@ const doctorNav: RoleNavConfig = {
       items: [
         { label: "My Patients", href: "/doctor/patients", icon: Users },
         { label: "Prescriptions", href: "/doctor/prescriptions", icon: FileText },
+      ],
+    },
+    {
+      id: "telehealth",
+      label: "TELEHEALTH",
+      items: [
+        { label: "Video Consult", href: "/doctor/consult?mode=video", icon: Video, requiredFeature: "telemedicine" },
       ],
     },
     {
