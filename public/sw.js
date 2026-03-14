@@ -1,11 +1,11 @@
-const CACHE_NAME = "ai-hos-v1"
+const CACHE_NAME = "ai-hos-v2"
 const STATIC_ASSETS = [
-  "/login",
   "/icons/icon.svg",
+  "/icons/icon-192.png",
   "/manifest.json",
 ]
 
-// Install: cache shell
+// Install: cache only small static assets (don't block on pages)
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
@@ -23,7 +23,7 @@ self.addEventListener("activate", (event) => {
   self.clients.claim()
 })
 
-// Fetch: network-first for API/pages, cache-first for static assets
+// Fetch strategy
 self.addEventListener("fetch", (event) => {
   const { request } = event
   const url = new URL(request.url)
@@ -31,8 +31,8 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET and cross-origin
   if (request.method !== "GET" || url.origin !== self.location.origin) return
 
-  // API routes: always network
-  if (url.pathname.startsWith("/api/")) return
+  // API routes + auth: always network (never cache)
+  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/login")) return
 
   // Static assets (_next/static, icons, fonts): cache-first
   if (
@@ -55,17 +55,22 @@ self.addEventListener("fetch", (event) => {
     return
   }
 
-  // Pages: network-first with cache fallback
+  // Pages: stale-while-revalidate (show cache instantly, update in background)
   event.respondWith(
-    fetch(request)
-      .then((response) => {
-        if (response.ok) {
-          const clone = response.clone()
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
-        }
-        return response
-      })
-      .catch(() => caches.match(request))
+    caches.match(request).then((cached) => {
+      const fetchPromise = fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone()
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
+          }
+          return response
+        })
+        .catch(() => cached)
+
+      // Return cached immediately if available, otherwise wait for network
+      return cached || fetchPromise
+    })
   )
 })
 
@@ -95,14 +100,12 @@ self.addEventListener("notificationclick", (event) => {
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
-      // Focus existing window if open
       for (const client of clients) {
         if (client.url.includes(self.location.origin) && "focus" in client) {
           client.navigate(url)
           return client.focus()
         }
       }
-      // Open new window
       return self.clients.openWindow(url)
     })
   )

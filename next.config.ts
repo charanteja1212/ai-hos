@@ -26,8 +26,32 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // Service worker: short cache, always check for updates
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, must-revalidate",
+          },
+          {
+            key: "Service-Worker-Allowed",
+            value: "/",
+          },
+        ],
+      },
+      {
+        // Manifest: cache for 1 hour
+        source: "/manifest.json",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600",
+          },
+        ],
+      },
+      {
         // HTML pages: short CDN cache, always revalidate
-        source: "/:path((?!_next/static|_next/image|favicon.ico).*)",
+        source: "/:path((?!_next/static|_next/image|favicon.ico|sw.js|manifest.json).*)",
         headers: [
           {
             key: "Cache-Control",
