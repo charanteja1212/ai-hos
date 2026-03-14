@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     // IP-based rate limit: max 10 OTP requests per IP per 15 minutes
     const forwarded = req.headers.get("x-forwarded-for")
     const ip = forwarded?.split(",")[0]?.trim() || "unknown"
-    if (isRateLimited(`otp-ip:${ip}`, 10, 15 * 60 * 1000)) {
+    if (await isRateLimited(`otp-ip:${ip}`, 10, 15 * 60 * 1000)) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },
         { status: 429 }

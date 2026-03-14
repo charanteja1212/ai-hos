@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 1.5: Per-sender rate limit (30 messages per 5 minutes per user)
-    if (parsed.senderPhone && isRateLimited(`wa:${parsed.senderPhone}`, 30, 5 * 60 * 1000)) {
+    if (parsed.senderPhone && await isRateLimited(`wa:${parsed.senderPhone}`, 30, 5 * 60 * 1000)) {
       return NextResponse.json({ status: "rate_limited" })
     }
 

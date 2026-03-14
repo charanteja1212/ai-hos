@@ -10,6 +10,12 @@ export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const redisUrl = process.env.REDIS_URL
 
+    // If workers run in a separate container, skip starting them here
+    if (process.env.WORKER_MODE === "separate") {
+      console.log("[instrumentation] WORKER_MODE=separate — workers run in dedicated container")
+      return
+    }
+
     if (redisUrl) {
       try {
         const { startWorkers, initRepeatableJobs } = await import("@/lib/queue")

@@ -12,12 +12,25 @@ services:
     environment:
       - AUTH_TRUST_HOST=true
       - REDIS_URL=redis://redis:6379
+      - WORKER_MODE=separate
     labels:
       - traefik.enable=true
       - traefik.http.routers.aihos.rule=Host(`app.ainewworld.in`)
       - traefik.http.routers.aihos.tls=true
       - traefik.http.routers.aihos.entrypoints=web,websecure
       - traefik.http.services.aihos.loadbalancer.server.port=3000
+    networks:
+      - n8n_default
+
+  ai-hos-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379
     networks:
       - n8n_default
 

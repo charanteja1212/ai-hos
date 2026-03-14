@@ -76,7 +76,7 @@ export const authConfig: NextAuthConfig = {
           if (!email) return null
 
           const rateLimitKey = `pin:super:${email}`
-          if (isRateLimited(rateLimitKey, 5)) return null
+          if (await isRateLimited(rateLimitKey, 5)) return null
 
           const { data: admin } = await supabase
             .from("platform_admins")
@@ -86,7 +86,7 @@ export const authConfig: NextAuthConfig = {
             .single()
 
           if (!admin || admin.pin !== pin) return null
-          resetRateLimit(rateLimitKey)
+          await resetRateLimit(rateLimitKey)
 
           return {
             id: admin.admin_id,
@@ -105,7 +105,7 @@ export const authConfig: NextAuthConfig = {
           if (!clientId) return null
 
           const rateLimitKey = `pin:client:${clientId}`
-          if (isRateLimited(rateLimitKey, 5)) return null
+          if (await isRateLimited(rateLimitKey, 5)) return null
 
           const { data: client } = await supabase
             .from("clients")
@@ -115,7 +115,7 @@ export const authConfig: NextAuthConfig = {
             .single()
 
           if (!client || client.admin_pin !== pin) return null
-          resetRateLimit(rateLimitKey)
+          await resetRateLimit(rateLimitKey)
 
           // Get the first ACTIVE branch for this client as default
           const { data: firstBranch } = await supabase
@@ -148,7 +148,7 @@ export const authConfig: NextAuthConfig = {
         // Rate limit: 5 failed PIN attempts per tenant+role in 15 minutes
         const identifier = credentials.identifier as string || ""
         const rateLimitKey = `pin:branch:${tenantId}:${role}:${identifier}`
-        if (isRateLimited(rateLimitKey, 5)) return null
+        if (await isRateLimited(rateLimitKey, 5)) return null
 
         // Fetch tenant info — must be active
         const { data: tenant } = await supabase
@@ -176,7 +176,7 @@ export const authConfig: NextAuthConfig = {
 
         if (role === "ADMIN" || role === "BRANCH_ADMIN") {
           if (tenant.admin_pin !== pin) return null
-          resetRateLimit(rateLimitKey)
+          await resetRateLimit(rateLimitKey)
           return {
             id: `admin-${tenantId}`,
             name: tenant.hospital_name + " Admin",
@@ -190,7 +190,7 @@ export const authConfig: NextAuthConfig = {
 
         if (role === "RECEPTION") {
           if (tenant.reception_pin !== pin) return null
-          resetRateLimit(rateLimitKey)
+          await resetRateLimit(rateLimitKey)
           return {
             id: `reception-${tenantId}`,
             name: "Reception",
@@ -214,7 +214,7 @@ export const authConfig: NextAuthConfig = {
             .single()
 
           if (!doctor || doctor.pin !== pin) return null
-          resetRateLimit(rateLimitKey)
+          await resetRateLimit(rateLimitKey)
 
           return {
             id: doctor.doctor_id,
@@ -244,7 +244,7 @@ export const authConfig: NextAuthConfig = {
             .single()
 
           if (!staff || staff.pin !== pin) return null
-          resetRateLimit(rateLimitKey)
+          await resetRateLimit(rateLimitKey)
 
           return {
             id: staff.staff_id,
@@ -274,7 +274,7 @@ export const authConfig: NextAuthConfig = {
 
         // Rate limit: 5 OTP verification attempts per phone in 15 minutes
         const otpRateLimitKey = `otp:verify:${phone}`
-        if (isRateLimited(otpRateLimitKey, 5)) return null
+        if (await isRateLimited(otpRateLimitKey, 5)) return null
 
         const supabase = createServerClient()
 
@@ -288,7 +288,7 @@ export const authConfig: NextAuthConfig = {
           .update({ verified: true }).eq("phone", phone).eq("verified", false).select("id")
         if (!updatedRows || updatedRows.length === 0) return null
 
-        resetRateLimit(otpRateLimitKey)
+        await resetRateLimit(otpRateLimitKey)
 
         // Lookup patient — handle both phone formats (with/without 91 prefix)
         const phoneVariants: string[] = [phone]
