@@ -57,7 +57,7 @@ export async function buildSessionUser(
     // Get first branch as default
     const { data: firstBranch } = await supabase
       .from("tenants")
-      .select("tenant_id, hospital_name")
+      .select("tenant_id, hospital_name, logo_url")
       .eq("client_id", entityId)
       .limit(1)
       .single()
@@ -71,6 +71,7 @@ export async function buildSessionUser(
       clientId: client.client_id,
       clientName: client.name,
       email,
+      logoUrl: firstBranch?.logo_url || undefined,
     }
   }
 
@@ -89,7 +90,7 @@ export async function buildSessionUser(
     // Fetch tenant + client info
     const { data: tenant } = await supabase
       .from("tenants")
-      .select("hospital_name, client_id")
+      .select("hospital_name, client_id, logo_url")
       .eq("tenant_id", resolvedTenantId)
       .single()
 
@@ -115,6 +116,7 @@ export async function buildSessionUser(
       doctorId: doctor.doctor_id,
       specialty: doctor.specialty,
       email,
+      logoUrl: tenant?.logo_url || undefined,
     }
   }
 
@@ -133,7 +135,7 @@ export async function buildSessionUser(
 
     const { data: tenant } = await supabase
       .from("tenants")
-      .select("hospital_name, client_id")
+      .select("hospital_name, client_id, logo_url")
       .eq("tenant_id", resolvedTenantId)
       .single()
 
@@ -157,6 +159,7 @@ export async function buildSessionUser(
       clientId: resolvedClientId,
       clientName: resolvedClientName,
       email,
+      logoUrl: tenant?.logo_url || undefined,
     }
   }
 
@@ -166,7 +169,7 @@ export async function buildSessionUser(
 
     const { data: tenant } = await supabase
       .from("tenants")
-      .select("tenant_id, hospital_name, client_id")
+      .select("tenant_id, hospital_name, client_id, logo_url")
       .eq("tenant_id", resolvedTenantId)
       .single()
 
@@ -195,6 +198,7 @@ export async function buildSessionUser(
       clientId: resolvedClientId,
       clientName: resolvedClientName,
       email,
+      logoUrl: tenant.logo_url || undefined,
     }
   }
 

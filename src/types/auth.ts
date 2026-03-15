@@ -21,6 +21,7 @@ export interface SessionUser {
   specialty?: string      // Only for DOCTOR role
   email?: string          // Set when user has password auth configured
   patientPhone?: string   // Only for PATIENT role
+  logoUrl?: string        // Hospital/branch logo URL
 }
 
 export const PLATFORM_ROLES: UserRole[] = ["SUPER_ADMIN"]

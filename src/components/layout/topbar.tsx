@@ -187,7 +187,11 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
           <span className="text-sm font-semibold text-foreground sm:hidden truncate max-w-[160px]">
             {breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].label : displayHospitalName}
           </span>
-          {/* Desktop: hospital + breadcrumbs */}
+          {/* Desktop: hospital logo + name + breadcrumbs */}
+          {user.logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.logoUrl} alt="" className="w-6 h-6 rounded-md object-contain hidden lg:inline-block shrink-0" />
+          )}
           <span className="text-sm font-semibold text-foreground hidden lg:inline-block shrink-0 truncate max-w-[200px]">
             {displayHospitalName}
           </span>

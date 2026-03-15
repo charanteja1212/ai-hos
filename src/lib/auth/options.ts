@@ -345,6 +345,7 @@ export const authConfig: NextAuthConfig = {
         token.specialty = sessionUser.specialty
         token.email = sessionUser.email
         token.patientPhone = sessionUser.patientPhone
+        token.logoUrl = sessionUser.logoUrl
 
         // Generate custom Supabase JWT for browser RLS
         try {
@@ -372,6 +373,7 @@ export const authConfig: NextAuthConfig = {
         user.specialty = token.specialty as string | undefined
         user.email = token.email as string | undefined
         user.patientPhone = token.patientPhone as string | undefined
+        user.logoUrl = token.logoUrl as string | undefined
       }
       // Pass Supabase JWT to browser
       if (token.supabaseAccessToken) {

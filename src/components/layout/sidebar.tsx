@@ -29,9 +29,10 @@ interface SidebarProps {
   hospitalName: string
   userName?: string
   clientId?: string
+  logoUrl?: string
 }
 
-export function Sidebar({ role, hospitalName, userName, clientId = "" }: SidebarProps) {
+export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({})
@@ -74,8 +75,13 @@ export function Sidebar({ role, hospitalName, userName, clientId = "" }: Sidebar
     >
       {/* ── Header ── */}
       <div className="flex items-center gap-3 px-4 h-14 border-b border-border/40 shrink-0">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 shrink-0">
-          <Heart className="w-4 h-4 text-primary" />
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 shrink-0 overflow-hidden">
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt="" className="w-full h-full object-contain p-0.5" />
+          ) : (
+            <Heart className="w-4 h-4 text-primary" />
+          )}
         </div>
         <AnimatePresence>
           {!collapsed && (

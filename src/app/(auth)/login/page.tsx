@@ -623,7 +623,12 @@ function LoginPageContent() {
                   className="inline-flex relative"
                 >
                   <div className="w-[72px] h-[72px] rounded-[20px] bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-blue-500/25 relative overflow-hidden">
-                    <Activity className="w-9 h-9 text-white relative z-10" />
+                    {directClient?.logo_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={directClient.logo_url} alt={directClient.name} className="w-full h-full object-contain p-2 relative z-10" />
+                    ) : (
+                      <Activity className="w-9 h-9 text-white relative z-10" />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                   </div>
                   <motion.div

@@ -120,7 +120,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
-        <Sidebar role={user.role} hospitalName={user.hospitalName} userName={user.name} clientId={user.clientId || ""} />
+        <Sidebar role={user.role} hospitalName={user.hospitalName} userName={user.name} clientId={user.clientId || ""} logoUrl={user.logoUrl} />
       </div>
 
       {/* Content — offset by sidebar width */}
