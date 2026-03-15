@@ -191,7 +191,10 @@ function LoginPageContent() {
   const directClientLoaded = useRef(false)
   const [directClient, setDirectClient] = useState<Client | null>(null)
   const [directBranches, setDirectBranches] = useState<Branch[]>([])
-  const [directClientLoading, setDirectClientLoading] = useState(!!directClientId)
+  const [directClientResolved, setDirectClientResolved] = useState(false)
+
+  // Derived: true when we have a ?client= param but haven't finished loading yet
+  const directClientLoading = !!directClientId && !directClientResolved
 
   // Credentials
   const [pin, setPin] = useState("")
@@ -222,7 +225,7 @@ function LoginPageContent() {
           setDirectBranches(branchesRes || [])
         }
       } finally {
-        setDirectClientLoading(false)
+        setDirectClientResolved(true)
       }
     })()
   }, [directClientId])
@@ -1106,9 +1109,26 @@ function LoginPageContent() {
   )
 }
 
+function LoginSuspenseFallback() {
+  return (
+    <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-[#060609] relative overflow-hidden">
+      <div className="fixed inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,#0C1425,#060609)]" />
+      </div>
+      <div className="relative z-10 flex flex-col items-center gap-4">
+        <div className="w-[72px] h-[72px] rounded-[20px] bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-blue-500/25 relative overflow-hidden">
+          <Activity className="w-9 h-9 text-white relative z-10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+        </div>
+        <Loader2 className="w-6 h-6 text-white/40 animate-spin mt-2" />
+      </div>
+    </div>
+  )
+}
+
 export default function LoginPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<LoginSuspenseFallback />}>
       <LoginPageContent />
     </Suspense>
   )
