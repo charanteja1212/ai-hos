@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef, Suspense } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 
@@ -168,8 +168,12 @@ const cardItem = {
 // Component
 // ---------------------------------------------------------------------------
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Direct client URL: /login?client=CL002
+  const directClientId = searchParams.get("client")
 
   // Navigation state
   const [step, setStep] = useState<Step>("role")
@@ -183,6 +187,11 @@ export default function LoginPage() {
   const [fetchingClients, setFetchingClients] = useState(false)
   const [fetchingBranches, setFetchingBranches] = useState(false)
 
+  // Pre-fetched direct client data
+  const directClientLoaded = useRef(false)
+  const [directClient, setDirectClient] = useState<Client | null>(null)
+  const [directBranches, setDirectBranches] = useState<Branch[]>([])
+
   // Credentials
   const [pin, setPin] = useState("")
   const [email, setEmail] = useState("")
@@ -194,6 +203,24 @@ export default function LoginPage() {
   const [authMethod, setAuthMethod] = useState<"pin" | "password">("pin")
   const [loginEmail, setLoginEmail] = useState("")
   const [loginPassword, setLoginPassword] = useState("")
+
+  // Pre-fetch client + branches when ?client= param is present
+  useEffect(() => {
+    if (!directClientId || directClientLoaded.current) return
+    directClientLoaded.current = true
+
+    ;(async () => {
+      const [clientsRes, branchesRes] = await Promise.all([
+        fetch("/api/auth/tenants").then((r) => r.json()),
+        fetch(`/api/auth/tenants?clientId=${directClientId}`).then((r) => r.json()),
+      ])
+      const matched = (clientsRes as Client[]).find((c) => c.client_id === directClientId)
+      if (matched) {
+        setDirectClient(matched)
+        setDirectBranches(branchesRes || [])
+      }
+    })()
+  }, [directClientId])
 
   // ---------------------------------------------------------------------------
   // Data fetching helpers
@@ -234,6 +261,33 @@ export default function LoginPage() {
       return
     }
 
+    // Direct client URL — skip client selection entirely
+    if (directClient) {
+      setSelectedClient(directClient)
+      setClients([directClient])
+
+      if (role.loginMode === "client_admin") {
+        setStep("credentials")
+        return
+      }
+
+      const branchList = directBranches
+      setBranches(branchList)
+
+      if (branchList.length === 0) {
+        setError("No active branches found.")
+        return
+      }
+      if (branchList.length === 1) {
+        setSelectedBranch(branchList[0])
+        setStep("credentials")
+      } else {
+        setStep("branch")
+      }
+      return
+    }
+
+    // Normal flow — fetch all clients
     const fetchedClients = await fetchClients()
     setClients(fetchedClients)
 
@@ -562,10 +616,10 @@ export default function LoginPage() {
                 </motion.div>
 
                 <h1 className="mt-6 text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-                  AI-HOS
+                  {directClient ? directClient.name : "AI-HOS"}
                 </h1>
                 <p className="mt-1.5 text-sm text-white/30 tracking-widest uppercase font-medium">
-                  Hospital Operating System
+                  {directClient ? "Staff Login" : "Hospital Operating System"}
                 </p>
               </div>
 
@@ -576,7 +630,9 @@ export default function LoginPage() {
                 animate="show"
                 className="grid grid-cols-2 sm:grid-cols-4 gap-2.5"
               >
-                {roles.map((role) => {
+                {roles
+                .filter((role) => !directClient || (role.loginMode !== "super_admin" && role.loginMode !== "client_admin"))
+                .map((role) => {
                   const Icon = role.icon
                   return (
                     <motion.button
@@ -1028,5 +1084,13 @@ export default function LoginPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageContent />
+    </Suspense>
   )
 }
