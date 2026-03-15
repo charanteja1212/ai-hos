@@ -294,7 +294,11 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => signOut({ callbackUrl: user.clientId ? `/login?client=${user.clientId}` : "/login" })}
+              onClick={async () => {
+                const url = user.clientId ? `/login?client=${user.clientId}` : "/login"
+                await signOut({ redirect: false })
+                window.location.href = url
+              }}
               className="text-destructive focus:text-destructive"
             >
               <LogOut className="w-4 h-4 mr-2" />
