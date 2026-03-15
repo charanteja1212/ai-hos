@@ -646,8 +646,8 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
 
   const handlePayClick = () => {
     setPaymentStatus("checking");
-    // Open payment link in same tab so UPI redirect works properly on mobile
-    window.location.href = bookingResult.payment_link;
+    // Open payment link in new tab — our page stays open to poll for confirmation
+    window.open(bookingResult.payment_link, "_blank");
   };
 
   return (
