@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useWaAuth } from "@/hooks/use-wa-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -513,37 +513,7 @@ export default function BookPage() {
 
       {/* Success */}
       {step === "success" && bookingResult && (
-        <Card className="border-green-200 dark:border-green-800">
-          <CardContent className="pt-6 text-center space-y-4">
-            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-8 h-8 text-green-600" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">Booking Confirmed!</h2>
-              <p className="text-sm text-muted-foreground mt-1">Your appointment has been booked</p>
-            </div>
-            <div className="text-left space-y-2 bg-muted/50 rounded-xl p-4">
-              <InfoRow label="Booking ID" value={bookingResult.booking_id} />
-              <InfoRow label="Patient" value={bookingResult.patient_name} />
-              <InfoRow label="Doctor" value={bookingResult.doctor_name} />
-              <InfoRow label="Date" value={bookingResult.date} />
-              <InfoRow label="Time" value={bookingResult.time} />
-            </div>
-            {bookingResult.payment_link && (
-              <a
-                href={bookingResult.payment_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full bg-primary text-primary-foreground rounded-xl py-3 font-medium text-center"
-              >
-                Pay Now
-              </a>
-            )}
-            <p className="text-xs text-muted-foreground">
-              You can close this page and return to WhatsApp. A confirmation has been sent to your WhatsApp.
-            </p>
-          </CardContent>
-        </Card>
+        <SuccessCard bookingResult={bookingResult} auth={auth} />
       )}
     </PageShell>
   );
@@ -625,4 +595,128 @@ function convertTo24h(time12: string): string {
   if (ap === "PM" && h < 12) h += 12;
   if (ap === "AM" && h === 12) h = 0;
   return String(h).padStart(2, "0") + ":" + m;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { token: string } }) {
+  const [paymentStatus, setPaymentStatus] = useState<"pending" | "paid" | "checking">(
+    bookingResult.payment_required ? "pending" : "paid"
+  );
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Poll for payment status after user clicks Pay Now
+  useEffect(() => {
+    if (paymentStatus !== "checking") return;
+
+    const check = async () => {
+      try {
+        const res = await fetch("/api/wa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: auth.token, action: "list_appointments" }),
+        });
+        const data = await res.json();
+        if (Array.isArray(data.appointments)) {
+          const appt = data.appointments.find(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (a: any) => a.booking_id === bookingResult.booking_id
+          );
+          if (appt && appt.status === "confirmed" && appt.payment_status === "paid") {
+            setPaymentStatus("paid");
+            if (intervalRef.current) clearInterval(intervalRef.current);
+          }
+        }
+      } catch { /* ignore */ }
+    };
+
+    // Check immediately, then every 5 seconds
+    check();
+    intervalRef.current = setInterval(check, 5000);
+
+    // Stop after 10 minutes
+    const timeout = setTimeout(() => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }, 10 * 60 * 1000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      clearTimeout(timeout);
+    };
+  }, [paymentStatus, auth.token, bookingResult.booking_id]);
+
+  const handlePayClick = () => {
+    setPaymentStatus("checking");
+    // Open payment link in same tab so UPI redirect works properly on mobile
+    window.location.href = bookingResult.payment_link;
+  };
+
+  return (
+    <Card className={paymentStatus === "paid" ? "border-green-200 dark:border-green-800" : "border-amber-200 dark:border-amber-800"}>
+      <CardContent className="pt-6 text-center space-y-4">
+        <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto ${
+          paymentStatus === "paid"
+            ? "bg-green-100 dark:bg-green-900/30"
+            : "bg-amber-100 dark:bg-amber-900/30"
+        }`}>
+          {paymentStatus === "paid" ? (
+            <CheckCircle2 className="w-8 h-8 text-green-600" />
+          ) : paymentStatus === "checking" ? (
+            <Loader2 className="w-8 h-8 text-amber-600 animate-spin" />
+          ) : (
+            <Clock className="w-8 h-8 text-amber-600" />
+          )}
+        </div>
+        <div>
+          <h2 className="text-xl font-bold">
+            {paymentStatus === "paid"
+              ? "Booking Confirmed!"
+              : paymentStatus === "checking"
+              ? "Waiting for Payment..."
+              : "Appointment Reserved"}
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {paymentStatus === "paid"
+              ? "Your appointment has been booked and paid"
+              : paymentStatus === "checking"
+              ? "Complete payment in your UPI app. This page will update automatically."
+              : "Complete payment to confirm your appointment"}
+          </p>
+        </div>
+        <div className="text-left space-y-2 bg-muted/50 rounded-xl p-4">
+          <InfoRow label="Booking ID" value={bookingResult.booking_id} />
+          <InfoRow label="Patient" value={bookingResult.patient_name} />
+          <InfoRow label="Doctor" value={bookingResult.doctor_name} />
+          <InfoRow label="Date" value={bookingResult.date} />
+          <InfoRow label="Time" value={bookingResult.time} />
+          {bookingResult.consultation_fee && (
+            <InfoRow label="Fee" value={`₹${bookingResult.consultation_fee}`} />
+          )}
+        </div>
+        {bookingResult.payment_link && paymentStatus === "pending" && (
+          <button
+            onClick={handlePayClick}
+            className="block w-full bg-primary text-primary-foreground rounded-xl py-3 font-medium text-center"
+          >
+            Pay Now — ₹{bookingResult.consultation_fee || "200"}
+          </button>
+        )}
+        {paymentStatus === "checking" && (
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Checking payment status...
+          </div>
+        )}
+        {paymentStatus === "paid" && (
+          <p className="text-xs text-muted-foreground">
+            You can close this page. A confirmation with your OP Pass has been sent to your WhatsApp.
+          </p>
+        )}
+        {paymentStatus === "pending" && (
+          <p className="text-xs text-muted-foreground">
+            Payment link expires in 20 minutes. After payment, your confirmation will be sent to WhatsApp.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
