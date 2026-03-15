@@ -646,8 +646,6 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
 
   const handlePayClick = () => {
     setPaymentStatus("checking");
-    // Open payment link in new tab — our page stays open to poll for confirmation
-    window.open(bookingResult.payment_link, "_blank");
   };
 
   return (
@@ -678,7 +676,7 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
             {paymentStatus === "paid"
               ? "Your appointment has been booked and paid"
               : paymentStatus === "checking"
-              ? "Complete payment in your UPI app. This page will update automatically."
+              ? "Pay using the link below, then come back here. This page updates automatically."
               : "Complete payment to confirm your appointment"}
           </p>
         </div>
@@ -689,16 +687,29 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
           <InfoRow label="Date" value={bookingResult.date} />
           <InfoRow label="Time" value={bookingResult.time} />
           {bookingResult.consultation_fee && (
-            <InfoRow label="Fee" value={`₹${bookingResult.consultation_fee}`} />
+            <InfoRow label="Fee" value={`\u20B9${bookingResult.consultation_fee}`} />
           )}
         </div>
         {bookingResult.payment_link && paymentStatus === "pending" && (
-          <button
+          <a
+            href={bookingResult.payment_link}
             onClick={handlePayClick}
+            target="_blank"
+            rel="noopener noreferrer"
             className="block w-full bg-primary text-primary-foreground rounded-xl py-3 font-medium text-center"
           >
-            Pay Now — ₹{bookingResult.consultation_fee || "200"}
-          </button>
+            Pay Now — \u20B9{bookingResult.consultation_fee || "200"}
+          </a>
+        )}
+        {bookingResult.payment_link && paymentStatus === "checking" && (
+          <a
+            href={bookingResult.payment_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full bg-primary text-primary-foreground rounded-xl py-3 font-medium text-center"
+          >
+            Open Payment Page
+          </a>
         )}
         {paymentStatus === "checking" && (
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
@@ -710,6 +721,12 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
           <p className="text-xs text-muted-foreground">
             You can close this page. A confirmation with your OP Pass has been sent to your WhatsApp.
           </p>
+        )}
+        {paymentStatus === "checking" && (
+          <div className="text-xs text-muted-foreground space-y-1 bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+            <p className="font-medium text-blue-700 dark:text-blue-300">After paying, come back to this page.</p>
+            <p>If the payment page shows an error after UPI payment, you can ignore it — your payment is processed. Check WhatsApp for your OP Pass.</p>
+          </div>
         )}
         {paymentStatus === "pending" && (
           <p className="text-xs text-muted-foreground">
