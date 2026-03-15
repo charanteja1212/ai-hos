@@ -38,6 +38,7 @@ export default auth((req) => {
     pathname.startsWith("/unauthorized") ||
     pathname.startsWith("/queue/") ||
     pathname.startsWith("/rx/") ||
+    pathname.startsWith("/wa/") ||
     pathname.startsWith("/api/") ||
     pathname.startsWith("/_next/") ||
     pathname === "/favicon.ico"
