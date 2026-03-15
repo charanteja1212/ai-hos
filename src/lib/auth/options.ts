@@ -121,7 +121,7 @@ export const authConfig: NextAuthConfig = {
           // Get the first ACTIVE branch for this client as default
           const { data: firstBranch } = await supabase
             .from("tenants")
-            .select("tenant_id, hospital_name")
+            .select("tenant_id, hospital_name, logo_url")
             .eq("client_id", clientId)
             .eq("status", "active")
             .limit(1)
@@ -138,6 +138,7 @@ export const authConfig: NextAuthConfig = {
             hospitalName: firstBranch.hospital_name || client.name,
             clientId: client.client_id,
             clientName: client.name,
+            logoUrl: firstBranch.logo_url || undefined,
           } as SessionUser & { id: string }
         }
 
@@ -154,7 +155,7 @@ export const authConfig: NextAuthConfig = {
         // Fetch tenant info — must be active
         const { data: tenant } = await supabase
           .from("tenants")
-          .select("tenant_id, hospital_name, admin_pin, reception_pin, client_id, status")
+          .select("tenant_id, hospital_name, admin_pin, reception_pin, client_id, status, logo_url")
           .eq("tenant_id", tenantId)
           .single()
 
@@ -186,6 +187,7 @@ export const authConfig: NextAuthConfig = {
             hospitalName: tenant.hospital_name,
             clientId,
             clientName,
+            logoUrl: tenant.logo_url || undefined,
           } as SessionUser & { id: string }
         }
 
@@ -200,6 +202,7 @@ export const authConfig: NextAuthConfig = {
             hospitalName: tenant.hospital_name,
             clientId,
             clientName,
+            logoUrl: tenant.logo_url || undefined,
           } as SessionUser & { id: string }
         }
 
@@ -227,6 +230,7 @@ export const authConfig: NextAuthConfig = {
             clientName,
             doctorId: doctor.doctor_id,
             specialty: doctor.specialty,
+            logoUrl: tenant.logo_url || undefined,
           } as SessionUser & { id: string }
         }
 
@@ -255,6 +259,7 @@ export const authConfig: NextAuthConfig = {
             hospitalName: tenant.hospital_name,
             clientId,
             clientName,
+            logoUrl: tenant.logo_url || undefined,
           } as SessionUser & { id: string }
         }
 
