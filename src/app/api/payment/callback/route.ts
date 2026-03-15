@@ -80,6 +80,24 @@ export async function GET(req: NextRequest) {
 
   if (!paymentId || paymentLinkStatus !== 'paid') {
     console.error('[payment-callback] REJECTED — paymentId:', paymentId, 'status:', paymentLinkStatus);
+
+    // Check if webhook already processed this payment link
+    if (paymentLinkId) {
+      try {
+        const existing = await sbGet(
+          '/appointments?payment_id=eq.' + encodeURIComponent(paymentLinkId) +
+          '&status=eq.confirmed&select=booking_id,op_pass_id'
+        );
+        if (Array.isArray(existing) && existing.length > 0) {
+          console.log('[payment-callback] Webhook already processed, showing confirmation for:', existing[0].booking_id);
+          return new NextResponse(
+            await confirmationPage({ referenceId: existing[0].booking_id, alreadyProcessed: true }),
+            { status: 200, headers: { 'Content-Type': 'text/html' } }
+          );
+        }
+      } catch { /* continue to error */ }
+    }
+
     return new NextResponse(errorPage('Payment not completed. Status: ' + paymentLinkStatus), {
       status: 200, headers: { 'Content-Type': 'text/html' },
     });
