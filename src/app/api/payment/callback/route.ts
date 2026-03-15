@@ -73,7 +73,13 @@ export async function GET(req: NextRequest) {
   const paymentId = params.get('razorpay_payment_id') || '';
   const paymentLinkStatus = params.get('razorpay_payment_link_status') || '';
 
+  // Debug logging — capture all callback params
+  console.log('[payment-callback] URL:', req.nextUrl.toString());
+  console.log('[payment-callback] Params:', Object.fromEntries(params.entries()));
+  console.log('[payment-callback] paymentId:', paymentId, 'status:', paymentLinkStatus, 'linkId:', paymentLinkId);
+
   if (!paymentId || paymentLinkStatus !== 'paid') {
+    console.error('[payment-callback] REJECTED — paymentId:', paymentId, 'status:', paymentLinkStatus);
     return new NextResponse(errorPage('Payment not completed. Status: ' + paymentLinkStatus), {
       status: 200, headers: { 'Content-Type': 'text/html' },
     });
@@ -284,19 +290,10 @@ export async function GET(req: NextRequest) {
       if (patientPhone) {
         await sendWA(waApiUrl, waToken, patientPhone, { type: 'image', image: { link: cardImageUrl, caption } });
 
-        // Post-booking menu after delay
+        // Post-booking follow-up after delay
         await new Promise(r => setTimeout(r, 5000));
         await sendWA(waApiUrl, waToken, patientPhone, {
-          type: 'interactive', interactive: {
-            type: 'list',
-            body: { text: 'Thank you for choosing *' + hospitalName + '*.\n\nIs there anything else we can help you with?' },
-            action: { button: 'More Options', sections: [{ title: 'Options', rows: [
-              { id: 'pb_self', title: 'Book for Yourself', description: 'Schedule another appointment' },
-              { id: 'pb_other', title: 'Book for Someone Else', description: 'Book for a family member' },
-              { id: 'pb_resched', title: 'Reschedule', description: 'Change appointment date/time' },
-              { id: 'pb_cancel', title: 'Cancel Booking', description: 'Cancel an existing appointment' },
-            ]}]},
-          },
+          type: 'text', text: { body: 'Thank you for choosing *' + hospitalName + '* ✅\n\nType *menu* anytime to book another appointment, reschedule, or manage your bookings.' },
         });
       }
 
@@ -336,8 +333,8 @@ export async function GET(req: NextRequest) {
       status: 200, headers: { 'Content-Type': 'text/html' },
     });
   } catch (error) {
-    console.error('[payment-callback] Error:', error);
-    return new NextResponse(errorPage('Payment processing error. Please contact the hospital.'), {
+    console.error('[payment-callback] FATAL Error:', error);
+    return new NextResponse(errorPage('Payment processing error. Please contact the hospital. Error: ' + (error instanceof Error ? error.message : String(error))), {
       status: 200, headers: { 'Content-Type': 'text/html' },
     });
   }
