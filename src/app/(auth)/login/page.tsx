@@ -600,6 +600,18 @@ function LoginPageContent() {
               exit="exit"
               transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
             >
+              {directClientLoading ? (
+                /* Full loading state — prevents any flash of wrong content */
+                <div className="flex flex-col items-center justify-center py-24 gap-4">
+                  <div className="w-[72px] h-[72px] rounded-[20px] bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-blue-500/25 relative overflow-hidden">
+                    <Activity className="w-9 h-9 text-white relative z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                  </div>
+                  <Loader2 className="w-6 h-6 text-white/40 animate-spin mt-4" />
+                  <p className="text-sm text-white/30">Loading...</p>
+                </div>
+              ) : (
+              <>
               {/* Logo */}
               <div className="text-center mb-10">
                 <motion.div
@@ -629,12 +641,6 @@ function LoginPageContent() {
               </div>
 
               {/* Role Grid - 4 cols on desktop, 2 on mobile */}
-              {directClientLoading ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-3">
-                  <Loader2 className="w-8 h-8 text-white/40 animate-spin" />
-                  <p className="text-sm text-white/30">Loading...</p>
-                </div>
-              ) : (
               <motion.div
                 variants={cardStagger}
                 initial="hidden"
@@ -688,7 +694,6 @@ function LoginPageContent() {
                   )
                 })}
               </motion.div>
-              )}
 
               {/* Loading */}
               {fetchingClients && (
@@ -712,6 +717,8 @@ function LoginPageContent() {
                   Powered by AI-HOS
                 </p>
               </div>
+              </>
+              )}
             </motion.div>
           )}
 
