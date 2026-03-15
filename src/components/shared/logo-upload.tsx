@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Upload, X, Loader2 } from "lucide-react"
 import { toast } from "sonner"
@@ -53,27 +52,26 @@ export function LogoUpload({
     setUploading(true)
 
     try {
-      const supabase = createBrowserClient()
       const ext = file.name.split(".").pop() || "png"
       const fileName = `${pathPrefix}/logo.${ext}`
 
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, file, { upsert: true, cacheControl: "3600" })
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("bucket", bucket)
+      formData.append("path", fileName)
 
-      if (uploadError) {
-        // If bucket doesn't exist, try creating it via a simple upload
-        console.error("[logo-upload] Upload error:", uploadError.message)
-        toast.error("Upload failed. Ensure storage bucket exists.")
+      const res = await fetch("/api/upload", { method: "POST", body: formData })
+      const data = await res.json()
+
+      if (!res.ok) {
+        console.error("[logo-upload] Upload error:", data.error)
+        toast.error(data.error || "Upload failed")
         setUploading(false)
         return
       }
 
-      const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName)
-      const publicUrl = urlData.publicUrl
-
-      setPreview(publicUrl)
-      onUpload(publicUrl)
+      setPreview(data.url)
+      onUpload(data.url)
       toast.success("Logo uploaded")
     } catch (err) {
       console.error("[logo-upload]", err)
