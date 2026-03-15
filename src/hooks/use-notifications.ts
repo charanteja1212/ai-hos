@@ -9,6 +9,36 @@ import type { Notification } from "@/types/database"
 
 
 
+/** Show a browser notification via service worker (when tab is not focused) */
+function showBrowserNotification(title: string, body: string) {
+  if (
+    typeof window === "undefined" ||
+    !("Notification" in window) ||
+    Notification.permission !== "granted" ||
+    document.hasFocus()
+  ) return
+
+  navigator.serviceWorker?.ready?.then((reg) => {
+    reg.showNotification(title, {
+      body,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon.svg",
+      tag: "notif-" + Date.now(),
+    } as NotificationOptions)
+  }).catch(() => {})
+}
+
+/** Request browser notification permission (called once) */
+function requestBrowserPermission() {
+  if (
+    typeof window !== "undefined" &&
+    "Notification" in window &&
+    Notification.permission === "default"
+  ) {
+    Notification.requestPermission().catch(() => {})
+  }
+}
+
 function playBeep() {
   try {
     const ctx = new AudioContext()
@@ -108,6 +138,9 @@ export function useNotifications({ tenantId, role, userId }: UseNotificationsOpt
         playBeep()
       }
 
+      // Browser notification (when tab not focused)
+      showBrowserNotification(n.title, n.message || "")
+
       // Refresh list
       mutate()
     },
@@ -122,10 +155,11 @@ export function useNotifications({ tenantId, role, userId }: UseNotificationsOpt
     enabled: !!tenantId,
   })
 
-  // Mark initial load complete after first fetch
+  // Mark initial load complete + request browser notification permission
   useEffect(() => {
     if (data && isInitialLoad.current) {
       isInitialLoad.current = false
+      requestBrowserPermission()
     }
   }, [data])
 

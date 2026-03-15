@@ -25,6 +25,7 @@ import {
   Shield,
   MessageSquare,
   HeartPulse,
+  Heart,
   Video,
 } from "lucide-react"
 import type { UserRole } from "@/types/auth"
@@ -182,6 +183,7 @@ const doctorNav: RoleNavConfig = {
       items: [
         { label: "My Patients", href: "/doctor/patients", icon: Users },
         { label: "Prescriptions", href: "/doctor/prescriptions", icon: FileText },
+        { label: "Analytics", href: "/doctor/analytics", icon: BarChart3 },
       ],
     },
     {
@@ -247,6 +249,7 @@ export const patientNav: RoleNavConfig = {
         { label: "OP Passes", href: "/patient/op-pass", icon: Shield },
         { label: "Prescriptions", href: "/patient/prescriptions", icon: Pill },
         { label: "Lab Results", href: "/patient/lab", icon: TestTube },
+        { label: "My Health", href: "/patient/health", icon: Heart },
       ],
     },
     {
