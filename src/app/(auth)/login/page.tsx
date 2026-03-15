@@ -191,6 +191,7 @@ function LoginPageContent() {
   const directClientLoaded = useRef(false)
   const [directClient, setDirectClient] = useState<Client | null>(null)
   const [directBranches, setDirectBranches] = useState<Branch[]>([])
+  const [directClientLoading, setDirectClientLoading] = useState(!!directClientId)
 
   // Credentials
   const [pin, setPin] = useState("")
@@ -210,14 +211,18 @@ function LoginPageContent() {
     directClientLoaded.current = true
 
     ;(async () => {
-      const [clientsRes, branchesRes] = await Promise.all([
-        fetch("/api/auth/tenants").then((r) => r.json()),
-        fetch(`/api/auth/tenants?clientId=${directClientId}`).then((r) => r.json()),
-      ])
-      const matched = (clientsRes as Client[]).find((c) => c.client_id === directClientId)
-      if (matched) {
-        setDirectClient(matched)
-        setDirectBranches(branchesRes || [])
+      try {
+        const [clientsRes, branchesRes] = await Promise.all([
+          fetch("/api/auth/tenants").then((r) => r.json()),
+          fetch(`/api/auth/tenants?clientId=${directClientId}`).then((r) => r.json()),
+        ])
+        const matched = (clientsRes as Client[]).find((c) => c.client_id === directClientId)
+        if (matched) {
+          setDirectClient(matched)
+          setDirectBranches(branchesRes || [])
+        }
+      } finally {
+        setDirectClientLoading(false)
       }
     })()
   }, [directClientId])
@@ -624,6 +629,12 @@ function LoginPageContent() {
               </div>
 
               {/* Role Grid - 4 cols on desktop, 2 on mobile */}
+              {directClientLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <Loader2 className="w-8 h-8 text-white/40 animate-spin" />
+                  <p className="text-sm text-white/30">Loading...</p>
+                </div>
+              ) : (
               <motion.div
                 variants={cardStagger}
                 initial="hidden"
@@ -677,6 +688,7 @@ function LoginPageContent() {
                   )
                 })}
               </motion.div>
+              )}
 
               {/* Loading */}
               {fetchingClients && (
