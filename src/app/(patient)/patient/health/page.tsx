@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useMemo } from "react"
 import { useSession } from "next-auth/react"
 import useSWR from "swr"
 import { createBrowserClient } from "@/lib/supabase/client"
@@ -34,6 +34,11 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { SessionUser } from "@/types/auth"
+
+interface Condition { condition_name: string; severity?: string }
+interface Allergy { allergen: string; severity?: string; reaction?: string }
+interface Vital { created_at: string; bp_systolic?: number; bp_diastolic?: number; pulse?: number; spo2?: number; temperature?: number; weight?: number }
+interface PrescriptionItem { name?: string; medicine_name?: string; dosage?: string; frequency?: string; duration?: string }
 
 export default function HealthPage() {
   const { data: session } = useSession()
@@ -167,13 +172,13 @@ export default function HealthPage() {
 
     if (data.conditions.length > 0) {
       lines.push("=== MEDICAL CONDITIONS ===")
-      data.conditions.forEach((c: any) => lines.push(`- ${c.condition_name} (${c.severity || "—"})`))
+      data.conditions.forEach((c: Condition) => lines.push(`- ${c.condition_name} (${c.severity || "—"})`))
       lines.push("")
     }
 
     if (data.allergies.length > 0) {
       lines.push("=== ALLERGIES ===")
-      data.allergies.forEach((a: any) => lines.push(`- ${a.allergen} (${a.severity || "—"}) — ${a.reaction || ""}`))
+      data.allergies.forEach((a: Allergy) => lines.push(`- ${a.allergen} (${a.severity || "—"}) — ${a.reaction || ""}`))
       lines.push("")
     }
 
@@ -186,7 +191,7 @@ export default function HealthPage() {
     lines.push("=== PRESCRIPTIONS ===")
     data.prescriptions.forEach((rx) => {
       lines.push(`${(rx.created_at || "").slice(0, 10)} | ${rx.diagnosis || "—"} | Dr. ${rx.doctor_name || "—"}`)
-      ;(rx.items || []).forEach((m: any) => {
+      ;(rx.items || []).forEach((m: PrescriptionItem) => {
         lines.push(`    - ${m.name || m.medicine_name || "—"} ${m.dosage || ""} ${m.frequency || ""} ${m.duration || ""}`)
       })
     })
@@ -194,7 +199,7 @@ export default function HealthPage() {
 
     if (data.vitals.length > 0) {
       lines.push("=== VITALS HISTORY ===")
-      data.vitals.slice(0, 20).forEach((v: any) => {
+      data.vitals.slice(0, 20).forEach((v: Vital) => {
         lines.push(`${new Date(v.created_at).toLocaleDateString("en-IN")} | BP: ${v.bp_systolic || "—"}/${v.bp_diastolic || "—"} | Pulse: ${v.pulse || "—"} | SpO2: ${v.spo2 || "—"}% | Temp: ${v.temperature || "—"}°F | Weight: ${v.weight || "—"} kg`)
       })
     }
@@ -276,7 +281,7 @@ export default function HealthPage() {
                 <CardTitle className="text-sm font-semibold">Medical Conditions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {data!.conditions.map((c: any, i: number) => (
+                {data!.conditions.map((c: Condition, i: number) => (
                   <div key={i} className="flex items-center justify-between">
                     <span className="text-sm">{c.condition_name}</span>
                     <Badge variant={c.severity === "severe" ? "destructive" : "secondary"} className="text-xs">
@@ -293,7 +298,7 @@ export default function HealthPage() {
                 <CardTitle className="text-sm font-semibold">Allergies</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {data!.allergies.map((a: any, i: number) => (
+                {data!.allergies.map((a: Allergy, i: number) => (
                   <div key={i} className="flex items-center justify-between">
                     <div>
                       <span className="text-sm font-medium">{a.allergen}</span>
