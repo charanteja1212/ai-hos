@@ -27,6 +27,29 @@ function buildReplyButtons(toPhone: string, text: string, buttons: { id: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildListMessage(toPhone: string, bodyText: string, listData: { buttonText: string; sectionTitle: string; rows: { id: string; title: string; description: string }[] }): any {
+  return {
+    messaging_product: 'whatsapp', recipient_type: 'individual', to: toPhone,
+    type: 'interactive',
+    interactive: {
+      type: 'list',
+      body: { text: truncate(bodyText, 1024) },
+      action: {
+        button: truncate(listData.buttonText, 20),
+        sections: [{
+          title: truncate(listData.sectionTitle, 24),
+          rows: listData.rows.map(r => ({
+            id: r.id,
+            title: truncate(r.title, 24),
+            description: truncate(r.description, 72),
+          })),
+        }],
+      },
+    },
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildTextMessage(toPhone: string, text: string): any {
   return {
     messaging_product: 'whatsapp', recipient_type: 'individual', to: toPhone,
@@ -55,12 +78,29 @@ export function buildMessagePayloads(
 ): BuildResult {
   const lang = language || 'en';
 
-  const buttonRegex = /\[BUTTONS:([^\]]+)\]/;
-  const btnMatch = buttonRegex.exec(aiReply);
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payloads: any[] = [];
   let sentType = 'text';
+
+  // Check for list menu marker first
+  const listMenuRegex = /\[LIST_MENU:([\s\S]+)\]$/;
+  const listMatch = listMenuRegex.exec(aiReply);
+
+  if (listMatch) {
+    const bodyText = truncate(aiReply.substring(0, listMatch.index).trim(), 1024);
+    try {
+      const listData = JSON.parse(listMatch[1]);
+      payloads.push(buildListMessage(toPhone, bodyText, listData));
+      sentType = 'list';
+    } catch {
+      payloads.push(buildTextMessage(toPhone, aiReply.replace(listMenuRegex, '').trim()));
+      sentType = 'text';
+    }
+    return { payloads, sentType };
+  }
+
+  const buttonRegex = /\[BUTTONS:([^\]]+)\]/;
+  const btnMatch = buttonRegex.exec(aiReply);
 
   if (btnMatch) {
     const bodyText = truncate(aiReply.substring(0, btnMatch.index).trim() || t('select_option', lang), 1024);

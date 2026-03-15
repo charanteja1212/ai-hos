@@ -77,6 +77,56 @@ export const MSGS: Record<string, TranslationEntry> = {
     hi: '"talk to staff" टाइप करके रिसेप्शन से जुड़ें',
     te: 'రిసెప్షన్‌తో కనెక్ట్ అవ్వడానికి "talk to staff" టైప్ చేయండి',
   },
+  desc_book_self: {
+    en: 'Schedule a visit for yourself',
+    hi: 'अपने लिए विज़िट शेड्यूल करें',
+    te: 'మీ కోసం విజిట్ షెడ్యూల్ చేయండి',
+  },
+  desc_book_other: {
+    en: 'Book for a family member',
+    hi: 'परिवार के सदस्य के लिए बुक करें',
+    te: 'కుటుంబ సభ్యుని కోసం బుక్ చేయండి',
+  },
+  desc_appointments: {
+    en: 'View your upcoming visits',
+    hi: 'आगामी विज़िट देखें',
+    te: 'మీ రాబోయే విజిట్‌లు చూడండి',
+  },
+  desc_reschedule: {
+    en: 'Change date or time',
+    hi: 'तारीख या समय बदलें',
+    te: 'తేదీ లేదా సమయం మార్చండి',
+  },
+  desc_cancel: {
+    en: 'Cancel an existing booking',
+    hi: 'मौजूदा बुकिंग रद्द करें',
+    te: 'ఇప్పటి బుకింగ్ రద్దు చేయండి',
+  },
+  desc_prescriptions: {
+    en: 'View your medications',
+    hi: 'अपनी दवाइयाँ देखें',
+    te: 'మీ మందులు చూడండి',
+  },
+  desc_talk_staff: {
+    en: 'Chat with hospital reception',
+    hi: 'अस्पताल रिसेप्शन से चैट करें',
+    te: 'ఆసుపత్రి రిసెప్షన్‌తో చాట్ చేయండి',
+  },
+  menu_button: {
+    en: 'View Services',
+    hi: 'सेवाएँ देखें',
+    te: 'సేవలు చూడండి',
+  },
+  menu_section_title: {
+    en: 'Hospital Services',
+    hi: 'अस्पताल सेवाएँ',
+    te: 'ఆసుపత్రి సేవలు',
+  },
+  link_tap_below: {
+    en: 'Tap the link below to continue:',
+    hi: 'जारी रखने के लिए नीचे दिए गए लिंक पर टैप करें:',
+    te: 'కొనసాగించడానికి క్రింద లింక్ ట్యాప్ చేయండి:',
+  },
 
   // --- Live Agent ---
   live_agent_connected: {

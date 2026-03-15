@@ -41,28 +41,24 @@ async function buildWebMenu(
   hospitalName: string,
   patientName?: string,
 ): Promise<string> {
-  const token = await generateWaToken(cleanPhone, tenantId, patientName);
-  const base = `${APP_URL}/wa`;
-  const q = `token=${token}`;
-
   const greeting = patientName
     ? msg('menu_greeting_known', language, { name: patientName, hospital: hospitalName })
     : msg('menu_greeting', language, { hospital: hospitalName });
 
-  const links = [
-    { emoji: '1️⃣', label: msg('link_book_self', language), url: `${base}/book?mode=self&${q}` },
-    { emoji: '2️⃣', label: msg('link_book_other', language), url: `${base}/book?mode=dependent&${q}` },
-    { emoji: '3️⃣', label: msg('link_appointments', language), url: `${base}/appointments?${q}` },
-    { emoji: '4️⃣', label: msg('link_reschedule', language), url: `${base}/appointments?action=reschedule&${q}` },
-    { emoji: '5️⃣', label: msg('link_cancel', language), url: `${base}/appointments?action=cancel&${q}` },
-    { emoji: '6️⃣', label: msg('link_prescriptions', language), url: `${base}/prescriptions?${q}` },
+  const rows = [
+    { id: 'menu_book_self', title: msg('link_book_self', language), description: msg('desc_book_self', language) },
+    { id: 'menu_book_other', title: msg('link_book_other', language), description: msg('desc_book_other', language) },
+    { id: 'menu_appointments', title: msg('link_appointments', language), description: msg('desc_appointments', language) },
+    { id: 'menu_reschedule', title: msg('link_reschedule', language), description: msg('desc_reschedule', language) },
+    { id: 'menu_cancel', title: msg('link_cancel', language), description: msg('desc_cancel', language) },
+    { id: 'menu_prescriptions', title: msg('link_prescriptions', language), description: msg('desc_prescriptions', language) },
+    { id: 'menu_talk_staff', title: msg('link_talk_staff', language), description: msg('desc_talk_staff', language) },
   ];
 
-  const linkLines = links.map(l => `${l.emoji} *${l.label}*\n${l.url}`).join('\n\n');
+  const buttonText = msg('menu_button', language);
+  const sectionTitle = msg('menu_section_title', language);
 
-  const talkLine = `7️⃣ *${msg('link_talk_staff', language)}*\n_${msg('link_talk_staff_hint', language)}_`;
-
-  return `${greeting}\n\n${linkLines}\n\n${talkLine}`;
+  return `${greeting}\n[LIST_MENU:${JSON.stringify({ buttonText, sectionTitle, rows })}]`;
 }
 
 /**
@@ -84,7 +80,7 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
 
   // ---- Global shortcuts ----
   const isMainMenuRequest = lowerMsg === 'menu' || lowerMsg === 'main menu' || lowerMsg === 'start over' || lowerMsg === 'restart' || lowerMsg === 'hi' || lowerMsg === 'hello';
-  const isTalkToHuman = lowerMsg === 'talk to human' || lowerMsg === 'talk to staff' || lowerMsg === 'human' || lowerMsg === 'agent' || lowerMsg === 'help me' || lowerMsg === 'menu_talk_human' || lowerMsg === '7';
+  const isTalkToHuman = lowerMsg === 'talk to human' || lowerMsg === 'talk to staff' || lowerMsg === 'human' || lowerMsg === 'agent' || lowerMsg === 'help me' || lowerMsg === 'menu_talk_human' || lowerMsg === 'menu_talk_staff' || lowerMsg === '7';
   const isEndChat = lowerMsg === 'end chat' || lowerMsg === 'end' || lowerMsg === 'close chat' || lowerMsg === 'exit chat';
 
   // Quick menu shortcuts from numbered replies
@@ -126,8 +122,25 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     // ----- MAIN MENU -----
     case 'MAIN_MENU_SHOW':
     case 'MAIN_MENU': {
-      if (isMenuAction && language) {
-        // User typed a number — generate fresh menu with clickable links
+      const menuPaths: Record<string, string> = {
+        'menu_book_self': '/wa/book?mode=self',
+        'menu_book_other': '/wa/book?mode=dependent',
+        'menu_appointments': '/wa/appointments',
+        'menu_reschedule': '/wa/appointments?action=reschedule',
+        'menu_cancel': '/wa/appointments?action=cancel',
+        'menu_prescriptions': '/wa/prescriptions',
+      };
+
+      if (lowerMsg in menuPaths && language) {
+        // User tapped a menu row — generate token and send that one URL
+        const token = await generateWaToken(cleanPhone, tenantId, data.patientName);
+        const path = menuPaths[lowerMsg];
+        const separator = path.includes('?') ? '&' : '?';
+        const url = `${APP_URL}${path}${separator}token=${token}`;
+        reply = `${msg('link_tap_below', language)}\n\n${url}`;
+        nextState = 'MAIN_MENU';
+      } else if (isMenuAction && language) {
+        // User typed a number 1-6 — show the full list menu
         reply = await buildWebMenu(cleanPhone, tenantId, language, hospitalName, data.patientName);
         nextState = 'MAIN_MENU';
       } else if (language) {
