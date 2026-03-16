@@ -697,7 +697,7 @@ export async function bookAppointment(args: any): Promise<any> {
       notes: { type: 'appointment', reference_id: bookingId, patient_name: name, patient_phone: phone, doctor_name: doctorName, specialty, appointment_date: formattedDate, appointment_time: time, tenant_id: tenantId },
       callback_url: callbackUrl,
       callback_method: 'get',
-      expire_by: Math.floor(Date.now() / 1000) + 300,
+      expire_by: Math.floor(Date.now() / 1000) + 900,
     };
     const rzpRes = await fetch('https://api.razorpay.com/v1/payment_links', {
       method: 'POST',
@@ -716,8 +716,13 @@ export async function bookAppointment(args: any): Promise<any> {
           });
         } catch { /* ok */ }
       }
+    } else {
+      const errText = await rzpRes.text().catch(() => '');
+      console.error('[bookAppointment] Razorpay payment link failed:', rzpRes.status, errText.substring(0, 300));
     }
-  } catch { /* payment link creation failed */ }
+  } catch (e: any) {
+    console.error('[bookAppointment] Payment link error:', e.message || e);
+  }
 
   return {
     success: true, booking_id: bookingId, date: formattedDate, time,
