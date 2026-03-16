@@ -135,12 +135,15 @@ export async function POST(req: NextRequest) {
     const cleanPhone = (parsed.senderPhone || "").replace(/\D/g, "")
 
     // Step 4: Load session
+    console.log("[webhook] Loading session for:", cleanPhone, "tenant:", tenantId)
     const session = await loadSession(cleanPhone, tenantId, parsed.messageId)
+    console.log("[webhook] Session loaded, state:", session.state, "lang:", session.language, "dup:", session.isDuplicateMessage)
     if (session.isDuplicateMessage) {
       return NextResponse.json({ status: "duplicate" })
     }
 
     // Step 5: Run state machine
+    console.log("[webhook] Running agent, state:", session.state)
     const result = await runAgent({
       senderPhone: parsed.senderPhone,
       messageBody: parsed.messageBody,
@@ -155,8 +158,10 @@ export async function POST(req: NextRequest) {
     })
 
     // Step 6: Send reply (skip if empty — live agent mode)
+    console.log("[webhook] Agent result, nextState:", result.nextState, "reply length:", result.reply?.length || 0)
     const waToken = tenantConfig.wa_token || WA_TOKEN_DEFAULT
     const waApiUrl = tenantConfig.wa_api_url || WA_API_URL_DEFAULT
+    console.log("[webhook] waApiUrl:", waApiUrl ? "set" : "EMPTY", "waToken:", waToken ? "set" : "EMPTY")
 
     if (result.reply) {
       const sendResult = await sendReply({
