@@ -688,15 +688,16 @@ export async function bookAppointment(args: any): Promise<any> {
   let paymentLinkId = '';
   try {
     const rzpAuth = 'Basic ' + (tenantRzpAuth || process.env.RAZORPAY_AUTH || '');
-    const callbackUrl = tenantCallbackUrl || (process.env.NEXT_PUBLIC_APP_URL || 'https://app.ainewworld.in') + '/api/payment/callback';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.ainewworld.in';
+    const callbackUrl = appUrl + '/wa/pay?id=' + encodeURIComponent(bookingId);
     const payload = {
       amount: consultationFee * 100, currency: 'INR', accept_partial: false,
       description: 'Consultation - ' + doctorName + ' (' + specialty + ')',
       customer: { name, contact: '+' + phone },
       notify: { sms: false, email: false }, reminder_enable: false,
-      notes: { type: 'appointment', reference_id: bookingId, patient_name: name, patient_phone: phone, doctor_name: doctorName, specialty, appointment_date: formattedDate, appointment_time: time, tenant_id: tenantId },
       callback_url: callbackUrl,
       callback_method: 'get',
+      notes: { type: 'appointment', reference_id: bookingId, patient_name: name, patient_phone: phone, doctor_name: doctorName, specialty, appointment_date: formattedDate, appointment_time: time, tenant_id: tenantId },
       expire_by: Math.floor(Date.now() / 1000) + 1200,
     };
     const rzpRes = await fetch('https://api.razorpay.com/v1/payment_links', {
@@ -707,12 +708,14 @@ export async function bookAppointment(args: any): Promise<any> {
     });
     if (rzpRes.ok) {
       const rzpData = await rzpRes.json();
-      paymentLinkUrl = rzpData.short_url || '';
+      const rawRzpLink = rzpData.short_url || '';
       paymentLinkId = rzpData.id || '';
-      if (paymentLinkUrl) {
+      // Use our custom payment page instead of raw Razorpay link (fixes blank screen in WhatsApp WebView)
+      paymentLinkUrl = rawRzpLink ? (appUrl + '/wa/pay?id=' + encodeURIComponent(bookingId)) : '';
+      if (rawRzpLink) {
         try {
           await sbPatch('/appointments?booking_id=eq.' + encodeURIComponent(bookingId), {
-            payment_link: paymentLinkUrl, payment_id: paymentLinkId, source,
+            payment_link: rawRzpLink, payment_id: paymentLinkId, source,
           });
         } catch { /* ok */ }
       }
