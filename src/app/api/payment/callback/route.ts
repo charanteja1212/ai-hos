@@ -108,13 +108,8 @@ export async function GET(req: NextRequest) {
           '&status=eq.confirmed&select=booking_id,op_pass_id,patient_name,doctor_name,specialty,date,time'
         );
         if (Array.isArray(existing) && existing.length > 0) {
-          console.log('[payment-callback] Webhook already processed, showing confirmation for:', existing[0].booking_id);
-          const e = existing[0];
-          const amountPaid = await getRzpAmount(paymentLinkId);
-          return new NextResponse(
-            quickConfirm(e.booking_id, amountPaid),
-            { status: 200, headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' } }
-          );
+          console.log('[payment-callback] Webhook already processed for:', existing[0].booking_id, '— redirecting');
+          return NextResponse.redirect('https://wa.me/', 302);
         }
       } catch { /* continue to error */ }
     }
@@ -169,11 +164,8 @@ export async function GET(req: NextRequest) {
       '&status=eq.confirmed&select=booking_id,op_pass_id,patient_name,doctor_name,specialty,date,time'
     );
     if (Array.isArray(existing) && existing.length > 0) {
-      const e = existing[0];
-      const amountPaid = await getRzpAmount(paymentLinkId);
-      return new NextResponse(
-        quickConfirm(e.booking_id, amountPaid),
-        { status: 200, headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' } }
+      console.log('[payment-callback] Already processed payment:', paymentId, '— redirecting');
+      return NextResponse.redirect('https://wa.me/', 302
       );
     }
   } catch { /* continue */ }
@@ -370,12 +362,9 @@ export async function GET(req: NextRequest) {
         } catch (e) { console.error('[payment-callback] Background WA send error:', e); }
       })();
 
-      // Redirect back to WhatsApp immediately — user gets OP pass via WA message
-      // WhatsApp's in-app browser doesn't render HTML pages reliably
-      return new NextResponse(
-        quickConfirm(referenceId, amountPaid),
-        { status: 200, headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' } }
-      );
+      // 302 redirect to WhatsApp — WhatsApp's in-app browser can't render HTML reliably after UPI app switch
+      console.log('[payment-callback] SUCCESS — booking:', referenceId, 'amount:', amountPaid, '— redirecting to WhatsApp');
+      return NextResponse.redirect('https://wa.me/', 302);
     }
 
     // Prescription payment type
@@ -386,10 +375,7 @@ export async function GET(req: NextRequest) {
         });
       } catch { /* continue */ }
 
-      return new NextResponse(
-        quickConfirm(referenceId, amountPaid),
-        { status: 200, headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' } }
-      );
+      return NextResponse.redirect('https://wa.me/', 302);
     }
 
     return new NextResponse(errorPage('Unknown payment type'), {
