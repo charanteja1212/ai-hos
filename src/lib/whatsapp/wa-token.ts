@@ -10,8 +10,8 @@ const SECRET = new TextEncoder().encode(
   process.env.WA_WEB_TOKEN_SECRET || process.env.NEXTAUTH_SECRET || 'wa-web-fallback-secret-change-me'
 );
 
-/** Token TTL — 15 minutes */
-const TOKEN_TTL = '15m';
+/** Default token TTL — 15 minutes */
+const DEFAULT_TOKEN_TTL = '15m';
 
 export interface WaTokenPayload extends JWTPayload {
   phone: string;
@@ -25,12 +25,13 @@ export interface WaTokenPayload extends JWTPayload {
 export async function generateWaToken(
   phone: string,
   tenantId: string,
-  patientName?: string
+  patientName?: string,
+  ttl?: string
 ): Promise<string> {
   return new SignJWT({ phone, tenantId, patientName })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime(TOKEN_TTL)
+    .setExpirationTime(ttl || DEFAULT_TOKEN_TTL)
     .sign(SECRET);
 }
 

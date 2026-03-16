@@ -5,9 +5,8 @@ import { useWaAuth } from "@/hooks/use-wa-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
-  ArrowLeft,
+  ChevronLeft,
   CalendarDays,
   CheckCircle2,
   Clock,
@@ -21,7 +20,6 @@ import {
   Mail,
   Users,
   MapPin,
-  Heart,
 } from "lucide-react";
 
 type Step = "register" | "specialty" | "doctor" | "date" | "slot" | "confirm" | "success";
@@ -75,26 +73,6 @@ const STEP_LABELS: Record<Step, string> = {
   confirm: "Confirm",
   success: "Done",
 };
-
-const SPECIALTY_ICONS: Record<string, string> = {
-  "General Medicine": "from-blue-400 to-blue-600",
-  "Cardiology": "from-red-400 to-red-600",
-  "Dermatology": "from-pink-400 to-pink-600",
-  "ENT": "from-teal-400 to-teal-600",
-  "Gastroenterology": "from-amber-400 to-amber-600",
-  "Gynecology": "from-rose-400 to-rose-600",
-  "Neurology": "from-purple-400 to-purple-600",
-  "Ophthalmology": "from-cyan-400 to-cyan-600",
-  "Orthopedics": "from-orange-400 to-orange-600",
-  "Pediatrics": "from-green-400 to-green-600",
-  "Psychiatry": "from-indigo-400 to-indigo-600",
-  "Pulmonology": "from-sky-400 to-sky-600",
-  "Urology": "from-yellow-400 to-yellow-600",
-};
-
-function getSpecialtyGradient(name: string): string {
-  return SPECIALTY_ICONS[name] || "from-blue-400 to-indigo-600";
-}
 
 const RELATIONSHIP_OPTIONS = [
   { value: "PARENT", label: "Parent" },
@@ -299,9 +277,7 @@ export default function BookPage() {
   if (authLoading) return (
     <div className="flex items-center justify-center py-20">
       <div className="flex flex-col items-center gap-3">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
-          <Loader2 className="w-6 h-6 animate-spin text-white" />
-        </div>
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
         <p className="text-sm text-muted-foreground font-medium">Loading...</p>
       </div>
     </div>
@@ -313,38 +289,44 @@ export default function BookPage() {
   const displaySteps = STEPS.filter(s => s !== "success");
 
   return (
-    <div className="min-h-screen pb-8">
-      {/* Step Progress Bar */}
+    <div className="min-h-screen pb-8 px-4">
+      {/* Progress Bar */}
       {step !== "success" && (
-        <div className="mb-8 px-2">
-          <div className="flex items-start justify-between relative">
+        <div className="mb-6 pt-2">
+          <div className="flex items-center justify-between relative">
+            {/* Connector line */}
+            <div className="absolute top-[14px] left-[14px] right-[14px] h-[2px] bg-slate-200 dark:bg-slate-700" />
+            <div
+              className="absolute top-[14px] left-[14px] h-[2px] bg-blue-600 transition-all duration-500"
+              style={{ width: `calc(${(Math.min(currentStepIndex, displaySteps.length - 1) / (displaySteps.length - 1)) * 100}% - 28px)` }}
+            />
             {displaySteps.map((s, i) => {
               const isActive = currentStepIndex === i;
               const isComplete = currentStepIndex > i;
               return (
-                <div key={s} className="flex flex-col items-center relative z-10" style={{ flex: i < displaySteps.length - 1 ? 1 : "none" }}>
+                <div key={s} className="flex flex-col items-center relative z-10">
                   <div className="relative">
                     <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500 ${
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300 ${
                         isComplete
-                          ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/25"
+                          ? "bg-blue-600 text-white"
                           : isActive
-                          ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/40 ring-4 ring-blue-500/20"
+                          ? "bg-white dark:bg-slate-900 border-2 border-blue-600 text-blue-600"
                           : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
                       }`}
                     >
                       {isComplete ? (
-                        <CheckCircle2 className="w-4.5 h-4.5" />
+                        <CheckCircle2 className="w-4 h-4" />
                       ) : (
                         <span>{i + 1}</span>
                       )}
                     </div>
                     {isActive && (
-                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 animate-ping opacity-20" />
+                      <div className="absolute inset-0 rounded-full border-2 border-blue-600 animate-ping opacity-20" />
                     )}
                   </div>
                   <span
-                    className={`text-[10px] mt-2 font-semibold tracking-wide uppercase transition-colors duration-300 ${
+                    className={`text-[10px] mt-1.5 font-medium transition-colors duration-300 ${
                       isActive
                         ? "text-blue-600 dark:text-blue-400"
                         : isComplete
@@ -357,112 +339,92 @@ export default function BookPage() {
                 </div>
               );
             })}
-            {/* Connector lines */}
-            <div className="absolute top-[18px] left-0 right-0 flex items-center z-0 px-[18px]">
-              {displaySteps.slice(0, -1).map((_, i) => (
-                <div key={i} className="flex-1 h-[2px] mx-0">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      currentStepIndex > i
-                        ? "bg-gradient-to-r from-blue-500 to-indigo-600"
-                        : "bg-slate-200 dark:bg-slate-700"
-                    }`}
-                  />
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       )}
 
       {/* Header with Back Button */}
-      <div className="flex items-center gap-3 mb-6">
-        {step !== "register" && step !== "specialty" && step !== "success" && (
-          <button
-            onClick={goBack}
-            className="w-11 h-11 rounded-2xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/40 flex items-center justify-center shrink-0 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
-          >
-            <ArrowLeft className="w-5 h-5 text-slate-700 dark:text-slate-200" />
-          </button>
-        )}
-        <div className="min-w-0">
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-            {isDependent ? "Book for Family Member" : "Book Appointment"}
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            {step === "success" ? "Booking confirmed" : stepLabel(step)}
-          </p>
+      {step !== "success" && (
+        <div className="flex items-center gap-3 mb-4">
+          {step !== "register" && step !== "specialty" && (
+            <button
+              onClick={goBack}
+              className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center shrink-0 active:scale-95 transition-transform"
+            >
+              <ChevronLeft className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+            </button>
+          )}
+          <div className="min-w-0">
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {isDependent ? "Book for Family Member" : "Book Appointment"}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {stepLabel(step)}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Error Banner */}
       {error && (
-        <div className="mb-5 p-4 bg-red-50/80 dark:bg-red-950/30 backdrop-blur-sm border border-red-200/60 dark:border-red-800/50 rounded-2xl text-sm text-red-600 dark:text-red-400 flex items-start gap-3" style={{ animation: "fadeSlideIn 0.3s ease-out both" }}>
-          <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center shrink-0">
-            <AlertCircle className="w-4 h-4" />
-          </div>
-          <div className="pt-1">{error}</div>
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-600 dark:text-red-400 flex items-center gap-3">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
       {/* ============ STEP 1: REGISTER ============ */}
       {step === "register" && (
-        <div
-          className="rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/40 shadow-lg shadow-slate-200/50 dark:shadow-black/20 overflow-hidden"
-          style={{ animation: "fadeSlideIn 0.4s ease-out both" }}
-        >
-          <div className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/25">
-                <User className="w-5 h-5 text-white" />
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-4">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center">
+                <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                <h2 className="text-base font-semibold text-slate-900 dark:text-white">
                   {!isRegistered ? "Your Details" : "Patient Details"}
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Fill in the information below</p>
+                <p className="text-xs text-muted-foreground">Fill in the information below</p>
               </div>
             </div>
 
-            <div className="space-y-5">
+            <div className="space-y-4">
               {!isRegistered && (
                 <>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Full Name *</Label>
-                    <div className="relative">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <Input
-                        value={patientName}
-                        onChange={(e) => setPatientName(e.target.value)}
-                        placeholder="Enter your name"
-                        className="pl-11 h-12 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
-                      />
-                    </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Full Name *</Label>
+                    <Input
+                      value={patientName}
+                      onChange={(e) => setPatientName(e.target.value)}
+                      placeholder="Enter your name"
+                      className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-blue-500 focus:border-blue-500"
+                    />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Age</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Age</Label>
                       <Input
                         type="number"
                         value={patientAge}
                         onChange={(e) => setPatientAge(e.target.value)}
                         placeholder="Age"
-                        className="h-12 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                        className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Gender</Label>
-                      <div className="flex gap-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Gender</Label>
+                      <div className="flex gap-1.5">
                         {GENDER_OPTIONS.map((g) => (
                           <button
                             key={g.value}
                             type="button"
                             onClick={() => setPatientGender(g.value)}
-                            className={`flex-1 h-12 rounded-xl text-sm font-medium transition-all duration-200 ${
+                            className={`flex-1 h-12 rounded-full text-sm font-medium transition-colors ${
                               patientGender === g.value
-                                ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/25"
-                                : "bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-300 dark:hover:border-blue-600"
+                                ? "bg-blue-600 text-white"
+                                : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
                             }`}
                           >
                             {g.label}
@@ -472,16 +434,16 @@ export default function BookPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Email</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email</Label>
                     <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <Input
                         type="email"
                         value={patientEmail}
                         onChange={(e) => setPatientEmail(e.target.value)}
                         placeholder="Optional"
-                        className="pl-11 h-12 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                        className="pl-10 h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
                   </div>
@@ -490,30 +452,25 @@ export default function BookPage() {
 
               {isDependent && (
                 <>
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                      <div className="w-full border-t border-slate-200 dark:border-slate-700" />
-                    </div>
-                    <div className="relative flex justify-center">
-                      <span className="bg-white dark:bg-slate-900 px-3 flex items-center gap-2">
-                        <Users className="w-4 h-4 text-indigo-500" />
-                        <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">Patient Information</span>
-                      </span>
+                  <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Users className="w-4 h-4 text-blue-600" />
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Patient Information</span>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Relationship *</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Relationship *</Label>
                     <div className="flex flex-wrap gap-2">
                       {RELATIONSHIP_OPTIONS.map((r) => (
                         <button
                           key={r.value}
                           type="button"
                           onClick={() => setRelationship(r.value)}
-                          className={`px-5 h-10 rounded-xl text-sm font-medium transition-all duration-200 ${
+                          className={`px-4 h-10 rounded-full text-sm font-medium transition-colors ${
                             relationship === r.value
-                              ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/25"
-                              : "bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-indigo-600"
+                              ? "bg-blue-600 text-white"
+                              : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
                           }`}
                         >
                           {r.label}
@@ -522,42 +479,39 @@ export default function BookPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Patient Name *</Label>
-                    <div className="relative">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <Input
-                        value={depName}
-                        onChange={(e) => setDepName(e.target.value)}
-                        placeholder="Patient's full name"
-                        className="pl-11 h-12 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
-                      />
-                    </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Patient Name *</Label>
+                    <Input
+                      value={depName}
+                      onChange={(e) => setDepName(e.target.value)}
+                      placeholder="Patient's full name"
+                      className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-blue-500 focus:border-blue-500"
+                    />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Age</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Age</Label>
                       <Input
                         type="number"
                         value={depAge}
                         onChange={(e) => setDepAge(e.target.value)}
                         placeholder="Age"
-                        className="h-12 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                        className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Gender</Label>
-                      <div className="flex gap-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Gender</Label>
+                      <div className="flex gap-1.5">
                         {GENDER_OPTIONS.map((g) => (
                           <button
                             key={g.value}
                             type="button"
                             onClick={() => setDepGender(g.value)}
-                            className={`flex-1 h-12 rounded-xl text-sm font-medium transition-all duration-200 ${
+                            className={`flex-1 h-12 rounded-full text-sm font-medium transition-colors ${
                               depGender === g.value
-                                ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/25"
-                                : "bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-300 dark:hover:border-blue-600"
+                                ? "bg-blue-600 text-white"
+                                : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
                             }`}
                           >
                             {g.label}
@@ -569,16 +523,14 @@ export default function BookPage() {
                 </>
               )}
 
-              <div className="pt-2">
-                <Button
-                  onClick={handleRegister}
-                  disabled={loading}
-                  className="w-full h-14 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold text-base shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all duration-200 border-0"
-                >
-                  {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
-                  Continue
-                </Button>
-              </div>
+              <Button
+                onClick={handleRegister}
+                disabled={loading}
+                className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold border-0"
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
+                Continue
+              </Button>
             </div>
           </div>
         </div>
@@ -586,33 +538,29 @@ export default function BookPage() {
 
       {/* ============ STEP 2: SPECIALTY ============ */}
       {step === "specialty" && (
-        <div style={{ animation: "fadeSlideIn 0.4s ease-out both" }}>
+        <div>
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-              <p className="text-sm text-slate-500">Loading departments...</p>
+              <Loader2 className="w-7 h-7 animate-spin text-blue-600" />
+              <p className="text-sm text-muted-foreground">Loading departments...</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
-              {specialties.map((spec, index) => {
-                const gradient = getSpecialtyGradient(spec.specialty);
-                return (
-                  <button
-                    key={spec.specialty}
-                    onClick={() => handleSpecialtySelect(spec)}
-                    className="group text-left p-4 rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/40 shadow-sm hover:shadow-xl hover:-translate-y-1 active:scale-[0.97] transition-all duration-300"
-                    style={{ animationDelay: `${index * 50}ms`, animation: "fadeSlideIn 0.4s ease-out both" }}
-                  >
-                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-3 shadow-md group-hover:shadow-lg transition-shadow duration-300`}>
-                      <Stethoscope className="w-5.5 h-5.5 text-white" />
-                    </div>
-                    <p className="font-semibold text-sm leading-tight text-slate-900 dark:text-white">{spec.specialty}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
-                      {spec.doctor_count} doctor{spec.doctor_count > 1 ? "s" : ""}
-                    </p>
-                  </button>
-                );
-              })}
+              {specialties.map((spec) => (
+                <button
+                  key={spec.specialty}
+                  onClick={() => handleSpecialtySelect(spec)}
+                  className="text-left p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-blue-300 dark:hover:border-blue-700 active:scale-[0.97] transition-all"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center mb-3">
+                    <Stethoscope className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <p className="font-medium text-sm text-slate-900 dark:text-white">{spec.specialty}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {spec.doctor_count} doctor{spec.doctor_count > 1 ? "s" : ""}
+                  </p>
+                </button>
+              ))}
             </div>
           )}
         </div>
@@ -620,32 +568,28 @@ export default function BookPage() {
 
       {/* ============ STEP 3: DOCTOR ============ */}
       {step === "doctor" && selectedSpecialty && (
-        <div style={{ animation: "fadeSlideIn 0.4s ease-out both" }}>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-            Doctors in <span className="font-semibold text-slate-900 dark:text-white">{selectedSpecialty.specialty}</span>
+        <div>
+          <p className="text-sm text-muted-foreground mb-3">
+            Doctors in <span className="font-medium text-slate-900 dark:text-white">{selectedSpecialty.specialty}</span>
           </p>
           <div className="space-y-3">
-            {selectedSpecialty.doctors.map((doc, index) => {
+            {selectedSpecialty.doctors.map((doc) => {
               const initials = doc.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
-              const gradient = getSpecialtyGradient(selectedSpecialty.specialty);
               return (
                 <button
                   key={doc.doctor_id}
                   onClick={() => handleDoctorSelect(doc)}
-                  className="w-full text-left p-4 rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/40 shadow-sm hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 group"
-                  style={{ animationDelay: `${index * 80}ms`, animation: "fadeSlideIn 0.4s ease-out both" }}
+                  className="w-full text-left p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-blue-300 dark:hover:border-blue-700 active:scale-[0.98] transition-all"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow duration-300`}>
-                      <span className="text-white font-bold text-base">{initials}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center shrink-0">
+                      <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm">{initials}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-900 dark:text-white text-[15px]">Dr. {doc.name}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{selectedSpecialty.specialty}</p>
+                      <p className="font-medium text-slate-900 dark:text-white">Dr. {doc.name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{selectedSpecialty.specialty}</p>
                     </div>
-                    <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
-                      <ArrowLeft className="w-4 h-4 rotate-180 text-slate-400 group-hover:text-blue-500 transition-colors" />
-                    </div>
+                    <ChevronLeft className="w-4 h-4 rotate-180 text-slate-400 shrink-0" />
                   </div>
                 </button>
               );
@@ -656,34 +600,34 @@ export default function BookPage() {
 
       {/* ============ STEP 4: DATE ============ */}
       {step === "date" && (
-        <div style={{ animation: "fadeSlideIn 0.4s ease-out both" }}>
+        <div>
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-              <p className="text-sm text-slate-500">Checking availability...</p>
+              <Loader2 className="w-7 h-7 animate-spin text-blue-600" />
+              <p className="text-sm text-muted-foreground">Checking availability...</p>
             </div>
           ) : availableDates.length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center shadow-inner">
-                <CalendarDays className="w-10 h-10 text-slate-400" />
+              <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                <CalendarDays className="w-8 h-8 text-slate-400" />
               </div>
-              <p className="text-slate-600 dark:text-slate-300 font-semibold mb-1">No Available Dates</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">No slots in the next 7 days</p>
+              <p className="font-medium text-slate-900 dark:text-white mb-1">No Available Dates</p>
+              <p className="text-sm text-muted-foreground">No slots in the next 7 days</p>
               <Button
                 variant="outline"
                 onClick={() => setStep("specialty")}
-                className="mt-5 rounded-xl h-12 px-6 font-medium"
+                className="mt-4 rounded-xl h-12 px-6 font-medium"
               >
                 Try another department
               </Button>
             </div>
           ) : (
             <>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                Available dates for <span className="font-semibold text-slate-900 dark:text-white">Dr. {selectedDoctor?.name}</span>
+              <p className="text-sm text-muted-foreground mb-3">
+                Available dates for <span className="font-medium text-slate-900 dark:text-white">Dr. {selectedDoctor?.name}</span>
               </p>
-              <div className="flex gap-3 overflow-x-auto pb-3 -mx-1 px-1 snap-x snap-mandatory scrollbar-hide">
-                {availableDates.map((d, index) => {
+              <div className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
+                {availableDates.map((d) => {
                   const dateObj = new Date(d.date_key);
                   const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" });
                   const dayNum = dateObj.getDate();
@@ -694,27 +638,26 @@ export default function BookPage() {
                     <button
                       key={d.date_key}
                       onClick={() => handleDateSelect(d)}
-                      className={`flex-shrink-0 snap-center w-20 py-4 px-2 rounded-2xl text-center transition-all duration-300 active:scale-95 ${
+                      className={`flex-shrink-0 snap-center w-16 py-3 rounded-xl text-center transition-all active:scale-95 ${
                         isSelected
-                          ? "bg-gradient-to-b from-blue-500 to-indigo-600 text-white shadow-xl shadow-blue-500/30 scale-105"
+                          ? "bg-blue-600 text-white shadow-sm"
                           : isToday
-                          ? "bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-2 border-blue-300 dark:border-blue-600 shadow-sm"
-                          : "bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/40 shadow-sm hover:shadow-lg hover:-translate-y-0.5"
+                          ? "bg-white dark:bg-slate-900 border-2 border-blue-500 dark:border-blue-500"
+                          : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
                       }`}
-                      style={{ animationDelay: `${index * 60}ms`, animation: "fadeSlideIn 0.3s ease-out both" }}
                     >
-                      <p className={`text-[11px] font-semibold uppercase tracking-wider ${isSelected ? "text-blue-100" : isToday ? "text-blue-500" : "text-slate-400"}`}>
+                      <p className={`text-[10px] font-medium uppercase tracking-wide ${isSelected ? "text-blue-100" : isToday ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"}`}>
                         {isToday ? "Today" : dayName}
                       </p>
-                      <p className={`text-2xl font-bold my-1 ${isSelected ? "text-white" : "text-slate-900 dark:text-white"}`}>{dayNum}</p>
-                      <p className={`text-[11px] font-medium ${isSelected ? "text-blue-100" : "text-slate-500"}`}>{month}</p>
-                      <Badge className={`text-[10px] mt-2 h-5 px-2 font-semibold ${
+                      <p className={`text-xl font-semibold my-0.5 ${isSelected ? "text-white" : "text-slate-900 dark:text-white"}`}>{dayNum}</p>
+                      <p className={`text-[10px] font-medium ${isSelected ? "text-blue-100" : "text-muted-foreground"}`}>{month}</p>
+                      <div className={`text-[9px] font-semibold mt-1.5 mx-auto w-fit px-1.5 py-0.5 rounded-full ${
                         isSelected
-                          ? "bg-white/20 text-white border-white/30 hover:bg-white/30"
-                          : "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100"
+                          ? "bg-white/20 text-white"
+                          : "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
                       }`}>
                         {d.available_count}
-                      </Badge>
+                      </div>
                     </button>
                   );
                 })}
@@ -726,27 +669,27 @@ export default function BookPage() {
 
       {/* ============ STEP 5: SLOT ============ */}
       {step === "slot" && selectedDate && (
-        <div style={{ animation: "fadeSlideIn 0.4s ease-out both" }}>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
-            Available times for <span className="font-semibold text-slate-900 dark:text-white">{selectedDate.date}</span>
+        <div>
+          <p className="text-sm text-muted-foreground mb-4">
+            Available times for <span className="font-medium text-slate-900 dark:text-white">{selectedDate.date}</span>
           </p>
           {(() => {
             const slots = slotsByDate[selectedDate.date];
             if (!slots) return (
               <div className="text-center py-12">
-                <p className="text-slate-500 font-medium">No slots available</p>
+                <p className="text-muted-foreground font-medium">No slots available</p>
               </div>
             );
             return (
-              <div className="space-y-6">
+              <div className="space-y-5">
                 {slots.morning.length > 0 && (
-                  <SlotGroup label="Morning" icon={<Sun className="w-4.5 h-4.5 text-amber-500" />} gradient="from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20" borderColor="border-amber-200/60 dark:border-amber-800/30" slots={slots.morning} selected={selectedSlot} onSelect={handleSlotSelect} />
+                  <SlotGroup label="Morning" icon={<Sun className="w-4 h-4 text-amber-500" />} slots={slots.morning} selected={selectedSlot} onSelect={handleSlotSelect} />
                 )}
                 {slots.afternoon.length > 0 && (
-                  <SlotGroup label="Afternoon" icon={<Sunset className="w-4.5 h-4.5 text-orange-500" />} gradient="from-orange-50 to-rose-50 dark:from-orange-950/20 dark:to-rose-950/20" borderColor="border-orange-200/60 dark:border-orange-800/30" slots={slots.afternoon} selected={selectedSlot} onSelect={handleSlotSelect} />
+                  <SlotGroup label="Afternoon" icon={<Sunset className="w-4 h-4 text-orange-500" />} slots={slots.afternoon} selected={selectedSlot} onSelect={handleSlotSelect} />
                 )}
                 {slots.evening.length > 0 && (
-                  <SlotGroup label="Evening" icon={<Moon className="w-4.5 h-4.5 text-indigo-500" />} gradient="from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20" borderColor="border-indigo-200/60 dark:border-indigo-800/30" slots={slots.evening} selected={selectedSlot} onSelect={handleSlotSelect} />
+                  <SlotGroup label="Evening" icon={<Moon className="w-4 h-4 text-indigo-500" />} slots={slots.evening} selected={selectedSlot} onSelect={handleSlotSelect} />
                 )}
               </div>
             );
@@ -756,22 +699,11 @@ export default function BookPage() {
 
       {/* ============ STEP 6: CONFIRM ============ */}
       {step === "confirm" && (
-        <div
-          className="rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/40 shadow-lg shadow-slate-200/50 dark:shadow-black/20 overflow-hidden"
-          style={{ animation: "fadeSlideIn 0.4s ease-out both" }}
-        >
-          <div className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/25">
-                <CheckCircle2 className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Review Appointment</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Please confirm the details below</p>
-              </div>
-            </div>
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-4">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-4">Review Appointment</h2>
 
-            <div className="space-y-3 mb-7">
+            <div className="divide-y divide-slate-200 dark:divide-slate-800 mb-5">
               <ConfirmRow icon={<User className="w-4 h-4" />} label="Patient" value={isDependent ? depName : patientName} />
               <ConfirmRow icon={<Stethoscope className="w-4 h-4" />} label="Doctor" value={`Dr. ${selectedDoctor?.name}`} />
               <ConfirmRow icon={<MapPin className="w-4 h-4" />} label="Department" value={selectedSpecialty?.specialty || ""} />
@@ -779,11 +711,11 @@ export default function BookPage() {
               <ConfirmRow icon={<Clock className="w-4 h-4" />} label="Time" value={selectedSlot?.time || ""} />
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Button
                 onClick={handleConfirm}
                 disabled={loading}
-                className="w-full h-14 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold text-base shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all duration-200 border-0"
+                className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold border-0"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle2 className="w-5 h-5 mr-2" />}
                 Confirm & Book
@@ -791,7 +723,7 @@ export default function BookPage() {
               <Button
                 variant="outline"
                 onClick={goBack}
-                className="w-full h-12 rounded-xl border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800"
+                className="w-full h-12 rounded-xl border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-medium"
               >
                 Change Time
               </Button>
@@ -805,21 +737,8 @@ export default function BookPage() {
         <SuccessCard bookingResult={bookingResult} auth={auth} />
       )}
 
-      {/* Animation Keyframes + Scrollbar Hide */}
+      {/* Scrollbar Hide */}
       <style>{`
-        @keyframes fadeSlideIn {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pulseGlow {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.3); }
-          50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
-        }
-        @keyframes checkBounce {
-          0% { transform: scale(0); opacity: 0; }
-          50% { transform: scale(1.2); }
-          100% { transform: scale(1); opacity: 1; }
-        }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
@@ -831,34 +750,28 @@ export default function BookPage() {
 
 function ErrorState({ message }: { message: string }) {
   return (
-    <div className="text-center py-16" style={{ animation: "fadeSlideIn 0.5s ease-out both" }}>
-      <div className="w-20 h-20 mx-auto mb-5 rounded-3xl bg-gradient-to-br from-red-100 to-rose-100 dark:from-red-900/30 dark:to-rose-900/30 flex items-center justify-center shadow-lg shadow-red-100/50 dark:shadow-none">
-        <AlertCircle className="w-10 h-10 text-red-400" />
+    <div className="text-center py-16 px-4">
+      <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-red-50 dark:bg-red-950/30 flex items-center justify-center">
+        <AlertCircle className="w-8 h-8 text-red-400" />
       </div>
-      <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Link Expired</h2>
-      <p className="text-sm text-slate-500 dark:text-slate-400">{message}</p>
-      <p className="text-xs text-slate-400 dark:text-slate-500 mt-5">
+      <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Link Expired</h2>
+      <p className="text-sm text-muted-foreground">{message}</p>
+      <p className="text-xs text-slate-400 dark:text-slate-500 mt-4">
         Please go back to WhatsApp and type &quot;menu&quot; to get a new link.
       </p>
-      <style>{`
-        @keyframes fadeSlideIn {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 }
 
 function ConfirmRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700/30">
-      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 border border-blue-100/60 dark:border-blue-800/30">
+    <div className="flex items-center gap-3 p-3">
+      <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{label}</p>
-        <p className="font-semibold text-sm text-slate-900 dark:text-white truncate mt-0.5">{value}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="font-medium text-sm text-slate-900 dark:text-white truncate">{value}</p>
       </div>
     </div>
   );
@@ -867,43 +780,38 @@ function ConfirmRow({ icon, label, value }: { icon: React.ReactNode; label: stri
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between items-center text-sm py-1.5">
-      <span className="text-slate-500 dark:text-slate-400 font-medium">{label}</span>
-      <span className="font-semibold text-slate-900 dark:text-white text-right max-w-[55%] truncate">{value}</span>
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-slate-900 dark:text-white text-right max-w-[55%] truncate">{value}</span>
     </div>
   );
 }
 
-function SlotGroup({ label, icon, gradient, borderColor, slots, selected, onSelect }: {
+function SlotGroup({ label, icon, slots, selected, onSelect }: {
   label: string;
   icon: React.ReactNode;
-  gradient: string;
-  borderColor: string;
   slots: Slot[];
   selected: Slot | null;
   onSelect: (s: Slot) => void;
 }) {
   return (
-    <div className={`rounded-2xl bg-gradient-to-br ${gradient} border ${borderColor} p-4`}>
-      <div className="flex items-center gap-2.5 mb-3">
-        <div className="w-8 h-8 rounded-xl bg-white/80 dark:bg-slate-800/80 flex items-center justify-center shadow-sm">
-          {icon}
-        </div>
-        <span className="text-sm font-bold text-slate-900 dark:text-white">{label}</span>
-        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-auto">{slots.length} slot{slots.length !== 1 ? "s" : ""}</span>
+    <div>
+      <div className="flex items-center gap-2 mb-2.5">
+        {icon}
+        <span className="text-sm font-medium text-slate-900 dark:text-white">{label}</span>
+        <span className="text-xs text-muted-foreground ml-auto">{slots.length} slot{slots.length !== 1 ? "s" : ""}</span>
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        {slots.map((slot, index) => {
+      <div className="flex flex-wrap gap-2">
+        {slots.map((slot) => {
           const isSelected = selected?.time === slot.time;
           return (
             <button
               key={slot.time}
               onClick={() => onSelect(slot)}
-              className={`py-3 px-2 text-sm font-semibold rounded-xl text-center transition-all duration-200 active:scale-95 ${
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors active:scale-95 ${
                 isSelected
-                  ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 scale-[1.02]"
-                  : "bg-white/90 dark:bg-slate-800/90 border border-white/60 dark:border-slate-600/40 shadow-sm text-slate-700 dark:text-slate-200 hover:shadow-md hover:-translate-y-0.5"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:border-blue-300 dark:hover:border-blue-700"
               }`}
-              style={{ animationDelay: `${index * 40}ms`, animation: "fadeSlideIn 0.3s ease-out both" }}
             >
               {slot.time}
             </button>
@@ -1001,126 +909,114 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
   const isPaid = paymentStatus === "paid";
 
   return (
-    <div
-      className={`rounded-2xl overflow-hidden shadow-lg ${
-        isPaid
-          ? "bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-2 border-emerald-300 dark:border-emerald-700 shadow-emerald-100/50 dark:shadow-emerald-900/20"
-          : "bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-2 border-amber-300 dark:border-amber-700 shadow-amber-100/50 dark:shadow-amber-900/20"
-      }`}
-      style={{ animation: "fadeSlideIn 0.5s ease-out both" }}
-    >
-      <div className="p-6 text-center space-y-5">
-        {/* Status Icon */}
-        <div className="relative inline-flex">
-          <div className={`w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl ${
-            isPaid
-              ? "bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-500/30"
-              : paymentStatus === "checking"
-              ? "bg-gradient-to-br from-amber-400 to-amber-600 shadow-amber-500/30"
-              : "bg-gradient-to-br from-amber-400 to-orange-500 shadow-amber-500/30"
-          }`}>
-            {isPaid ? (
-              <CheckCircle2 className="w-10 h-10 text-white" style={{ animation: "checkBounce 0.5s ease-out both" }} />
-            ) : paymentStatus === "checking" ? (
-              <Loader2 className="w-10 h-10 text-white animate-spin" />
-            ) : (
-              <Clock className="w-10 h-10 text-white" />
-            )}
-          </div>
-          {isPaid && (
-            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-emerald-400 to-emerald-600 animate-ping opacity-20" />
+    <div className="px-4">
+      {/* Status Icon */}
+      <div className="flex justify-center mb-5">
+        <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+          isPaid
+            ? "bg-green-100 dark:bg-green-950/40"
+            : paymentStatus === "checking"
+            ? "bg-blue-100 dark:bg-blue-950/40"
+            : "bg-slate-100 dark:bg-slate-800"
+        }`}>
+          {isPaid ? (
+            <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+          ) : paymentStatus === "checking" ? (
+            <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
+          ) : (
+            <Clock className="w-8 h-8 text-slate-400" />
           )}
         </div>
+      </div>
 
-        {/* Status Text */}
-        <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-            {isPaid
-              ? "Booking Confirmed!"
-              : paymentStatus === "checking"
-              ? "Waiting for Payment..."
-              : "Appointment Reserved"}
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed max-w-xs mx-auto">
-            {isPaid
-              ? "Your appointment has been booked and paid"
-              : paymentStatus === "checking"
-              ? "Pay using the link below, then come back here. This page updates automatically."
-              : "Complete payment to confirm your appointment"}
-          </p>
-        </div>
+      {/* Status Text */}
+      <div className="text-center mb-5">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+          {isPaid
+            ? "Booking Confirmed!"
+            : paymentStatus === "checking"
+            ? "Waiting for Payment..."
+            : "Appointment Reserved"}
+        </h2>
+        <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
+          {isPaid
+            ? "Your appointment has been booked and paid"
+            : paymentStatus === "checking"
+            ? "Pay using the link below, then come back here. This page updates automatically."
+            : "Complete payment to confirm your appointment"}
+        </p>
+      </div>
 
-        {/* Booking Details */}
-        <div className="text-left bg-slate-50/80 dark:bg-slate-800/40 rounded-2xl p-4 space-y-2 border border-slate-100 dark:border-slate-700/30">
-          <InfoRow label="Booking ID" value={bookingResult.booking_id} />
-          <div className="border-t border-slate-200/60 dark:border-slate-700/30" />
-          <InfoRow label="Patient" value={bookingResult.patient_name} />
-          <InfoRow label="Doctor" value={bookingResult.doctor_name} />
-          <InfoRow label="Date" value={bookingResult.date} />
-          <InfoRow label="Time" value={bookingResult.time} />
-          {bookingResult.consultation_fee && (
-            <>
-              <div className="border-t border-slate-200/60 dark:border-slate-700/30" />
-              <InfoRow label="Fee" value={`\u20B9${bookingResult.consultation_fee}`} />
-            </>
-          )}
-        </div>
-
-        {/* Pay Now - Pending */}
-        {bookingResult.payment_link && paymentStatus === "pending" && (
-          <a
-            href={bookingResult.payment_link}
-            onClick={handlePayClick}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-2xl py-4 font-semibold text-base text-center shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all duration-200"
-          >
-            Pay Now {"\u2014"} {"\u20B9"}{bookingResult.consultation_fee || "200"}
-          </a>
-        )}
-
-        {/* Open Payment - Checking */}
-        {bookingResult.payment_link && paymentStatus === "checking" && (
-          <a
-            href={bookingResult.payment_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl py-4 font-semibold text-base text-center shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all duration-200"
-          >
-            Open Payment Page
-          </a>
-        )}
-
-        {/* Checking Status Indicator */}
-        {paymentStatus === "checking" && (
-          <div className="flex items-center justify-center gap-2.5 text-sm text-slate-500 dark:text-slate-400 py-1">
-            <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-            <span>Checking payment status...</span>
-          </div>
-        )}
-
-        {/* Success Message */}
-        {isPaid && (
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            You can close this page. A confirmation with your OP Pass has been sent to your WhatsApp.
-          </p>
-        )}
-
-        {/* Payment Instructions */}
-        {paymentStatus === "checking" && (
-          <div className="text-xs text-left space-y-1.5 bg-blue-50/80 dark:bg-blue-950/30 rounded-2xl p-4 border border-blue-200/60 dark:border-blue-800/40">
-            <p className="font-bold text-blue-700 dark:text-blue-300">After paying, come back to this page.</p>
-            <p className="text-blue-600/80 dark:text-blue-400/80 leading-relaxed">If the payment page shows an error after UPI payment, you can ignore it {"\u2014"} your payment is processed. Check WhatsApp for your OP Pass.</p>
-          </div>
-        )}
-
-        {/* Pending Footer */}
-        {paymentStatus === "pending" && (
-          <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
-            Payment link expires in 20 minutes. After payment, your confirmation will be sent to WhatsApp.
-          </p>
+      {/* Booking Details */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 space-y-2 mb-4">
+        <InfoRow label="Booking ID" value={bookingResult.booking_id} />
+        <div className="border-t border-slate-200 dark:border-slate-800" />
+        <InfoRow label="Patient" value={bookingResult.patient_name} />
+        <InfoRow label="Doctor" value={bookingResult.doctor_name} />
+        <InfoRow label="Date" value={bookingResult.date} />
+        <InfoRow label="Time" value={bookingResult.time} />
+        {bookingResult.consultation_fee && (
+          <>
+            <div className="border-t border-slate-200 dark:border-slate-800" />
+            <InfoRow label="Fee" value={`\u20B9${bookingResult.consultation_fee}`} />
+          </>
         )}
       </div>
+
+      {/* Pay Now - Pending */}
+      {bookingResult.payment_link && paymentStatus === "pending" && (
+        <a
+          href={bookingResult.payment_link}
+          onClick={handlePayClick}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-center leading-[3rem] transition-colors mb-4"
+        >
+          Pay Now {"\u2014"} {"\u20B9"}{bookingResult.consultation_fee || "200"}
+        </a>
+      )}
+
+      {/* Open Payment - Checking */}
+      {bookingResult.payment_link && paymentStatus === "checking" && (
+        <a
+          href={bookingResult.payment_link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-center leading-[3rem] transition-colors mb-4"
+        >
+          Open Payment Page
+        </a>
+      )}
+
+      {/* Checking Status Indicator */}
+      {paymentStatus === "checking" && (
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-1 mb-3">
+          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+          <span>Checking payment status...</span>
+        </div>
+      )}
+
+      {/* Success Message */}
+      {isPaid && (
+        <p className="text-xs text-muted-foreground text-center">
+          You can close this page. A confirmation with your OP Pass has been sent to your WhatsApp.
+        </p>
+      )}
+
+      {/* Payment Instructions */}
+      {paymentStatus === "checking" && (
+        <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-800 p-3 text-xs space-y-1">
+          <p className="font-semibold text-blue-700 dark:text-blue-300">After paying, come back to this page.</p>
+          <p className="text-blue-600/80 dark:text-blue-400/80 leading-relaxed">If the payment page shows an error after UPI payment, you can ignore it {"\u2014"} your payment is processed. Check WhatsApp for your OP Pass.</p>
+        </div>
+      )}
+
+      {/* Pending Footer */}
+      {paymentStatus === "pending" && (
+        <p className="text-xs text-slate-400 dark:text-slate-500 text-center leading-relaxed">
+          Payment link expires in 20 minutes. After payment, your confirmation will be sent to WhatsApp.
+        </p>
+      )}
     </div>
   );
 }

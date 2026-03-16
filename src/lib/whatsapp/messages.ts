@@ -82,23 +82,6 @@ export function buildMessagePayloads(
   const payloads: any[] = [];
   let sentType = 'text';
 
-  // Check for list menu marker first
-  const listMenuRegex = /\[LIST_MENU:([\s\S]+)\]$/;
-  const listMatch = listMenuRegex.exec(aiReply);
-
-  if (listMatch) {
-    const bodyText = truncate(aiReply.substring(0, listMatch.index).trim(), 1024);
-    try {
-      const listData = JSON.parse(listMatch[1]);
-      payloads.push(buildListMessage(toPhone, bodyText, listData));
-      sentType = 'list';
-    } catch {
-      payloads.push(buildTextMessage(toPhone, aiReply.replace(listMenuRegex, '').trim()));
-      sentType = 'text';
-    }
-    return { payloads, sentType };
-  }
-
   const buttonRegex = /\[BUTTONS:([^\]]+)\]/;
   const btnMatch = buttonRegex.exec(aiReply);
 
