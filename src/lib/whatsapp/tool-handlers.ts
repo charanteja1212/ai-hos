@@ -489,7 +489,7 @@ export async function bookAppointment(args: any): Promise<any> {
   const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const dateObj = new Date(Date.UTC(yr, mo - 1, dy, 12, 0, 0));
   const formattedDate = dayNames[dateObj.getUTCDay()] + ', ' + dy + ' ' + months[mo - 1] + ' ' + yr;
-  const consultationFee = 200;
+  const consultationFee = 10;
 
   // Check OP Pass
   let hasValidPass = false;
