@@ -227,12 +227,12 @@ export async function checkAvailability7Days(args: any): Promise<any> {
         '&leave_date=gte.' + dates[0] + '&leave_date=lte.' + dates[6] + '&select=leave_date'),
       sbGet('/appointments?doctor_id=eq.' + encodeURIComponent(doctorId) +
         '&date=gte.' + dates[0] + '&date=lte.' + dates[6] +
-        '&status=in.(confirmed,pending_payment,completed)' +
+        '&or=(status.in.(confirmed,completed),and(status.eq.pending_payment,locked_until.gt.' + new Date().toISOString() + '))' +
         (excludeApptId ? '&booking_id=neq.' + encodeURIComponent(excludeApptId) : '') +
         '&select=date,time'),
-      patientPhone ? sbGet('/appointments?or=(patient_phone.eq.' + patientPhone +
-        ',patient_phone.eq.%2B' + patientPhone + ')&date=gte.' + dates[0] +
-        '&date=lte.' + dates[6] + '&status=in.(confirmed,pending_payment,completed)' +
+      patientPhone ? sbGet('/appointments?patient_phone=in.(' + patientPhone + ',%2B' + patientPhone + ')' +
+        '&date=gte.' + dates[0] + '&date=lte.' + dates[6] +
+        '&or=(status.in.(confirmed,completed),and(status.eq.pending_payment,locked_until.gt.' + new Date().toISOString() + '))' +
         (excludeApptId ? '&booking_id=neq.' + encodeURIComponent(excludeApptId) : '') +
         '&select=date,time') : Promise.resolve([]),
       sbGet('/slot_locks?doctor_id=eq.' + encodeURIComponent(doctorId) +
@@ -463,12 +463,12 @@ export async function bookAppointment(args: any): Promise<any> {
     return { success: false, error: 'Could not lock slot: ' + msg };
   }
 
-  // Check doctor conflicts
+  // Check doctor conflicts (only count confirmed/completed, or pending_payment with active lock)
   try {
     const conflicts = await sbGet(
       '/appointments?doctor_id=eq.' + encodeURIComponent(doctorId) +
       '&date=eq.' + dateStr + '&time=eq.' + encodeURIComponent(time) +
-      '&status=in.(confirmed,pending_payment,completed)' +
+      '&or=(status.in.(confirmed,completed),and(status.eq.pending_payment,locked_until.gt.' + new Date().toISOString() + '))' +
       (excludeApptId ? '&booking_id=neq.' + encodeURIComponent(excludeApptId) : '') +
       '&select=booking_id'
     );
@@ -491,6 +491,7 @@ export async function bookAppointment(args: any): Promise<any> {
     booked_by_whatsapp_number: bookedBy || phone,
     relationship_to_patient: relationship, source,
     tenant_id: tenantId, reschedule_count: 0,
+    locked_until: lockExpiry.toISOString(),
   };
 
   try {
