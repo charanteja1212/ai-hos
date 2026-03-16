@@ -12,7 +12,6 @@ import {
   User,
   XCircle,
   ShieldAlert,
-  CalendarX2,
   ArrowLeft,
 } from "lucide-react";
 
@@ -72,10 +71,6 @@ export default function AppointmentsPage() {
   const [cancelledIds, setCancelledIds] = useState<Set<string>>(new Set());
   const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
 
-  const actionParam = typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search).get("action")
-    : null;
-
   const loadAppointments = useCallback(async () => {
     if (!auth) return;
     setLoading(true);
@@ -130,17 +125,8 @@ export default function AppointmentsPage() {
   if (authError) return <ErrorView message={authError} />;
   if (!auth) return null;
 
-  const title = actionParam === "cancel"
-    ? "Cancel Appointment"
-    : actionParam === "reschedule"
-    ? "Reschedule Appointment"
-    : "My Appointments";
-
-  const subtitle = actionParam === "cancel"
-    ? "Select the appointment you want to cancel"
-    : actionParam === "reschedule"
-    ? "Select the appointment you want to reschedule"
-    : "Manage your upcoming visits";
+  const title = "My Appointments";
+  const subtitle = "Manage your upcoming visits";
 
   const activeAppointments = appointments.filter(
     (a) => !cancelledIds.has(a.booking_id) && ["confirmed", "pending_payment"].includes(a.status)
@@ -152,11 +138,7 @@ export default function AppointmentsPage() {
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center shrink-0">
-            {actionParam === "cancel" ? (
-              <CalendarX2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            ) : (
-              <CalendarDays className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            )}
+            <CalendarDays className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h1>
@@ -282,60 +264,58 @@ export default function AppointmentsPage() {
                     </span>
                   </div>
 
-                  {/* Cancel / Reschedule action */}
-                  {(actionParam === "cancel" || actionParam === "reschedule") && (
-                    <div className="border-t border-slate-100 dark:border-slate-800 pt-3 mt-3">
-                      {confirmCancel === appt.booking_id ? (
-                        <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
-                          <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
-                            <ShieldAlert className="w-4 h-4 text-red-500 dark:text-red-400 shrink-0 mt-0.5" />
-                            <div>
-                              <p className="text-sm font-medium text-red-700 dark:text-red-300">
-                                Confirm cancellation
-                              </p>
-                              <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
-                                This action cannot be undone.
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleCancel(appt.booking_id)}
-                              disabled={cancellingId === appt.booking_id}
-                              className="flex-1 h-10 rounded-lg font-medium"
-                            >
-                              {cancellingId === appt.booking_id ? (
-                                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                              ) : (
-                                <XCircle className="w-4 h-4 mr-2" />
-                              )}
-                              Yes, Cancel
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setConfirmCancel(null)}
-                              className="flex-1 h-10 rounded-lg font-medium"
-                            >
-                              Keep it
-                            </Button>
+                  {/* Cancel action — always visible */}
+                  <div className="border-t border-slate-100 dark:border-slate-800 pt-3 mt-3">
+                    {confirmCancel === appt.booking_id ? (
+                      <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                        <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
+                          <ShieldAlert className="w-4 h-4 text-red-500 dark:text-red-400 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                              Confirm cancellation
+                            </p>
+                            <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
+                              This action cannot be undone.
+                            </p>
                           </div>
                         </div>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setConfirmCancel(appt.booking_id)}
-                          className="w-full h-10 rounded-lg text-red-500 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/20 font-medium"
-                        >
-                          <XCircle className="w-4 h-4 mr-2" />
-                          Cancel Appointment
-                        </Button>
-                      )}
-                    </div>
-                  )}
+                        <div className="flex gap-2">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleCancel(appt.booking_id)}
+                            disabled={cancellingId === appt.booking_id}
+                            className="flex-1 h-10 rounded-lg font-medium"
+                          >
+                            {cancellingId === appt.booking_id ? (
+                              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            ) : (
+                              <XCircle className="w-4 h-4 mr-2" />
+                            )}
+                            Yes, Cancel
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setConfirmCancel(null)}
+                            className="flex-1 h-10 rounded-lg font-medium"
+                          >
+                            Keep it
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setConfirmCancel(appt.booking_id)}
+                        className="w-full h-10 rounded-lg text-red-500 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/20 font-medium"
+                      >
+                        <XCircle className="w-4 h-4 mr-2" />
+                        Cancel Appointment
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
