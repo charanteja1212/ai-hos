@@ -68,6 +68,23 @@ function normalizePhone(raw: string): string {
   return String(raw || '').replace(/[^\d]/g, '');
 }
 
+async function sendWA(to: string, text: string, tenantId: string): Promise<void> {
+  if (!to || !text) return;
+  try {
+    const tRows = await sbGet('/tenants?tenant_id=eq.' + encodeURIComponent(tenantId) + '&select=wa_api_url,wa_token');
+    if (!Array.isArray(tRows) || tRows.length === 0) return;
+    const waApiUrl = tRows[0].wa_api_url || '';
+    const waToken = tRows[0].wa_token || '';
+    if (!waApiUrl || !waToken) return;
+    await fetch(waApiUrl, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + waToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messaging_product: 'whatsapp', to, type: 'text', text: { body: text } }),
+      signal: AbortSignal.timeout(15000),
+    });
+  } catch { /* non-critical */ }
+}
+
 function nowIST(): { date: Date; dateStr: string; ms: number } {
   const now = new Date();
   const istMs = now.getTime() + 5.5 * 3600000;
@@ -489,7 +506,23 @@ export async function bookAppointment(args: any): Promise<any> {
   const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const dateObj = new Date(Date.UTC(yr, mo - 1, dy, 12, 0, 0));
   const formattedDate = dayNames[dateObj.getUTCDay()] + ', ' + dy + ' ' + months[mo - 1] + ' ' + yr;
-  const consultationFee = 10;
+
+  // Fetch tenant config for hospital name, consultation fee, and Razorpay credentials
+  let hospitalName = 'Care Hospital';
+  let tenantConsultationFee = 0;
+  let tenantRzpAuth = '';
+  let tenantCallbackUrl = '';
+  try {
+    const tRows = await sbGet('/tenants?tenant_id=eq.' + encodeURIComponent(tenantId) + '&select=hospital_name,consultation_fee,razorpay_auth,razorpay_callback_url');
+    if (Array.isArray(tRows) && tRows.length > 0) {
+      if (tRows[0].hospital_name) hospitalName = tRows[0].hospital_name;
+      if (tRows[0].consultation_fee) tenantConsultationFee = tRows[0].consultation_fee;
+      if (tRows[0].razorpay_auth) tenantRzpAuth = tRows[0].razorpay_auth;
+      if (tRows[0].razorpay_callback_url) tenantCallbackUrl = tRows[0].razorpay_callback_url;
+    }
+  } catch { /* ok */ }
+  const cleanDrName = (doctorName || '').replace(/^Dr\.?\s*/i, '').trim();
+  const consultationFee = tenantConsultationFee || 10;
 
   // Check OP Pass
   let hasValidPass = false;
@@ -537,14 +570,6 @@ export async function bookAppointment(args: any): Promise<any> {
       try { await sbPost('/reminders', reminders); } catch { /* non-critical */ }
     }
   };
-
-  // Fetch hospital name for card
-  let hospitalName = 'Care Hospital';
-  try {
-    const tRows = await sbGet('/tenants?tenant_id=eq.' + encodeURIComponent(tenantId) + '&select=hospital_name');
-    if (Array.isArray(tRows) && tRows.length > 0 && tRows[0].hospital_name) hospitalName = tRows[0].hospital_name;
-  } catch { /* ok */ }
-  const cleanDrName = (doctorName || '').replace(/^Dr\.?\s*/i, '').trim();
 
   // Generate appointment card image via html2img service
   const generateCardImage = async (qrUrl: string, refId: string, passId: string, expiryDisplay: string, amountText: string) => {
@@ -661,14 +686,15 @@ export async function bookAppointment(args: any): Promise<any> {
   let paymentLinkUrl = '';
   let paymentLinkId = '';
   try {
-    const rzpAuth = 'Basic ' + (process.env.RAZORPAY_AUTH || '');
+    const rzpAuth = 'Basic ' + (tenantRzpAuth || process.env.RAZORPAY_AUTH || '');
+    const callbackUrl = tenantCallbackUrl || (process.env.NEXT_PUBLIC_APP_URL || 'https://app.ainewworld.in') + '/api/payment/callback';
     const payload = {
       amount: consultationFee * 100, currency: 'INR', accept_partial: false,
       description: 'Consultation - ' + doctorName + ' (' + specialty + ')',
       customer: { name, contact: '+' + phone },
       notify: { sms: false, email: false }, reminder_enable: false,
       notes: { type: 'appointment', reference_id: bookingId, patient_name: name, patient_phone: phone, doctor_name: doctorName, specialty, appointment_date: formattedDate, appointment_time: time, tenant_id: tenantId },
-      callback_url: (process.env.NEXT_PUBLIC_APP_URL || 'https://app.ainewworld.in') + '/api/payment/callback',
+      callback_url: callbackUrl,
       callback_method: 'get',
       expire_by: Math.floor(Date.now() / 1000) + 1200,
     };
@@ -755,6 +781,18 @@ export async function cancelAppointment(args: any): Promise<any> {
         }
       } catch { /* ok */ }
     }
+
+    // Send WhatsApp confirmation for cancellation
+    const cancelMsg = '*Appointment Cancelled* ❌\n\n'
+      + '*Patient:* ' + (appt.patient_name || 'N/A') + '\n'
+      + '*Doctor:* ' + (appt.doctor_name || 'N/A') + '\n'
+      + '*Date:* ' + (appt.date || 'N/A') + '\n'
+      + '*Time:* ' + (appt.time || 'N/A') + '\n'
+      + '*Booking ID:* ' + bookingId + '\n'
+      + (opPassId && opPassStatus === 'ACTIVE' ? '\nYour OP Pass (' + opPassId + ') is still active until ' + opPassExpiry + '. You can reschedule for free.\n' : '')
+      + '\nType *menu* to book a new appointment.';
+    const notifyPhone = normalizePhone(appt.booked_by_whatsapp_number || appt.patient_phone || senderPhone);
+    sendWA(notifyPhone, cancelMsg, tenantId).catch(() => {});
 
     return {
       success: true, cancelled_booking_id: bookingId, reason,
@@ -992,6 +1030,27 @@ export async function rescheduleAppointment(args: any): Promise<any> {
     try { await sbPatch('/appointments?booking_id=eq.' + encodeURIComponent(oldBookingId), { status: 'cancelled' }); } catch { /* ok */ }
     try { await sbDelete('/slot_locks?booking_id=eq.' + encodeURIComponent(oldBookingId)); } catch { /* ok */ }
     try { await sbPatch('/reminders?id=like.' + encodeURIComponent(oldBookingId) + '*&sent=eq.no', { sent: 'skipped' }); } catch { /* ok */ }
+
+    // Send WhatsApp confirmation for reschedule
+    const reschMsg = hasValidOpPass
+      ? '*Appointment Rescheduled* ✅\n\n'
+        + '*Patient:* ' + (old.patient_name || 'N/A') + '\n'
+        + '*Doctor:* ' + (newDoctorName || 'N/A') + '\n'
+        + '*New Date:* ' + (bookResult.date || 'N/A') + '\n'
+        + '*New Time:* ' + (bookResult.time || 'N/A') + '\n'
+        + '*Booking ID:* ' + newBookingId + '\n'
+        + '*OP Pass:* ' + opPassId + '\n'
+        + '*Reschedules Remaining:* ' + (5 - newRescheduleCount) + '\n'
+        + '\n_Present your OP Pass at reception._'
+      : '*Appointment Rescheduled* 🔄\n\n'
+        + '*Patient:* ' + (old.patient_name || 'N/A') + '\n'
+        + '*Doctor:* ' + (newDoctorName || 'N/A') + '\n'
+        + '*New Date:* ' + (bookResult.date || 'N/A') + '\n'
+        + '*New Time:* ' + (bookResult.time || 'N/A') + '\n'
+        + '*Booking ID:* ' + newBookingId + '\n'
+        + '\nPlease complete payment to confirm your appointment.';
+    const reschNotifyPhone = normalizePhone(old.booked_by_whatsapp_number || old.patient_phone || senderPhone);
+    sendWA(reschNotifyPhone, reschMsg, tenantId).catch(() => {});
 
     return {
       success: true, old_booking_id: oldBookingId, new_booking_id: newBookingId,
