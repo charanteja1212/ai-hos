@@ -334,37 +334,39 @@ export async function GET(req: NextRequest) {
         }
       } catch { /* reminders non-critical */ }
 
-      // Generate card image via html2img
-      const cardImageUrl = await generateCardImage({
-        hospitalName, patientName, cleanDrName, specialty,
-        appointmentDate, appointmentTime, amountPaid,
-        qrUrl, referenceId, opPassId, expiryDisplay,
-      });
+      // Fire-and-forget: generate card + send WA messages in background (don't block HTML response)
+      const bgPatientPhone = patientPhone;
+      const bgBookedBy = bookedBy;
+      (async () => {
+        try {
+          const cardImageUrl = await generateCardImage({
+            hospitalName, patientName, cleanDrName, specialty,
+            appointmentDate, appointmentTime, amountPaid,
+            qrUrl, referenceId, opPassId, expiryDisplay,
+          });
 
-      const isCard = cardImageUrl !== qrUrl;
-      const shortCaption = '*' + hospitalName + '*\nAppointment Confirmed\n\n*Amount Paid:* \u20B9' + amountPaid + '\n*Booking ID:* ' + referenceId + '\n*Valid Until:* ' + expiryDisplay + '\n\n_Present this digital pass at reception._';
-      const detailedCaption = '*' + hospitalName + '*\nAppointment Confirmed\n\n*Patient:* ' + patientName + '\n*Doctor:* Dr. ' + cleanDrName + '\n*Department:* ' + specialty + '\n*Date:* ' + appointmentDate + '\n*Time:* ' + appointmentTime + '\n\n*Booking ID:* ' + referenceId + '\n*OP Pass:* ' + opPassId + '\n*Valid Until:* ' + expiryDisplay + '\n*Paid:* \u20B9' + amountPaid + '\n\n_Present this QR code at reception._\n_Your OP Pass is valid for 15 days._';
-      const caption = isCard ? shortCaption : detailedCaption;
+          const isCard = cardImageUrl !== qrUrl;
+          const shortCaption = '*' + hospitalName + '*\nAppointment Confirmed\n\n*Amount Paid:* \u20B9' + amountPaid + '\n*Booking ID:* ' + referenceId + '\n*Valid Until:* ' + expiryDisplay + '\n\n_Present this digital pass at reception._';
+          const detailedCaption = '*' + hospitalName + '*\nAppointment Confirmed\n\n*Patient:* ' + patientName + '\n*Doctor:* Dr. ' + cleanDrName + '\n*Department:* ' + specialty + '\n*Date:* ' + appointmentDate + '\n*Time:* ' + appointmentTime + '\n\n*Booking ID:* ' + referenceId + '\n*OP Pass:* ' + opPassId + '\n*Valid Until:* ' + expiryDisplay + '\n*Paid:* \u20B9' + amountPaid + '\n\n_Present this QR code at reception._\n_Your OP Pass is valid for 15 days._';
+          const caption = isCard ? shortCaption : detailedCaption;
 
-      // Send card to patient
-      if (patientPhone) {
-        await sendWA(waApiUrl, waToken, patientPhone, { type: 'image', image: { link: cardImageUrl, caption } });
+          if (bgPatientPhone) {
+            await sendWA(waApiUrl, waToken, bgPatientPhone, { type: 'image', image: { link: cardImageUrl, caption } });
+            await new Promise(r => setTimeout(r, 5000));
+            await sendWA(waApiUrl, waToken, bgPatientPhone, {
+              type: 'text', text: { body: 'Thank you for choosing *' + hospitalName + '* \u2705\n\nType *menu* anytime to book another appointment, reschedule, or manage your bookings.' },
+            });
+          }
 
-        // Post-booking follow-up after delay
-        await new Promise(r => setTimeout(r, 5000));
-        await sendWA(waApiUrl, waToken, patientPhone, {
-          type: 'text', text: { body: 'Thank you for choosing *' + hospitalName + '* ✅\n\nType *menu* anytime to book another appointment, reschedule, or manage your bookings.' },
-        });
-      }
+          const bookerDigits = bgBookedBy.replace(/\D/g, '');
+          if (bookerDigits && bookerDigits !== bgPatientPhone) {
+            const bookerCaption = '*' + hospitalName + '*\nBooking Confirmed for ' + patientName + '\n\n*Doctor:* Dr. ' + cleanDrName + '\n*Date:* ' + appointmentDate + '\n*Time:* ' + appointmentTime + '\n*Booking ID:* ' + referenceId + '\n\n_Present this pass at reception._';
+            await sendWA(waApiUrl, waToken, bookerDigits, { type: 'image', image: { link: cardImageUrl, caption: bookerCaption } });
+          }
+        } catch (e) { console.error('[payment-callback] Background WA send error:', e); }
+      })();
 
-      // Send to booker if different
-      const bookerDigits = bookedBy.replace(/\D/g, '');
-      if (bookerDigits && bookerDigits !== patientPhone) {
-        const bookerCaption = '*' + hospitalName + '*\nBooking Confirmed for ' + patientName + '\n\n*Doctor:* Dr. ' + cleanDrName + '\n*Date:* ' + appointmentDate + '\n*Time:* ' + appointmentTime + '\n*Booking ID:* ' + referenceId + '\n\n_Present this pass at reception._';
-        await sendWA(waApiUrl, waToken, bookerDigits, { type: 'image', image: { link: cardImageUrl, caption: bookerCaption } });
-      }
-
-      // Return confirmation HTML page
+      // Return confirmation HTML page immediately
       return new NextResponse(
         await confirmationPage({
           hospitalName, patientName, cleanDrName, specialty,
@@ -446,7 +448,7 @@ async function generateCardImage(d: {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ html: cardHtml, vw: 800, vh: 600 }),
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(3000),
     });
     if (imgRes.ok) {
       const imgData = await imgRes.json();
