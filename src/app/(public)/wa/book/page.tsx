@@ -833,34 +833,34 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
   );
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const checkPayment = useCallback(async () => {
+    try {
+      const res = await fetch("/api/wa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: auth.token, action: "list_appointments" }),
+      });
+      const data = await res.json();
+      if (Array.isArray(data.appointments)) {
+        const appt = data.appointments.find(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (a: any) => a.booking_id === bookingResult.booking_id
+        );
+        if (appt && appt.status === "confirmed" && appt.payment_status === "paid") {
+          setPaymentStatus("paid");
+          if (intervalRef.current) clearInterval(intervalRef.current);
+        }
+      }
+    } catch { /* ignore */ }
+  }, [auth.token, bookingResult.booking_id]);
+
   // Poll for payment status after user clicks Pay Now
   useEffect(() => {
     if (paymentStatus !== "checking") return;
 
-    const check = async () => {
-      try {
-        const res = await fetch("/api/wa", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: auth.token, action: "list_appointments" }),
-        });
-        const data = await res.json();
-        if (Array.isArray(data.appointments)) {
-          const appt = data.appointments.find(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (a: any) => a.booking_id === bookingResult.booking_id
-          );
-          if (appt && appt.status === "confirmed" && appt.payment_status === "paid") {
-            setPaymentStatus("paid");
-            if (intervalRef.current) clearInterval(intervalRef.current);
-          }
-        }
-      } catch { /* ignore */ }
-    };
-
     // Check immediately, then every 5 seconds
-    check();
-    intervalRef.current = setInterval(check, 5000);
+    checkPayment();
+    intervalRef.current = setInterval(checkPayment, 5000);
 
     // Stop after 10 minutes
     const timeout = setTimeout(() => {
@@ -871,7 +871,17 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
       if (intervalRef.current) clearInterval(intervalRef.current);
       clearTimeout(timeout);
     };
-  }, [paymentStatus, auth.token, bookingResult.booking_id]);
+  }, [paymentStatus, checkPayment]);
+
+  // When user returns to this tab (e.g. after closing Razorpay error page), check immediately
+  useEffect(() => {
+    if (paymentStatus !== "checking") return;
+    const onVisible = () => {
+      if (document.visibilityState === "visible") checkPayment();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [paymentStatus, checkPayment]);
 
   const handlePayClick = () => {
     setPaymentStatus("checking");
