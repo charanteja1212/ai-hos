@@ -32,8 +32,9 @@ export interface AgentOutput {
 }
 
 /**
- * Build the main menu with all 7 clickable URLs sent directly as text.
- * Token is generated once with a 30-minute TTL so all links stay valid.
+ * Build the main menu as CTA URL buttons.
+ * Returns a special [CTA_MENU] format that buildMessagePayloads parses
+ * into separate WhatsApp CTA URL button messages.
  */
 async function buildWebMenu(
   cleanPhone: string,
@@ -49,27 +50,22 @@ async function buildWebMenu(
   // Generate a single token with 30-minute expiry for all URLs
   const token = await generateWaToken(cleanPhone, tenantId, patientName, '30m');
 
-  const menuItems = [
-    { emoji: '1️⃣', labelKey: 'link_book_self', path: `/wa/book?mode=self&token=${token}` },
-    { emoji: '2️⃣', labelKey: 'link_book_other', path: `/wa/book?mode=dependent&token=${token}` },
-    { emoji: '3️⃣', labelKey: 'link_appointments', path: `/wa/appointments?token=${token}` },
-    { emoji: '4️⃣', labelKey: 'link_reschedule', path: `/wa/appointments?action=reschedule&token=${token}` },
-    { emoji: '5️⃣', labelKey: 'link_cancel', path: `/wa/appointments?action=cancel&token=${token}` },
-    { emoji: '6️⃣', labelKey: 'link_prescriptions', path: `/wa/prescriptions?token=${token}` },
-    { emoji: '7️⃣', labelKey: 'link_talk_staff', path: null }, // no URL — text-based
+  const ctaItems = [
+    { bodyKey: 'cta_book_self', labelKey: 'btn_book_self', path: `/wa/book?mode=self&token=${token}` },
+    { bodyKey: 'cta_book_other', labelKey: 'btn_book_other', path: `/wa/book?mode=dependent&token=${token}` },
+    { bodyKey: 'cta_appointments', labelKey: 'btn_appointments', path: `/wa/appointments?token=${token}` },
+    { bodyKey: 'cta_prescriptions', labelKey: 'btn_prescriptions', path: `/wa/prescriptions?token=${token}` },
   ];
 
-  const lines = menuItems.map(item => {
+  const ctaLines = ctaItems.map(item => {
+    const body = msg(item.bodyKey, language);
     const label = msg(item.labelKey, language);
-    if (item.path) {
-      return `${item.emoji} *${label}*\n${APP_URL}${item.path}`;
-    }
-    // Talk to Staff — show hint instead of URL
-    const hint = msg('link_talk_staff_hint', language);
-    return `${item.emoji} *${label}*\n_${hint}_`;
+    return `[CTA_URL]${body}|${label}|${APP_URL}${item.path}`;
   });
 
-  return `${greeting}\n\n${lines.join('\n\n')}`;
+  const talkHint = msg('talk_staff_footer', language);
+
+  return `[CTA_MENU]\n${greeting}\n${ctaLines.join('\n')}\n[CTA_FOOTER]${talkHint}`;
 }
 
 /**

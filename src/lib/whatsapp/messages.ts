@@ -1,7 +1,6 @@
 /**
- * WhatsApp Message Builders (Simplified)
- * Now only handles: language buttons, plain text, and CTA URLs.
- * Complex interactive menus removed — web pages handle those flows.
+ * WhatsApp Message Builders
+ * Handles: language buttons, CTA URL buttons, plain text.
  */
 
 import type { Language } from './types';
@@ -27,23 +26,19 @@ function buildReplyButtons(toPhone: string, text: string, buttons: { id: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function buildListMessage(toPhone: string, bodyText: string, listData: { buttonText: string; sectionTitle: string; rows: { id: string; title: string; description: string }[] }): any {
+function buildCtaUrlMessage(toPhone: string, bodyText: string, displayText: string, url: string): any {
   return {
     messaging_product: 'whatsapp', recipient_type: 'individual', to: toPhone,
     type: 'interactive',
     interactive: {
-      type: 'list',
+      type: 'cta_url',
       body: { text: truncate(bodyText, 1024) },
       action: {
-        button: truncate(listData.buttonText, 20),
-        sections: [{
-          title: truncate(listData.sectionTitle, 24),
-          rows: listData.rows.map(r => ({
-            id: r.id,
-            title: truncate(r.title, 24),
-            description: truncate(r.description, 72),
-          })),
-        }],
+        name: 'cta_url',
+        parameters: {
+          display_text: truncate(displayText, 36),
+          url,
+        },
       },
     },
   };
@@ -53,7 +48,7 @@ function buildListMessage(toPhone: string, bodyText: string, listData: { buttonT
 function buildTextMessage(toPhone: string, text: string): any {
   return {
     messaging_product: 'whatsapp', recipient_type: 'individual', to: toPhone,
-    type: 'text', text: { preview_url: true, body: text },
+    type: 'text', text: { preview_url: false, body: text },
   };
 }
 
@@ -65,7 +60,7 @@ export interface BuildResult {
 
 /**
  * Parse the AI reply string and build WhatsApp API payload(s).
- * Simplified — only language buttons and plain text remain.
+ * Supports: [BUTTONS:language], [CTA_URL] markers, and plain text.
  */
 export function buildMessagePayloads(
   aiReply: string,
@@ -82,6 +77,58 @@ export function buildMessagePayloads(
   const payloads: any[] = [];
   let sentType = 'text';
 
+  // --- CTA URL menu format ---
+  // [CTA_MENU]
+  // greeting line
+  // [CTA_URL]body text|button label|url
+  // [CTA_FOOTER]footer text
+  if (aiReply.startsWith('[CTA_MENU]')) {
+    const lines = aiReply.split('\n');
+    const greetingLines: string[] = [];
+    const footerLines: string[] = [];
+    const ctaItems: { body: string; label: string; url: string }[] = [];
+    let inFooter = false;
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.startsWith('[CTA_URL]')) {
+        const parts = line.substring(9).split('|');
+        if (parts.length >= 3) {
+          ctaItems.push({ body: parts[0], label: parts[1], url: parts[2] });
+        }
+      } else if (line.startsWith('[CTA_FOOTER]')) {
+        inFooter = true;
+        const rest = line.substring(12).trim();
+        if (rest) footerLines.push(rest);
+      } else if (inFooter) {
+        footerLines.push(line);
+      } else {
+        greetingLines.push(line);
+      }
+    }
+
+    // 1. Greeting text
+    const greeting = greetingLines.join('\n').trim();
+    if (greeting) {
+      payloads.push(buildTextMessage(toPhone, greeting));
+    }
+
+    // 2. CTA URL buttons
+    for (const cta of ctaItems) {
+      payloads.push(buildCtaUrlMessage(toPhone, cta.body, cta.label, cta.url));
+    }
+
+    // 3. Footer text
+    const footer = footerLines.join('\n').trim();
+    if (footer) {
+      payloads.push(buildTextMessage(toPhone, footer));
+    }
+
+    sentType = 'cta_menu';
+    return { payloads, sentType };
+  }
+
+  // --- Language buttons ---
   const buttonRegex = /\[BUTTONS:([^\]]+)\]/;
   const btnMatch = buttonRegex.exec(aiReply);
 
@@ -97,12 +144,11 @@ export function buildMessagePayloads(
       ]));
       sentType = 'buttons';
     } else {
-      // Any other marker — just send as text (fallback)
       payloads.push(buildTextMessage(toPhone, aiReply.replace(/\[BUTTONS:[^\]]+\]/g, '').trim()));
       sentType = 'text';
     }
   } else {
-    // Plain text — send with URL previews enabled
+    // Plain text
     payloads.push(buildTextMessage(toPhone, aiReply.trim()));
     sentType = 'text';
   }

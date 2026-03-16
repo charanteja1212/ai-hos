@@ -26,14 +26,65 @@ export const MSGS: Record<string, TranslationEntry> = {
 
   // --- Web Menu ---
   menu_greeting: {
-    en: '🏥 *{hospital}*\n\nHow can I help you today? Tap any link below to get started:',
-    hi: '🏥 *{hospital}*\n\nआज मैं आपकी कैसे मदद कर सकता हूं? शुरू करने के लिए नीचे कोई भी लिंक टैप करें:',
-    te: '🏥 *{hospital}*\n\nఈ రోజు నేను మీకు ఎలా సహాయం చేయగలను? ప్రారంభించడానికి క్రింద ఏదైనా లింక్ ట్యాప్ చేయండి:',
+    en: '🏥 *{hospital}*\n\nHow can I help you today? Tap a button below:',
+    hi: '🏥 *{hospital}*\n\nआज मैं आपकी कैसे मदद कर सकता हूं? नीचे बटन टैप करें:',
+    te: '🏥 *{hospital}*\n\nఈ రోజు నేను మీకు ఎలా సహాయం చేయగలను? క్రింద బటన్ ట్యాప్ చేయండి:',
   },
   menu_greeting_known: {
-    en: '🏥 *{hospital}*\n\nWelcome back, *{name}*! Tap any link below:',
-    hi: '🏥 *{hospital}*\n\nवापसी पर स्वागत है, *{name}*! नीचे कोई भी लिंक टैप करें:',
-    te: '🏥 *{hospital}*\n\nతిరిగి స్వాగతం, *{name}*! క్రింద ఏదైనా లింక్ ట్యాప్ చేయండి:',
+    en: '🏥 *{hospital}*\n\nWelcome back, *{name}*! Tap a button below:',
+    hi: '🏥 *{hospital}*\n\nवापसी पर स्वागत है, *{name}*! नीचे बटन टैप करें:',
+    te: '🏥 *{hospital}*\n\nతిరిగి స్వాగతం, *{name}*! క్రింద బటన్ ట్యాప్ చేయండి:',
+  },
+
+  // --- CTA Button Body Text ---
+  cta_book_self: {
+    en: '📅 Schedule an appointment for yourself',
+    hi: '📅 अपने लिए अपॉइंटमेंट शेड्यूल करें',
+    te: '📅 మీ కోసం అపాయింట్\u200Cమెంట్ షెడ్యూల్ చేయండి',
+  },
+  cta_book_other: {
+    en: '👨‍👩‍👧 Book an appointment for a family member',
+    hi: '👨‍👩‍👧 परिवार के सदस्य के लिए अपॉइंटमेंट बुक करें',
+    te: '👨‍👩‍👧 కుటుంబ సభ్యుని కోసం అపాయింట్\u200Cమెంట్ బుక్ చేయండి',
+  },
+  cta_appointments: {
+    en: '📋 View, reschedule, or cancel your appointments',
+    hi: '📋 अपॉइंटमेंट देखें, रीशेड्यूल या रद्द करें',
+    te: '📋 మీ అపాయింట్\u200Cమెంట్\u200Cలు చూడండి, రీషెడ్యూల్ లేదా రద్దు చేయండి',
+  },
+  cta_prescriptions: {
+    en: '💊 View your prescriptions and medications',
+    hi: '💊 अपने प्रिस्क्रिप्शन और दवाइयाँ देखें',
+    te: '💊 మీ ప్రిస్క్రిప్షన్లు మరియు మందులు చూడండి',
+  },
+
+  // --- CTA Button Labels (max 36 chars) ---
+  btn_book_self: {
+    en: 'Book Appointment',
+    hi: 'अपॉइंटमेंट बुक करें',
+    te: 'అపాయింట్\u200Cమెంట్ బుక్',
+  },
+  btn_book_other: {
+    en: 'Book for Family',
+    hi: 'परिवार के लिए बुक करें',
+    te: 'కుటుంబం కోసం బుక్',
+  },
+  btn_appointments: {
+    en: 'My Appointments',
+    hi: 'मेरे अपॉइंटमेंट',
+    te: 'నా అపాయింట్\u200Cమెంట్\u200Cలు',
+  },
+  btn_prescriptions: {
+    en: 'My Prescriptions',
+    hi: 'मेरे प्रिस्क्रिप्शन',
+    te: 'నా ప్రిస్క్రిప్షన్లు',
+  },
+
+  // --- Talk to Staff Footer ---
+  talk_staff_footer: {
+    en: '💬 Need to *talk to staff*? Reply *7* or type *talk to staff*',
+    hi: '💬 *स्टाफ से बात* करनी है? *7* भेजें या *talk to staff* टाइप करें',
+    te: '💬 *సిబ్బందితో మాట్లాడాలా*? *7* పంపండి లేదా *talk to staff* టైప్ చేయండి',
   },
 
   // --- Link Labels ---
