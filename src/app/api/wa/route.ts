@@ -14,6 +14,7 @@ import {
   bookAppointment,
   listAppointments,
   cancelAppointment,
+  rescheduleAppointment,
   listPrescriptions,
 } from "@/lib/whatsapp/tool-handlers";
 
@@ -93,6 +94,18 @@ export async function POST(req: NextRequest) {
       case "cancel_appointment":
         result = await cancelAppointment({
           booking_id: params.booking_id,
+          sender_phone: phone,
+          tenant_id: tenantId,
+        });
+        break;
+
+      case "reschedule_appointment":
+        result = await rescheduleAppointment({
+          old_booking_id: params.old_booking_id,
+          new_start_time: params.new_start_time,
+          new_doctor_id: params.new_doctor_id || params.doctor_id,
+          new_doctor_name: params.new_doctor_name || params.doctor_name,
+          new_specialty: params.new_specialty || params.specialty,
           sender_phone: phone,
           tenant_id: tenantId,
         });

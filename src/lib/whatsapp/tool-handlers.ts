@@ -816,7 +816,7 @@ export async function listAppointments(args: any): Promise<any> {
         booked_by_whatsapp_number: a.booked_by_whatsapp_number || '',
         relationship_to_patient: a.relationship_to_patient || 'SELF',
         dependent_id: a.dependent_id || null,
-        doctor_name: a.doctor_name || '', specialty: a.specialty || '',
+        doctor_id: a.doctor_id || '', doctor_name: a.doctor_name || '', specialty: a.specialty || '',
         date: a.date || '', time: a.time || '', status: a.status || 'confirmed',
         payment_status: a.payment_status || '',
         op_pass_id: a.op_pass_id || '', op_pass_expiry: op.expiry_date || '',
