@@ -135,6 +135,29 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Server-side verification: confirm payment is actually captured via Razorpay API
+  try {
+    const verifyRes = await fetch('https://api.razorpay.com/v1/payments/' + paymentId, {
+      headers: { 'Authorization': RAZORPAY_AUTH },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (verifyRes.ok) {
+      const paymentData = await verifyRes.json();
+      console.log('[payment-callback] Razorpay payment status:', paymentData.status, 'amount:', paymentData.amount);
+      if (paymentData.status !== 'captured' && paymentData.status !== 'authorized') {
+        console.error('[payment-callback] Payment not captured. Status:', paymentData.status);
+        return new NextResponse(errorPage('Payment not completed. Your payment status is: ' + paymentData.status + '. If money was deducted, it will be refunded automatically. Please try again.'), {
+          status: 200, headers: { 'Content-Type': 'text/html' },
+        });
+      }
+    } else {
+      console.error('[payment-callback] Failed to verify payment with Razorpay:', verifyRes.status);
+    }
+  } catch (e) {
+    console.error('[payment-callback] Payment verification API error:', e);
+    // Continue — don't block if Razorpay API is temporarily down, webhook will handle it
+  }
+
   // Idempotency check
   try {
     const existing = await sbGet(
