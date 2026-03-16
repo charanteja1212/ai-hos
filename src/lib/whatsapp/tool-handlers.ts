@@ -836,6 +836,7 @@ export async function checkOpPass(args: any): Promise<any> {
   const phone = normalizePhone(args.patient_phone || args.phone || '');
   const opPassIdInput = args.op_pass_id || '';
   const dependentId = args.dependent_id || '';
+  const patientType = (args.patient_type || 'SELF').toUpperCase();
 
   if (!phone && !opPassIdInput) {
     return { valid: false, op_pass_id: '', expiry_date: '', reschedules_remaining: 0, status: 'NONE', message: 'No phone or OP pass ID provided.' };
@@ -847,8 +848,14 @@ export async function checkOpPass(args: any): Promise<any> {
       url = '/op_passes?op_pass_id=eq.' + encodeURIComponent(opPassIdInput) + '&select=*';
     } else {
       url = '/op_passes?patient_phone=like.*' + phone + '*&status=eq.ACTIVE&order=created_at.desc&select=*';
-      if (dependentId) url += '&dependent_id=eq.' + encodeURIComponent(dependentId);
-      else url += '&or=(patient_type.eq.SELF,dependent_id.is.null)';
+      if (patientType === 'DEPENDENT') {
+        // Dependent bookings: only match passes for this specific dependent
+        if (dependentId) url += '&dependent_id=eq.' + encodeURIComponent(dependentId);
+        else url += '&patient_name=eq.' + encodeURIComponent(args.patient_name || '') + '&patient_type=eq.DEPENDENT';
+      } else {
+        // Self bookings: only match SELF passes
+        url += '&or=(patient_type.eq.SELF,dependent_id.is.null)';
+      }
     }
 
     const rows = await sbGet(url);
