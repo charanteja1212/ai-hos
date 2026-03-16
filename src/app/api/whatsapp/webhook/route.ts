@@ -83,17 +83,22 @@ async function resolveTenant(receiverPhoneId: string): Promise<TenantConfig | nu
  * POST — Receive WhatsApp messages and process them through the bot
  */
 export async function POST(req: NextRequest) {
+  console.log("[webhook] POST received")
   try {
     const body = await req.json()
+    console.log("[webhook] Body parsed, object:", body?.object)
 
     // Ignore status updates (delivery receipts, read receipts)
     if (isStatusUpdate(body)) {
+      console.log("[webhook] Status update, ignoring")
       return NextResponse.json({ status: "ok" })
     }
 
     // Step 1: Parse the message
     const parsed = parseWebhookPayload(body)
+    console.log("[webhook] Parsed:", parsed?.senderPhone, parsed?.messageBody, parsed?.messageType)
     if (!parsed || !parsed.messageBody) {
+      console.log("[webhook] No parseable message, skipping")
       return NextResponse.json({ status: "ok" })
     }
 
