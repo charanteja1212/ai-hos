@@ -518,7 +518,11 @@ ${d.qrUrl ? `<div class="qr"><img src="${d.qrUrl}" width="180" height="180" alt=
 ${d.expiryDisplay ? `<div class="expiry">OP Pass Valid Until: ${h(d.expiryDisplay)}</div>` : ''}
 <div class="footer">Thank you for choosing ${h(hospital)}.<br>Your OP Pass has been sent on WhatsApp.</div>
 </div>
-<div class="wa-note">You can close this page and return to WhatsApp.</div>
+<div class="wa-note" id="countdown">Returning to WhatsApp in <span id="sec">4</span>s...</div>
+<a href="https://wa.me/" id="wa-btn" style="display:none;text-align:center;margin:12px auto;padding:12px 28px;background:#25D366;color:#fff;font-weight:700;border-radius:10px;text-decoration:none;font-size:15px;max-width:260px;width:100%;">Return to WhatsApp</a>
+<script>
+var s=4,t=setInterval(function(){s--;document.getElementById('sec').textContent=s;if(s<=0){clearInterval(t);try{window.close()}catch(e){}setTimeout(function(){window.location.href='https://wa.me/';setTimeout(function(){document.getElementById('countdown').textContent='Page could not close automatically.';document.getElementById('wa-btn').style.display='block'},1500)},300)}},1000);
+</script>
 </body>
 </html>`;
 }
@@ -529,5 +533,9 @@ function errorPage(message: string): string {
 .card{background:#fff;padding:40px 24px;border-radius:16px;text-align:center;max-width:400px;margin:40px auto;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
 h1{font-size:20px;margin-bottom:12px;color:#dc2626}p{color:#64748b;font-size:14px;line-height:1.5}
 .note{margin-top:20px;font-size:13px;color:#94a3b8}</style>
-</head><body><div class="card"><h1>Payment Issue</h1><p>${escapeHtml(message)}</p><p class="note">You can close this page and return to WhatsApp.</p></div></body></html>`;
+</head><body><div class="card"><h1>Payment Issue</h1><p>${escapeHtml(message)}</p><p class="note" id="countdown">Returning to WhatsApp in <span id="sec">4</span>s...</p></div>
+<script>
+var s=4,t=setInterval(function(){s--;document.getElementById('sec').textContent=s;if(s<=0){clearInterval(t);try{window.close()}catch(e){}setTimeout(function(){window.location.href='https://wa.me/'},300)}},1000);
+</script>
+</body></html>`;
 }
