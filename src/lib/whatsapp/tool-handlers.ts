@@ -446,7 +446,7 @@ export async function bookAppointment(args: any): Promise<any> {
 
   const bookingId = 'BK' + Date.now() + Math.random().toString(36).substring(2, 6);
   const lockId = 'LOCK' + Date.now() + Math.random().toString(36).substring(2, 6);
-  const lockExpiry = new Date(Date.now() + 15 * 60 * 1000);
+  const lockExpiry = new Date(Date.now() + 5 * 60 * 1000);
 
   // Lock slot
   try {
@@ -697,7 +697,7 @@ export async function bookAppointment(args: any): Promise<any> {
       notes: { type: 'appointment', reference_id: bookingId, patient_name: name, patient_phone: phone, doctor_name: doctorName, specialty, appointment_date: formattedDate, appointment_time: time, tenant_id: tenantId },
       callback_url: callbackUrl,
       callback_method: 'get',
-      expire_by: Math.floor(Date.now() / 1000) + 1200,
+      expire_by: Math.floor(Date.now() / 1000) + 300,
     };
     const rzpRes = await fetch('https://api.razorpay.com/v1/payment_links', {
       method: 'POST',
@@ -726,7 +726,7 @@ export async function bookAppointment(args: any): Promise<any> {
     payment_link: paymentLinkUrl, payment_link_id: paymentLinkId,
     locked_until: lockExpiry.toISOString(),
     message: paymentLinkUrl
-      ? 'Appointment reserved. Fee: Rs ' + consultationFee + '. Complete payment within 20 minutes.'
+      ? 'Appointment reserved. Fee: Rs ' + consultationFee + '. Complete payment within 5 minutes.'
       : 'Appointment reserved but payment link could not be generated.',
   };
 }

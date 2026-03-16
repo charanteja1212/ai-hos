@@ -222,13 +222,13 @@ function createCleanupWorker() {
 
         if (lockErr) errors.push(`slot_locks: ${lockErr.message}`)
 
-        // 2. Expire stale pending_payment appointments with expired locks or null locked_until (> 20 min old)
-        const twentyMinAgo = new Date(Date.now() - 20 * 60 * 1000).toISOString()
+        // 2. Expire stale pending_payment appointments with expired locks or null locked_until (> 7 min old)
+        const sevenMinAgo = new Date(Date.now() - 7 * 60 * 1000).toISOString()
         const { data: expiredAppts, error: apptErr } = await supabase
           .from("appointments")
           .update({ status: "expired", payment_status: "expired" })
           .eq("status", "pending_payment")
-          .or(`locked_until.lt.${now},and(locked_until.is.null,booked_at.lt.${twentyMinAgo})`)
+          .or(`locked_until.lt.${now},and(locked_until.is.null,booked_at.lt.${sevenMinAgo})`)
           .select("booking_id")
 
         if (apptErr) errors.push(`appointments: ${apptErr.message}`)
