@@ -464,49 +464,70 @@ async function confirmationPage(d: {
 }): Promise<string> {
   const h = escapeHtml;
   const hospital = d.hospitalName || 'Care Hospital';
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Payment Confirmed</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f172a 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.pass-wrapper{max-width:440px;width:100%}.pass{background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 25px 80px rgba(0,0,0,0.4)}
-.pass-header{background:linear-gradient(135deg,#0284c7,#0ea5e9,#38bdf8);padding:32px 28px 40px;text-align:center;position:relative;overflow:hidden}
-.pass-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:20px;background:white;border-radius:20px 20px 0 0}
-.hospital-name{font-size:20px;font-weight:900;color:white;letter-spacing:1px}.pass-type{font-size:11px;color:rgba(255,255,255,0.85);margin-top:4px;text-transform:uppercase;letter-spacing:3px;font-weight:600}
-.status-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.2);color:white;padding:8px 20px;border-radius:24px;font-size:13px;font-weight:700;margin-top:14px;border:1px solid rgba(255,255,255,0.3)}
-.amount-section{text-align:center;padding:20px 28px 8px}.amount-label{font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:2px}
-.amount{font-size:36px;font-weight:900;background:linear-gradient(135deg,#10b981,#059669);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.details{padding:8px 28px 20px}.details-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.detail-item{background:#f8fafc;padding:14px 16px;border-radius:14px;border:1px solid #f1f5f9}.detail-item.full{grid-column:1/-1}
-.detail-label{font-size:9px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px}.detail-value{font-size:14px;color:#0f172a;font-weight:700}
-.ids-section{padding:0 28px;margin:4px 0 16px}.ids-grid{display:flex;gap:8px}.id-chip{flex:1;background:#f1f5f9;padding:10px 12px;border-radius:10px;text-align:center}
-.id-chip-label{font-size:8px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:1px}.id-chip-value{font-size:11px;color:#475569;font-weight:700;margin-top:2px;word-break:break-all}
-.qr-section{text-align:center;padding:16px 28px 24px}.qr-frame{display:inline-block;padding:16px;background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border-radius:20px;border:2px solid #bbf7d0}
-.qr-frame img{border-radius:12px;display:block}.qr-label{font-size:11px;color:#059669;font-weight:700;margin-top:10px;text-transform:uppercase;letter-spacing:1.5px}
-.validity{margin:0 28px 20px;padding:12px 16px;background:linear-gradient(135deg,#fef3c7,#fef9c3);border-radius:12px;border:1px solid #fde68a;text-align:center}.validity-text{font-size:12px;color:#92400e;font-weight:700}
-.pass-footer{background:#f8fafc;padding:20px 28px;text-align:center;border-top:1px solid #f1f5f9}.footer-text{font-size:12px;color:#94a3b8;font-weight:500;line-height:1.5}
-</style></head><body><div class="pass-wrapper"><div class="pass">
-<div class="pass-header"><div class="hospital-name">${h(hospital.toUpperCase())}</div><div class="pass-type">Digital Appointment Pass</div>
-<div class="status-badge">Confirmed & Paid</div></div>
-<div class="amount-section"><div class="amount-label">Amount Paid</div><div class="amount">\u20B9${d.amountPaid || 0}</div></div>
-<div class="details"><div class="details-grid">
-<div class="detail-item full"><div class="detail-label">Patient Name</div><div class="detail-value">${h(d.patientName || '-')}</div></div>
-${d.cleanDrName ? `<div class="detail-item"><div class="detail-label">Doctor</div><div class="detail-value">Dr. ${h(d.cleanDrName)}</div></div>` : ''}
-${d.specialty ? `<div class="detail-item"><div class="detail-label">Department</div><div class="detail-value">${h(d.specialty)}</div></div>` : ''}
-${d.appointmentDate ? `<div class="detail-item"><div class="detail-label">Date</div><div class="detail-value">${h(d.appointmentDate)}</div></div>` : ''}
-${d.appointmentTime ? `<div class="detail-item"><div class="detail-label">Time</div><div class="detail-value">${h(d.appointmentTime)}</div></div>` : ''}
-</div></div>
-<div class="ids-section"><div class="ids-grid">
-<div class="id-chip"><div class="id-chip-label">Booking ID</div><div class="id-chip-value">${h(d.referenceId || '-')}</div></div>
-${d.opPassId ? `<div class="id-chip"><div class="id-chip-label">OP Pass</div><div class="id-chip-value">${h(d.opPassId)}</div></div>` : ''}
-</div></div>
-${d.qrUrl ? `<div class="qr-section"><div class="qr-frame"><img src="${d.qrUrl}" width="220" height="220" alt="QR Code"><div class="qr-label">Scan at Reception</div></div></div>` : ''}
-${d.expiryDisplay ? `<div class="validity"><div class="validity-text">OP Pass Valid Until: ${h(d.expiryDisplay)}</div></div>` : ''}
-<div class="pass-footer"><div class="footer-text">Thank you for choosing ${h(hospital)}.<br>We look forward to seeing you!</div></div>
-</div></div></body></html>`;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Payment Confirmed</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f4f8;padding:16px;color:#1a202c}
+.card{background:#fff;border-radius:16px;overflow:hidden;max-width:440px;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.header{background:#0284c7;padding:24px 20px;text-align:center;color:#fff}
+.header h1{font-size:18px;font-weight:700;margin-bottom:4px}
+.header p{font-size:12px;opacity:0.9}
+.badge{display:inline-block;background:rgba(255,255,255,0.25);padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;margin-top:10px}
+.amount{text-align:center;padding:16px 20px;font-size:28px;font-weight:800;color:#059669}
+.rows{padding:0 20px 16px}
+.row{padding:10px 0;border-bottom:1px solid #f0f0f0}
+.row:last-child{border-bottom:none}
+.label{font-size:11px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.value{font-size:14px;font-weight:600;color:#1e293b;margin-top:2px}
+.ids{padding:0 20px 16px;display:flex;gap:8px}
+.id-box{flex:1;background:#f1f5f9;padding:10px;border-radius:8px;text-align:center}
+.id-box .label{font-size:9px}.id-box .value{font-size:11px;word-break:break-all}
+.qr{text-align:center;padding:16px 20px}
+.qr img{border-radius:8px;border:2px solid #e2e8f0}
+.qr p{font-size:11px;color:#059669;font-weight:600;margin-top:8px}
+.expiry{margin:0 20px 16px;padding:10px;background:#fef9c3;border-radius:8px;text-align:center;font-size:12px;color:#92400e;font-weight:600}
+.footer{background:#f8fafc;padding:16px 20px;text-align:center;font-size:12px;color:#94a3b8;border-top:1px solid #f1f5f9}
+.wa-note{text-align:center;padding:16px;font-size:13px;color:#64748b}
+</style>
+</head>
+<body>
+<div class="card">
+<div class="header">
+<h1>${h(hospital.toUpperCase())}</h1>
+<p>Digital Appointment Pass</p>
+<div class="badge">Confirmed &amp; Paid</div>
+</div>
+<div class="amount">\u20B9${d.amountPaid || 0}</div>
+<div class="rows">
+<div class="row"><div class="label">Patient</div><div class="value">${h(d.patientName || '-')}</div></div>
+${d.cleanDrName ? `<div class="row"><div class="label">Doctor</div><div class="value">Dr. ${h(d.cleanDrName)}</div></div>` : ''}
+${d.specialty ? `<div class="row"><div class="label">Department</div><div class="value">${h(d.specialty)}</div></div>` : ''}
+${d.appointmentDate ? `<div class="row"><div class="label">Date</div><div class="value">${h(d.appointmentDate)}</div></div>` : ''}
+${d.appointmentTime ? `<div class="row"><div class="label">Time</div><div class="value">${h(d.appointmentTime)}</div></div>` : ''}
+</div>
+<div class="ids">
+<div class="id-box"><div class="label">Booking ID</div><div class="value">${h(d.referenceId || '-')}</div></div>
+${d.opPassId ? `<div class="id-box"><div class="label">OP Pass</div><div class="value">${h(d.opPassId)}</div></div>` : ''}
+</div>
+${d.qrUrl ? `<div class="qr"><img src="${d.qrUrl}" width="180" height="180" alt="QR"><p>Scan at Reception</p></div>` : ''}
+${d.expiryDisplay ? `<div class="expiry">OP Pass Valid Until: ${h(d.expiryDisplay)}</div>` : ''}
+<div class="footer">Thank you for choosing ${h(hospital)}.<br>Your OP Pass has been sent on WhatsApp.</div>
+</div>
+<div class="wa-note">You can close this page and return to WhatsApp.</div>
+</body>
+</html>`;
 }
 
 function errorPage(message: string): string {
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Payment Error</title>
-<style>body{font-family:Inter,sans-serif;background:#0f172a;color:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
-.card{background:#1e293b;padding:40px;border-radius:16px;text-align:center;max-width:400px}h1{font-size:20px;margin-bottom:12px;color:#f87171}p{color:#94a3b8;font-size:14px}</style>
-</head><body><div class="card"><h1>Payment Issue</h1><p>${escapeHtml(message)}</p></div></body></html>`;
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f4f8;padding:16px;color:#1a202c}
+.card{background:#fff;padding:40px 24px;border-radius:16px;text-align:center;max-width:400px;margin:40px auto;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+h1{font-size:20px;margin-bottom:12px;color:#dc2626}p{color:#64748b;font-size:14px;line-height:1.5}
+.note{margin-top:20px;font-size:13px;color:#94a3b8}</style>
+</head><body><div class="card"><h1>Payment Issue</h1><p>${escapeHtml(message)}</p><p class="note">You can close this page and return to WhatsApp.</p></div></body></html>`;
 }
