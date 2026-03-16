@@ -83,7 +83,16 @@ function escapeHtml(s: string): string {
 }
 
 function quickConfirm(bookingId: string, amount: number): string {
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta http-equiv="refresh" content="1;url=https://wa.me/"><title>Payment Confirmed</title></head><body style="margin:0;padding:40px 20px;font-family:-apple-system,sans-serif;background:#f0f4f8;text-align:center"><div style="background:#fff;max-width:400px;margin:0 auto;padding:30px 20px;border-radius:16px"><div style="width:60px;height:60px;margin:0 auto 16px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center"><span style="font-size:28px;color:#16a34a">\u2713</span></div><h1 style="font-size:20px;color:#1a202c;margin:0 0 8px">Payment Confirmed!</h1><p style="font-size:14px;color:#64748b;margin:0 0 4px">\u20B9${amount} paid successfully</p><p style="font-size:13px;color:#64748b;margin:0 0 16px">Booking ID: ${escapeHtml(bookingId)}</p><p style="font-size:13px;color:#059669;font-weight:600;margin:0 0 12px">Your OP Pass has been sent on WhatsApp</p><p style="font-size:12px;color:#94a3b8;margin:0">Redirecting to WhatsApp...</p></div></body></html>`;
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Done</title></head>' +
+    '<body style="margin:0;padding:40px 20px;font-family:Arial,sans-serif;background:#f0f4f8;text-align:center">' +
+    '<div style="background:#fff;max-width:400px;margin:0 auto;padding:30px 20px;border-radius:16px">' +
+    '<div style="font-size:48px;margin-bottom:12px">&#9989;</div>' +
+    '<h1 style="font-size:20px;color:#1a202c;margin:0 0 8px">Payment Confirmed!</h1>' +
+    '<p style="font-size:15px;color:#64748b;margin:0 0 6px">Rs ' + amount + ' paid</p>' +
+    '<p style="font-size:13px;color:#64748b;margin:0 0 16px">Booking: ' + escapeHtml(bookingId) + '</p>' +
+    '<p style="font-size:14px;color:#059669;font-weight:bold;margin:0 0 16px">OP Pass sent on WhatsApp</p>' +
+    '<p style="font-size:13px;color:#94a3b8;margin:0">You can close this page now.</p>' +
+    '</div></body></html>';
 }
 
 export async function GET(req: NextRequest) {
@@ -108,8 +117,9 @@ export async function GET(req: NextRequest) {
           '&status=eq.confirmed&select=booking_id,op_pass_id,patient_name,doctor_name,specialty,date,time'
         );
         if (Array.isArray(existing) && existing.length > 0) {
-          console.log('[payment-callback] Webhook already processed for:', existing[0].booking_id, '— redirecting');
-          return NextResponse.redirect('https://wa.me/', 302);
+          console.log('[payment-callback] Webhook already processed for:', existing[0].booking_id);
+          const amt = await getRzpAmount(paymentLinkId);
+          return new NextResponse(quickConfirm(existing[0].booking_id, amt), { status: 200, headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store' } });
         }
       } catch { /* continue to error */ }
     }
@@ -164,9 +174,9 @@ export async function GET(req: NextRequest) {
       '&status=eq.confirmed&select=booking_id,op_pass_id,patient_name,doctor_name,specialty,date,time'
     );
     if (Array.isArray(existing) && existing.length > 0) {
-      console.log('[payment-callback] Already processed payment:', paymentId, '— redirecting');
-      return NextResponse.redirect('https://wa.me/', 302
-      );
+      console.log('[payment-callback] Already processed payment:', paymentId);
+      const amt = await getRzpAmount(paymentLinkId);
+      return new NextResponse(quickConfirm(existing[0].booking_id, amt), { status: 200, headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store' } });
     }
   } catch { /* continue */ }
 
@@ -364,7 +374,7 @@ export async function GET(req: NextRequest) {
 
       // 302 redirect to WhatsApp — WhatsApp's in-app browser can't render HTML reliably after UPI app switch
       console.log('[payment-callback] SUCCESS — booking:', referenceId, 'amount:', amountPaid, '— redirecting to WhatsApp');
-      return NextResponse.redirect('https://wa.me/', 302);
+      return new NextResponse(quickConfirm(referenceId || '', typeof amountPaid === 'number' ? amountPaid : 0), { status: 200, headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store' } });
     }
 
     // Prescription payment type
@@ -375,7 +385,7 @@ export async function GET(req: NextRequest) {
         });
       } catch { /* continue */ }
 
-      return NextResponse.redirect('https://wa.me/', 302);
+      return new NextResponse(quickConfirm(referenceId || '', typeof amountPaid === 'number' ? amountPaid : 0), { status: 200, headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store' } });
     }
 
     return new NextResponse(errorPage('Unknown payment type'), {
