@@ -82,6 +82,10 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function quickConfirm(bookingId: string, amount: number): string {
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta http-equiv="refresh" content="1;url=https://wa.me/"><title>Payment Confirmed</title></head><body style="margin:0;padding:40px 20px;font-family:-apple-system,sans-serif;background:#f0f4f8;text-align:center"><div style="background:#fff;max-width:400px;margin:0 auto;padding:30px 20px;border-radius:16px"><div style="width:60px;height:60px;margin:0 auto 16px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center"><span style="font-size:28px;color:#16a34a">\u2713</span></div><h1 style="font-size:20px;color:#1a202c;margin:0 0 8px">Payment Confirmed!</h1><p style="font-size:14px;color:#64748b;margin:0 0 4px">\u20B9${amount} paid successfully</p><p style="font-size:13px;color:#64748b;margin:0 0 16px">Booking ID: ${escapeHtml(bookingId)}</p><p style="font-size:13px;color:#059669;font-weight:600;margin:0 0 12px">Your OP Pass has been sent on WhatsApp</p><p style="font-size:12px;color:#94a3b8;margin:0">Redirecting to WhatsApp...</p></div></body></html>`;
+}
+
 export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams;
   const paymentLinkId = params.get('razorpay_payment_link_id') || '';
@@ -108,8 +112,8 @@ export async function GET(req: NextRequest) {
           const e = existing[0];
           const amountPaid = await getRzpAmount(paymentLinkId);
           return new NextResponse(
-            await confirmationPage({ referenceId: e.booking_id, opPassId: e.op_pass_id, patientName: e.patient_name, cleanDrName: (e.doctor_name || '').replace(/^Dr\.?\s*/i, '').trim(), specialty: e.specialty, appointmentDate: e.date, appointmentTime: e.time, amountPaid, alreadyProcessed: true }),
-            { status: 200, headers: { 'Content-Type': 'text/html' } }
+            quickConfirm(e.booking_id, amountPaid),
+            { status: 200, headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' } }
           );
         }
       } catch { /* continue to error */ }
@@ -168,8 +172,8 @@ export async function GET(req: NextRequest) {
       const e = existing[0];
       const amountPaid = await getRzpAmount(paymentLinkId);
       return new NextResponse(
-        await confirmationPage({ referenceId: e.booking_id, opPassId: e.op_pass_id, patientName: e.patient_name, cleanDrName: (e.doctor_name || '').replace(/^Dr\.?\s*/i, '').trim(), specialty: e.specialty, appointmentDate: e.date, appointmentTime: e.time, amountPaid, alreadyProcessed: true }),
-        { status: 200, headers: { 'Content-Type': 'text/html' } }
+        quickConfirm(e.booking_id, amountPaid),
+        { status: 200, headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' } }
       );
     }
   } catch { /* continue */ }
@@ -366,14 +370,11 @@ export async function GET(req: NextRequest) {
         } catch (e) { console.error('[payment-callback] Background WA send error:', e); }
       })();
 
-      // Return confirmation HTML page immediately
+      // Redirect back to WhatsApp immediately — user gets OP pass via WA message
+      // WhatsApp's in-app browser doesn't render HTML pages reliably
       return new NextResponse(
-        await confirmationPage({
-          hospitalName, patientName, cleanDrName, specialty,
-          appointmentDate, appointmentTime, amountPaid,
-          referenceId, opPassId, expiryDisplay, qrUrl,
-        }),
-        { status: 200, headers: { 'Content-Type': 'text/html' } }
+        quickConfirm(referenceId, amountPaid),
+        { status: 200, headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' } }
       );
     }
 
@@ -386,8 +387,8 @@ export async function GET(req: NextRequest) {
       } catch { /* continue */ }
 
       return new NextResponse(
-        await confirmationPage({ hospitalName, patientName, referenceId, amountPaid, isPrescription: true }),
-        { status: 200, headers: { 'Content-Type': 'text/html' } }
+        quickConfirm(referenceId, amountPaid),
+        { status: 200, headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' } }
       );
     }
 
