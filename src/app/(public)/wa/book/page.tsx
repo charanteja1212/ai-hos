@@ -968,6 +968,8 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
         <a
           href={bookingResult.payment_link}
           onClick={handlePayClick}
+          target="_blank"
+          rel="noopener noreferrer"
           className="block w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-center leading-[3rem] transition-colors mb-4"
         >
           Pay Now {"\u2014"} {"\u20B9"}{bookingResult.consultation_fee || "200"}
@@ -978,6 +980,8 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
       {bookingResult.payment_link && paymentStatus === "checking" && (
         <a
           href={bookingResult.payment_link}
+          target="_blank"
+          rel="noopener noreferrer"
           className="block w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-center leading-[3rem] transition-colors mb-4"
         >
           Open Payment Page
