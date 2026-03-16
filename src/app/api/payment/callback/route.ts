@@ -63,6 +63,21 @@ async function sendWA(waApiUrl: string, waToken: string, to: string, payload: ob
   } catch { /* non-critical */ }
 }
 
+async function getRzpAmount(paymentLinkId: string): Promise<number> {
+  if (!paymentLinkId) return 0;
+  try {
+    const res = await fetch('https://api.razorpay.com/v1/payment_links/' + paymentLinkId, {
+      headers: { 'Authorization': RAZORPAY_AUTH },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.amount ? data.amount / 100 : 0;
+    }
+  } catch { /* ok */ }
+  return 0;
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -86,12 +101,14 @@ export async function GET(req: NextRequest) {
       try {
         const existing = await sbGet(
           '/appointments?payment_id=eq.' + encodeURIComponent(paymentLinkId) +
-          '&status=eq.confirmed&select=booking_id,op_pass_id'
+          '&status=eq.confirmed&select=booking_id,op_pass_id,patient_name,doctor_name,specialty,date,time'
         );
         if (Array.isArray(existing) && existing.length > 0) {
           console.log('[payment-callback] Webhook already processed, showing confirmation for:', existing[0].booking_id);
+          const e = existing[0];
+          const amountPaid = await getRzpAmount(paymentLinkId);
           return new NextResponse(
-            await confirmationPage({ referenceId: existing[0].booking_id, alreadyProcessed: true }),
+            await confirmationPage({ referenceId: e.booking_id, opPassId: e.op_pass_id, patientName: e.patient_name, cleanDrName: (e.doctor_name || '').replace(/^Dr\.?\s*/i, '').trim(), specialty: e.specialty, appointmentDate: e.date, appointmentTime: e.time, amountPaid, alreadyProcessed: true }),
             { status: 200, headers: { 'Content-Type': 'text/html' } }
           );
         }
@@ -122,11 +139,13 @@ export async function GET(req: NextRequest) {
   try {
     const existing = await sbGet(
       '/appointments?razorpay_payment_id=eq.' + encodeURIComponent(paymentId) +
-      '&status=eq.confirmed&select=booking_id,op_pass_id'
+      '&status=eq.confirmed&select=booking_id,op_pass_id,patient_name,doctor_name,specialty,date,time'
     );
     if (Array.isArray(existing) && existing.length > 0) {
+      const e = existing[0];
+      const amountPaid = await getRzpAmount(paymentLinkId);
       return new NextResponse(
-        await confirmationPage({ referenceId: existing[0].booking_id, alreadyProcessed: true }),
+        await confirmationPage({ referenceId: e.booking_id, opPassId: e.op_pass_id, patientName: e.patient_name, cleanDrName: (e.doctor_name || '').replace(/^Dr\.?\s*/i, '').trim(), specialty: e.specialty, appointmentDate: e.date, appointmentTime: e.time, amountPaid, alreadyProcessed: true }),
         { status: 200, headers: { 'Content-Type': 'text/html' } }
       );
     }
