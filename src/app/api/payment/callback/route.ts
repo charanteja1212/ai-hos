@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
   if (RAZORPAY_KEY_SECRET && razorpaySignature) {
     const expectedSignature = crypto
       .createHmac('sha256', RAZORPAY_KEY_SECRET)
-      .update(paymentLinkId + '|' + params.get('razorpay_payment_link_reference_id') + '|' + paymentLinkStatus + '|' + params.get('razorpay_payment_link_reference_id'))
+      .update(paymentLinkId + '|' + params.get('razorpay_payment_link_reference_id') + '|' + paymentLinkStatus + '|' + paymentId)
       .digest('hex');
     if (razorpaySignature !== expectedSignature) {
       console.error('[payment-callback] Signature verification failed');
