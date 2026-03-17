@@ -73,6 +73,61 @@ export async function sendText(
   }
 }
 
+/** Send an interactive CTA URL button message */
+async function sendInteractiveButton(
+  to: string,
+  body: string,
+  buttonText: string,
+  url: string,
+  config?: WhatsAppConfig
+): Promise<SendResult> {
+  const phoneNumberId = config?.phoneNumberId || DEFAULT_PHONE_NUMBER_ID
+  const accessToken = config?.accessToken || DEFAULT_ACCESS_TOKEN
+
+  if (!accessToken || !phoneNumberId) {
+    return { success: false, error: "WhatsApp not configured" }
+  }
+
+  try {
+    const res = await fetch(getApiUrl(phoneNumberId), {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to: normalizePhone(to),
+        type: "interactive",
+        interactive: {
+          type: "cta_url",
+          body: { text: body },
+          action: {
+            name: "cta_url",
+            parameters: {
+              display_text: buttonText,
+              url,
+            },
+          },
+        },
+      }),
+      signal: AbortSignal.timeout(10000),
+    })
+
+    if (!res.ok) {
+      const err = await res.text().catch(() => "unknown error")
+      console.error("[whatsapp] Interactive send failed:", res.status, err.substring(0, 200))
+      return { success: false, error: `WhatsApp API ${res.status}` }
+    }
+
+    const data = await res.json()
+    return { success: true, messageId: data?.messages?.[0]?.id }
+  } catch (err) {
+    console.error("[whatsapp] Interactive send error:", err)
+    return { success: false, error: String(err) }
+  }
+}
+
 /** Send OTP message to patient */
 export async function sendOTP(
   phone: string,
@@ -235,8 +290,7 @@ export async function sendDoctorLeaveNotification(
   if (data.rescheduleLink) {
     lines.push(
       ``,
-      `You can reschedule your appointment${data.hasOpPass ? " *free of charge*" : ""} using the link below:`,
-      `${data.rescheduleLink}`,
+      `You can reschedule your appointment${data.hasOpPass ? " *free of charge*" : ""} using the button below.`,
     )
   } else {
     lines.push(
@@ -252,6 +306,17 @@ export async function sendDoctorLeaveNotification(
     `Regards,`,
     `${data.hospitalName}`,
   )
+
+  // Send as interactive button if reschedule link is available
+  if (data.rescheduleLink) {
+    return sendInteractiveButton(
+      phone,
+      lines.join("\n"),
+      "Reschedule Appointment",
+      data.rescheduleLink,
+      config
+    )
+  }
 
   return sendText(phone, lines.join("\n"), config)
 }
