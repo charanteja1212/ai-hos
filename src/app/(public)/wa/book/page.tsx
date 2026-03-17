@@ -5,8 +5,10 @@ import { useWaAuth } from "@/hooks/use-wa-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
+  ChevronRight,
   CalendarDays,
   CheckCircle2,
   Clock,
@@ -20,6 +22,8 @@ import {
   Mail,
   Users,
   MapPin,
+  Star,
+  Sparkles,
 } from "lucide-react";
 
 type Step = "register" | "specialty" | "doctor" | "date" | "slot" | "confirm" | "success";
@@ -544,52 +548,106 @@ export default function BookPage() {
         <div>
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <Loader2 className="w-7 h-7 animate-spin text-blue-600" />
-              <p className="text-sm text-muted-foreground">Loading departments...</p>
+              <div className="relative">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                <div className="absolute inset-0 w-8 h-8 rounded-full bg-blue-400/20 animate-ping" />
+              </div>
+              <p className="text-sm text-muted-foreground font-medium">Loading departments...</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {specialties.map((spec) => {
+              {specialties.map((spec, idx) => {
                 const doc = spec.doctors[0];
                 const initials = doc ? doc.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "";
                 return (
-                  <button
+                  <motion.button
                     key={spec.specialty}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.07, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => handleSpecialtySelect(spec)}
-                    className="w-full text-left p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-blue-300 dark:hover:border-blue-700 active:scale-[0.98] transition-all"
+                    className="w-full text-left group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-300"
                   >
-                    <div className="flex items-center gap-3">
+                    {/* Gradient hover overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-50/0 via-blue-50/0 to-blue-50/0 group-hover:from-blue-50/80 group-hover:via-blue-50/40 group-hover:to-transparent dark:group-hover:from-blue-950/30 dark:group-hover:via-blue-950/15 dark:group-hover:to-transparent transition-all duration-500" />
+
+                    <div className="relative p-4">
                       {spec.doctor_count === 1 && doc ? (
-                        doc.image_url ? (
-                          <img src={doc.image_url} alt={doc.name} className="w-12 h-12 rounded-full object-cover shrink-0 border border-slate-200 dark:border-slate-700" />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center shrink-0">
-                            <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm">{initials}</span>
+                        /* Single doctor - premium card */
+                        <div className="flex items-center gap-4">
+                          <div className="relative">
+                            {doc.image_url ? (
+                              <div className="relative">
+                                <div className="absolute -inset-1 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl opacity-20 group-hover:opacity-40 blur-sm transition-opacity duration-300" />
+                                <img src={doc.image_url} alt={doc.name} className="relative w-16 h-16 rounded-2xl object-cover border-2 border-white dark:border-slate-800 shadow-md" />
+                              </div>
+                            ) : (
+                              <div className="relative">
+                                <div className="absolute -inset-1 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl opacity-20 blur-sm" />
+                                <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+                                  <span className="text-white font-bold text-lg">{initials}</span>
+                                </div>
+                              </div>
+                            )}
+                            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 flex items-center justify-center">
+                              <CheckCircle2 className="w-3 h-3 text-white" />
+                            </div>
                           </div>
-                        )
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-[10px] font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">{spec.specialty}</span>
+                            </div>
+                            <p className="font-semibold text-[15px] text-slate-900 dark:text-white">{doc.name}</p>
+                            {doc.designation && (
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{doc.designation}</p>
+                            )}
+                          </div>
+                          <div className="shrink-0 w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors">
+                            <ChevronRight className="w-4 h-4 text-blue-500 group-hover:translate-x-0.5 transition-transform" />
+                          </div>
+                        </div>
                       ) : (
-                        <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center shrink-0">
-                          <Stethoscope className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                        /* Multi doctor - department card */
+                        <div className="flex items-center gap-4">
+                          <div className="relative">
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+                              <Stethoscope className="w-7 h-7 text-white" />
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-blue-600 border-2 border-white dark:border-slate-900 flex items-center justify-center">
+                              <span className="text-[9px] font-bold text-white">{spec.doctor_count}</span>
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-[15px] text-slate-900 dark:text-white">{spec.specialty}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                              {spec.doctor_count} doctors available
+                            </p>
+                            {/* Mini avatar stack */}
+                            <div className="flex items-center mt-2 -space-x-2">
+                              {spec.doctors.slice(0, 3).map((d, i) => (
+                                d.image_url ? (
+                                  <img key={d.doctor_id} src={d.image_url} alt={d.name} className="w-6 h-6 rounded-full object-cover border-2 border-white dark:border-slate-900" style={{ zIndex: 3 - i }} />
+                                ) : (
+                                  <div key={d.doctor_id} className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 border-2 border-white dark:border-slate-900 flex items-center justify-center" style={{ zIndex: 3 - i }}>
+                                    <span className="text-[8px] font-bold text-blue-600 dark:text-blue-400">{d.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+                                  </div>
+                                )
+                              ))}
+                              {spec.doctor_count > 3 && (
+                                <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center" style={{ zIndex: 0 }}>
+                                  <span className="text-[8px] font-bold text-slate-500">+{spec.doctor_count - 3}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="shrink-0 w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors">
+                            <ChevronRight className="w-4 h-4 text-blue-500 group-hover:translate-x-0.5 transition-transform" />
+                          </div>
                         </div>
                       )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-slate-900 dark:text-white">{spec.specialty}</p>
-                        {spec.doctor_count === 1 && doc ? (
-                          <>
-                            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">{doc.name}</p>
-                            {doc.designation && (
-                              <p className="text-[11px] text-blue-600 dark:text-blue-400">{doc.designation}</p>
-                            )}
-                          </>
-                        ) : (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {spec.doctor_count} doctors
-                          </p>
-                        )}
-                      </div>
-                      <ChevronLeft className="w-4 h-4 rotate-180 text-slate-400 shrink-0" />
                     </div>
-                  </button>
+                  </motion.button>
                 );
               })}
             </div>
@@ -600,38 +658,80 @@ export default function BookPage() {
       {/* ============ STEP 3: DOCTOR ============ */}
       {step === "doctor" && selectedSpecialty && (
         <div>
-          <p className="text-sm text-muted-foreground mb-3">
-            Doctors in <span className="font-medium text-slate-900 dark:text-white">{selectedSpecialty.specialty}</span>
-          </p>
-          <div className="space-y-3">
-            {selectedSpecialty.doctors.map((doc) => {
+          <motion.p
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-sm text-muted-foreground mb-4"
+          >
+            Choose your doctor in <span className="font-semibold text-slate-900 dark:text-white">{selectedSpecialty.specialty}</span>
+          </motion.p>
+          <div className="space-y-4">
+            {selectedSpecialty.doctors.map((doc, idx) => {
               const initials = doc.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
               return (
-                <button
+                <motion.button
                   key={doc.doctor_id}
+                  initial={{ opacity: 0, y: 24, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: idx * 0.1, duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => handleDoctorSelect(doc)}
-                  className="w-full text-left p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-blue-300 dark:hover:border-blue-700 active:scale-[0.98] transition-all"
+                  className="w-full text-left group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300"
                 >
-                  <div className="flex items-center gap-3">
-                    {doc.image_url ? (
-                      <img src={doc.image_url} alt={doc.name} className="w-12 h-12 rounded-full object-cover shrink-0 border border-slate-200 dark:border-slate-700" />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center shrink-0">
-                        <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm">{initials}</span>
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-slate-900 dark:text-white">Dr. {doc.name}</p>
-                      {doc.designation && (
-                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">{doc.designation}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {selectedSpecialty.specialty}
-                      </p>
-                    </div>
-                    <ChevronLeft className="w-4 h-4 rotate-180 text-slate-400 shrink-0" />
+                  {/* Animated gradient border on hover */}
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ padding: "1px" }}>
+                    <div className="absolute inset-[1px] rounded-[15px] bg-white dark:bg-slate-900" />
                   </div>
-                </button>
+
+                  <div className="relative p-5">
+                    <div className="flex gap-4">
+                      {/* Doctor Image */}
+                      <div className="relative shrink-0">
+                        {doc.image_url ? (
+                          <div className="relative">
+                            <div className="absolute -inset-1.5 bg-gradient-to-br from-blue-400 via-indigo-400 to-purple-400 rounded-2xl opacity-25 group-hover:opacity-50 blur-md transition-all duration-500" />
+                            <img src={doc.image_url} alt={doc.name} className="relative w-20 h-20 rounded-2xl object-cover border-2 border-white dark:border-slate-800 shadow-lg" />
+                          </div>
+                        ) : (
+                          <div className="relative">
+                            <div className="absolute -inset-1.5 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl opacity-25 blur-md" />
+                            <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
+                              <span className="text-white font-bold text-xl">{initials}</span>
+                            </div>
+                          </div>
+                        )}
+                        {/* Online indicator */}
+                        <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-emerald-500 border-[2.5px] border-white dark:border-slate-900">
+                          <div className="absolute inset-0.5 rounded-full bg-emerald-400 animate-pulse" />
+                        </div>
+                      </div>
+
+                      {/* Doctor Info */}
+                      <div className="flex-1 min-w-0 py-0.5">
+                        <p className="font-bold text-base text-slate-900 dark:text-white leading-tight">{doc.name}</p>
+                        {doc.designation && (
+                          <div className="flex items-center gap-1.5 mt-1.5">
+                            <Sparkles className="w-3 h-3 text-blue-500" />
+                            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">{doc.designation}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          <Stethoscope className="w-3 h-3 text-slate-400" />
+                          <span className="text-xs text-slate-500 dark:text-slate-400">{selectedSpecialty.specialty}</span>
+                        </div>
+
+                        {/* Book button */}
+                        <div className="mt-3">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-xs font-semibold group-hover:bg-blue-600 group-hover:text-white dark:group-hover:bg-blue-600 transition-all duration-300">
+                            <CalendarDays className="w-3 h-3" />
+                            Book Appointment
+                            <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.button>
               );
             })}
           </div>
