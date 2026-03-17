@@ -682,7 +682,7 @@ export default function DoctorsManagementPage() {
                 <label className="w-20 h-20 rounded-2xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 flex flex-col items-center justify-center cursor-pointer transition-colors bg-muted/20">
                   <Camera className="w-5 h-5 text-muted-foreground/50" />
                   <span className="text-[9px] text-muted-foreground/50 mt-0.5">Photo</span>
-                  <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageSelect} />
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" className="hidden" onChange={handleImageSelect} />
                 </label>
               )}
             </div>
