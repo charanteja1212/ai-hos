@@ -27,6 +27,9 @@ type Step = "register" | "specialty" | "doctor" | "date" | "slot" | "confirm" | 
 interface Doctor {
   doctor_id: string;
   name: string;
+  image_url?: string;
+  designation?: string;
+  consultation_fee?: number;
 }
 
 interface Specialty {
@@ -582,12 +585,22 @@ export default function BookPage() {
                   className="w-full text-left p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-blue-300 dark:hover:border-blue-700 active:scale-[0.98] transition-all"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center shrink-0">
-                      <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm">{initials}</span>
-                    </div>
+                    {doc.image_url ? (
+                      <img src={doc.image_url} alt={doc.name} className="w-12 h-12 rounded-full object-cover shrink-0 border border-slate-200 dark:border-slate-700" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center shrink-0">
+                        <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm">{initials}</span>
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-slate-900 dark:text-white">Dr. {doc.name}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{selectedSpecialty.specialty}</p>
+                      {doc.designation && (
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">{doc.designation}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {selectedSpecialty.specialty}
+                        {doc.consultation_fee ? ` · ₹${doc.consultation_fee}` : ""}
+                      </p>
                     </div>
                     <ChevronLeft className="w-4 h-4 rotate-180 text-slate-400 shrink-0" />
                   </div>

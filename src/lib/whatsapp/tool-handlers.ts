@@ -170,7 +170,7 @@ export async function listSpecialties(args: any): Promise<any> {
   try {
     const doctors = await sbGet(
       '/doctors?status=eq.active&tenant_id=eq.' + encodeURIComponent(tenantId) +
-      '&select=doctor_id,name,specialty'
+      '&select=doctor_id,name,specialty,image_url,designation,consultation_fee'
     );
     if (!Array.isArray(doctors)) return { specialties: [], total_specialties: 0, total_doctors: 0 };
 
@@ -178,7 +178,7 @@ export async function listSpecialties(args: any): Promise<any> {
     for (const d of doctors) {
       const s = d.specialty || 'Uncategorized';
       if (!map[s]) map[s] = [];
-      map[s].push({ doctor_id: d.doctor_id, name: d.name });
+      map[s].push({ doctor_id: d.doctor_id, name: d.name, image_url: d.image_url || '', designation: d.designation || '', consultation_fee: d.consultation_fee || 0 });
     }
     const specialties = Object.keys(map).map(s => ({
       specialty: s, doctors: map[s], doctor_count: map[s].length,

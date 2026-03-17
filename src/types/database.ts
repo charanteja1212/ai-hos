@@ -35,6 +35,8 @@ export interface Doctor {
   status?: string
   tenant_id?: string
   client_id?: string
+  image_url?: string
+  designation?: string
 }
 
 export interface Appointment {

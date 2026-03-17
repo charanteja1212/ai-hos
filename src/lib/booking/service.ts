@@ -106,7 +106,7 @@ export async function listSpecialties(tenantId: string) {
 
   const { data: doctors, error } = await supabase
     .from("doctors")
-    .select("specialty, doctor_id, name, consultation_fee")
+    .select("specialty, doctor_id, name, consultation_fee, image_url, designation")
     .eq("tenant_id", tenantId)
     .eq("status", "active")
 

@@ -906,11 +906,18 @@ export function BookingForm() {
                                 )}
                               >
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent to-primary/[0.02] opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shrink-0 relative", style.icon)}>
-                                  <Stethoscope className="w-5 h-5 text-white" />
-                                </div>
+                                {(doctor as Doctor & { image_url?: string }).image_url ? (
+                                  <img src={(doctor as Doctor & { image_url?: string }).image_url!} alt={doctor.name} className="w-12 h-12 rounded-2xl object-cover shadow-lg shrink-0 relative border border-border/30" />
+                                ) : (
+                                  <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shrink-0 relative", style.icon)}>
+                                    <Stethoscope className="w-5 h-5 text-white" />
+                                  </div>
+                                )}
                                 <div className="flex-1 min-w-0 relative">
                                   <p className="text-sm font-bold text-foreground">{doctor.name}</p>
+                                  {(doctor as Doctor & { designation?: string }).designation && (
+                                    <p className="text-[11px] text-primary/80 font-medium mt-0.5">{(doctor as Doctor & { designation?: string }).designation}</p>
+                                  )}
                                   <p className="text-[11px] text-muted-foreground mt-0.5">{doctor.specialty}</p>
                                   {(doctor as Doctor & { consultation_fee?: number }).consultation_fee && (
                                     <p className="text-[10px] text-muted-foreground/60 mt-0.5 font-mono">
