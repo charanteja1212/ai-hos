@@ -6,7 +6,13 @@ import { useBranch } from "@/components/providers/branch-context"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import {
@@ -24,7 +30,6 @@ import {
   UserPlus,
   Volume2,
   VolumeX,
-  Filter,
   X,
   MessageSquare,
   CalendarPlus,
@@ -113,7 +118,7 @@ function NotificationItem({
             <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
           )}
         </div>
-        <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+        <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
           {notification.message}
         </p>
         <p className="text-[10px] text-muted-foreground/60 mt-1">
@@ -144,6 +149,7 @@ type TabFilter = "all" | "unread"
 
 export function NotificationCenter({ user }: NotificationCenterProps) {
   const { activeTenantId } = useBranch()
+  const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<TabFilter>("all")
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
   const {
@@ -172,8 +178,8 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
   const presentTypes = [...new Set(notifications.map((n) => n.type))]
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="rounded-xl relative group">
           <Bell className="w-4 h-4 transition-transform group-hover:rotate-12" />
           <AnimatePresence>
@@ -189,46 +195,56 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
             )}
           </AnimatePresence>
         </Button>
-      </PopoverTrigger>
+      </SheetTrigger>
 
-      <PopoverContent align="end" className="w-80 p-0" sideOffset={8}>
+      <SheetContent side="right" showCloseButton={false} className="w-96 p-0 !gap-0 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold">Notifications</h3>
-            {unreadCount > 0 && (
-              <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
-                {unreadCount}
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 rounded-lg"
-              onClick={toggleSound}
-              title={soundEnabled ? "Mute notifications" : "Unmute notifications"}
-            >
-              {soundEnabled ? (
-                <Volume2 className="w-3.5 h-3.5" />
-              ) : (
-                <VolumeX className="w-3.5 h-3.5 text-muted-foreground" />
+        <SheetHeader className="px-4 py-3 border-b space-y-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <SheetTitle className="text-sm">Notifications</SheetTitle>
+              {unreadCount > 0 && (
+                <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                  {unreadCount}
+                </Badge>
               )}
-            </Button>
-            {unreadCount > 0 && (
+            </div>
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-7 text-xs rounded-lg gap-1"
-                onClick={markAllRead}
+                size="icon"
+                className="h-7 w-7 rounded-lg"
+                onClick={toggleSound}
+                title={soundEnabled ? "Mute notifications" : "Unmute notifications"}
               >
-                <CheckCheck className="w-3.5 h-3.5" />
-                Read all
+                {soundEnabled ? (
+                  <Volume2 className="w-3.5 h-3.5" />
+                ) : (
+                  <VolumeX className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
               </Button>
-            )}
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs rounded-lg gap-1"
+                  onClick={markAllRead}
+                >
+                  <CheckCheck className="w-3.5 h-3.5" />
+                  Read all
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 rounded-lg"
+                onClick={() => setOpen(false)}
+              >
+                <X className="w-3.5 h-3.5" />
+              </Button>
+            </div>
           </div>
-        </div>
+        </SheetHeader>
 
         {/* Tab filters: All / Unread */}
         <div className="flex items-center gap-1 px-3 pt-2 pb-1">
@@ -255,9 +271,9 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
             Unread{unreadCount > 0 ? ` (${unreadCount})` : ""}
           </button>
 
-          {/* Type filter dropdown */}
+          {/* Type filter chips */}
           {presentTypes.length > 1 && (
-            <div className="ml-auto flex items-center gap-1">
+            <div className="ml-auto flex items-center gap-1 flex-wrap">
               {typeFilter ? (
                 <button
                   onClick={() => setTypeFilter(null)}
@@ -267,36 +283,27 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
                   <X className="w-3 h-3" />
                 </button>
               ) : (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-accent/40 transition-colors">
-                      <Filter className="w-3.5 h-3.5" />
+                presentTypes.slice(0, 4).map((type) => {
+                  const Icon = TYPE_ICONS[type] || Bell
+                  const color = TYPE_COLORS[type] || "text-muted-foreground"
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => setTypeFilter(type)}
+                      className="flex items-center gap-1 text-[10px] font-medium px-1.5 py-1 rounded-md text-muted-foreground hover:bg-accent/40 transition-colors"
+                      title={TYPE_LABELS[type] || type}
+                    >
+                      <Icon className={cn("w-3 h-3", color)} />
                     </button>
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-40 p-1" sideOffset={4}>
-                    {presentTypes.map((type) => {
-                      const Icon = TYPE_ICONS[type] || Bell
-                      const color = TYPE_COLORS[type] || "text-muted-foreground"
-                      return (
-                        <button
-                          key={type}
-                          onClick={() => setTypeFilter(type)}
-                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent/40 transition-colors text-left"
-                        >
-                          <Icon className={cn("w-3.5 h-3.5", color)} />
-                          {TYPE_LABELS[type] || type}
-                        </button>
-                      )
-                    })}
-                  </PopoverContent>
-                </Popover>
+                  )
+                })
               )}
             </div>
           )}
         </div>
 
         {/* Notification List */}
-        <ScrollArea className="max-h-72">
+        <ScrollArea className="flex-1 overflow-y-auto" style={{ maxHeight: "calc(100vh - 120px)" }}>
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
               <BellOff className="w-8 h-8 mb-2 opacity-30" />
@@ -315,7 +322,7 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
             </div>
           )}
         </ScrollArea>
-      </PopoverContent>
-    </Popover>
+      </SheetContent>
+    </Sheet>
   )
 }

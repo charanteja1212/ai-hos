@@ -1006,8 +1006,8 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
       {/* Payment Instructions */}
       {paymentStatus === "checking" && (
         <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-800 p-3 text-xs space-y-1">
-          <p className="font-semibold text-blue-700 dark:text-blue-300">After paying, come back to this page.</p>
-          <p className="text-blue-600/80 dark:text-blue-400/80 leading-relaxed">If the payment page shows an error after UPI payment, you can ignore it {"\u2014"} your payment is processed. Check WhatsApp for your OP Pass.</p>
+          <p className="font-semibold text-blue-700 dark:text-blue-300">After paying, you will be redirected back automatically.</p>
+          <p className="text-blue-600/80 dark:text-blue-400/80">Your OP Pass will be sent to WhatsApp.</p>
         </div>
       )}
 

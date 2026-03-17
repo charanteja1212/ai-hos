@@ -19,21 +19,19 @@ interface BookingInfo {
 function PayPageContent() {
   const params = useSearchParams();
   const bookingId = params.get('id') || '';
-  // Detect if user returned from Razorpay (callback_url redirect has these params)
+  // Detect return from Razorpay via callback_url
   const rzpStatus = params.get('razorpay_payment_link_status');
 
   const [booking, setBooking] = useState<BookingInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [paid, setPaid] = useState(false);
   const [error, setError] = useState('');
-  const [payClicked, setPayClicked] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Check if returning from payment (via Razorpay callback or localStorage flag)
-  const [checkingPayment, setCheckingPayment] = useState(() => {
-    if (rzpStatus === 'paid') return true;
+  // Detect if returning from payment
+  const returnedFromPayment = rzpStatus === 'paid' || (() => {
     try { return localStorage.getItem('pay_active') === bookingId; } catch { return false; }
-  });
+  })();
 
   const checkStatus = useCallback(async () => {
     if (!bookingId) return;
@@ -46,39 +44,26 @@ function PayPageContent() {
       const data: BookingInfo = await res.json();
       setBooking(data);
       setLoading(false);
-
       if (data.payment_status === 'paid' || data.status === 'confirmed') {
         setPaid(true);
       }
-    } catch {
-      /* retry on next poll */
-    }
+    } catch { /* retry */ }
   }, [bookingId]);
 
   // Initial check + polling
   useEffect(() => {
     if (!bookingId) { setError('No booking ID'); setLoading(false); return; }
-
     checkStatus();
-
-    // Poll every 3 seconds
     intervalRef.current = setInterval(checkStatus, 3000);
-
-    // Also check on visibility change (user returns from UPI app)
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') {
-        checkStatus();
-      }
-    };
+    const onVisible = () => { if (document.visibilityState === 'visible') checkStatus(); };
     document.addEventListener('visibilitychange', onVisible);
-
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       document.removeEventListener('visibilitychange', onVisible);
     };
   }, [bookingId, checkStatus]);
 
-  // Stop polling once paid + clear localStorage flag
+  // Stop polling once paid
   useEffect(() => {
     if (paid) {
       if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
@@ -88,23 +73,24 @@ function PayPageContent() {
 
   const handlePay = () => {
     if (booking?.payment_link) {
-      setPayClicked(true);
-      // Save flag so if page reloads, we show "verifying payment" state
       try { localStorage.setItem('pay_active', bookingId); } catch {}
-      // Small delay so user sees the instruction before redirect
-      setTimeout(() => {
-        window.location.href = booking.payment_link!;
-      }, 600);
+      window.location.href = booking.payment_link;
     }
   };
 
+  const handleBackToWhatsApp = () => {
+    try { window.close(); } catch {}
+    setTimeout(() => { window.location.href = 'https://wa.me/'; }, 500);
+  };
+
+  // Loading state
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f4f8', fontFamily: '-apple-system,BlinkMacSystemFont,sans-serif' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: 40, height: 40, border: '3px solid #e2e8f0', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
           <p style={{ color: '#64748b', fontSize: 14 }}>
-            {checkingPayment ? 'Verifying payment...' : 'Loading booking details...'}
+            {returnedFromPayment ? 'Verifying payment...' : 'Loading booking details...'}
           </p>
           <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
         </div>
@@ -112,6 +98,7 @@ function PayPageContent() {
     );
   }
 
+  // Error state
   if (error) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f4f8', fontFamily: '-apple-system,BlinkMacSystemFont,sans-serif', padding: 20 }}>
@@ -124,7 +111,7 @@ function PayPageContent() {
     );
   }
 
-  // PAID — show success
+  // PAID — success
   if (paid && booking) {
     return (
       <div style={{ minHeight: '100vh', background: '#f0fdf4', fontFamily: '-apple-system,BlinkMacSystemFont,sans-serif', padding: 16 }}>
@@ -134,7 +121,6 @@ function PayPageContent() {
             <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Payment Successful!</h1>
             <p style={{ fontSize: 13, opacity: 0.9, marginTop: 4 }}>Your appointment is confirmed</p>
           </div>
-
           <div style={{ padding: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <Row label="Patient" value={booking.patient_name} />
@@ -146,24 +132,22 @@ function PayPageContent() {
               <Row label="Booking ID" value={booking.booking_id} />
             </div>
           </div>
-
           <div style={{ padding: '16px 20px', background: '#f0fdf4', borderTop: '1px solid #dcfce7', textAlign: 'center' }}>
             <p style={{ fontSize: 14, color: '#059669', fontWeight: 600, margin: '0 0 4px' }}>OP Pass sent on WhatsApp</p>
             <p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>Present the digital pass at reception</p>
           </div>
         </div>
-
         <div style={{ textAlign: 'center', marginTop: 16 }}>
-          <a href="whatsapp://" style={{ display: 'inline-block', background: '#25D366', color: '#fff', padding: '14px 36px', borderRadius: 12, textDecoration: 'none', fontWeight: 700, fontSize: 16 }}>
+          <button onClick={handleBackToWhatsApp} style={{ display: 'inline-block', background: '#25D366', color: '#fff', padding: '14px 36px', borderRadius: 12, border: 'none', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>
             Back to WhatsApp
-          </a>
+          </button>
         </div>
       </div>
     );
   }
 
-  // Returning from payment (via back button or callback) but not yet confirmed
-  if (checkingPayment && !paid) {
+  // Returned from payment but not yet confirmed — verifying
+  if (returnedFromPayment && !paid) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f4f8', fontFamily: '-apple-system,BlinkMacSystemFont,sans-serif', padding: 20 }}>
         <div style={{ background: '#fff', padding: '40px 24px', borderRadius: 16, textAlign: 'center', maxWidth: 400, width: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
@@ -172,12 +156,6 @@ function PayPageContent() {
           <p style={{ color: '#64748b', fontSize: 14 }}>Please wait while we confirm your payment.</p>
           <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 16 }}>This usually takes a few seconds.</p>
           <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-          <button
-            onClick={() => setCheckingPayment(false)}
-            style={{ marginTop: 20, padding: '10px 24px', background: 'transparent', color: '#64748b', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}
-          >
-            Payment not done? Go back
-          </button>
         </div>
       </div>
     );
@@ -191,7 +169,6 @@ function PayPageContent() {
           <h1 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 4px' }}>Complete Payment</h1>
           <p style={{ fontSize: 13, opacity: 0.9, margin: 0 }}>Appointment Booking</p>
         </div>
-
         <div style={{ padding: '20px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <Row label="Patient" value={booking?.patient_name || ''} />
@@ -201,33 +178,25 @@ function PayPageContent() {
             <Row label="Time" value={booking?.appointment_time || ''} />
           </div>
         </div>
-
         <div style={{ padding: '0 20px 24px', textAlign: 'center' }}>
           <button
             onClick={handlePay}
-            disabled={payClicked || !booking?.payment_link}
+            disabled={!booking?.payment_link}
             style={{
-              width: '100%', padding: '16px', background: payClicked ? '#94a3b8' : '#059669',
+              width: '100%', padding: '16px', background: '#059669',
               color: '#fff', border: 'none', borderRadius: 12, fontSize: 18, fontWeight: 700,
-              cursor: payClicked ? 'default' : 'pointer',
+              cursor: 'pointer',
             }}
           >
-            {payClicked ? 'Opening payment page...' : 'Pay Now'}
+            Pay Now
           </button>
-
-          {payClicked && (
-            <div style={{ marginTop: 16, padding: '12px 16px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10 }}>
-              <p style={{ fontSize: 14, color: '#92400e', fontWeight: 600, margin: '0 0 4px' }}>
-                After completing payment:
-              </p>
-              <p style={{ fontSize: 13, color: '#78350f', margin: 0 }}>
-                Press the <strong>&larr; back button</strong> to return here and see your confirmation.
-              </p>
-            </div>
-          )}
+          <div style={{ marginTop: 16, padding: '12px 16px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 10 }}>
+            <p style={{ fontSize: 13, color: '#0369a1', margin: 0 }}>
+              After completing UPI payment, press the <strong>&larr; back button</strong> to see your confirmation here.
+            </p>
+          </div>
         </div>
       </div>
-
       <p style={{ textAlign: 'center', fontSize: 12, color: '#94a3b8', marginTop: 16 }}>
         Payment is secured by Razorpay
       </p>

@@ -203,6 +203,59 @@ export async function sendReminder(
   return sendText(phone, text, config)
 }
 
+/** Send doctor leave notification to affected patients */
+export async function sendDoctorLeaveNotification(
+  phone: string,
+  data: {
+    patientName: string
+    doctorName: string
+    specialty: string
+    date: string
+    time: string
+    bookingId: string
+    hospitalName: string
+    reason?: string
+    hasOpPass?: boolean
+    rescheduleLink?: string
+  },
+  config?: WhatsAppConfig
+): Promise<SendResult> {
+  const firstName = (data.patientName || "").split(" ")[0]
+  const lines = [
+    `*${data.hospitalName}*`,
+    `*Appointment Rescheduling Notice*`,
+    ``,
+    `Dear ${firstName},`,
+    ``,
+    `We regret to inform you that your appointment with *Dr. ${data.doctorName}* (${data.specialty}) on *${data.date}* at *${data.time}* has been cancelled due to the doctor being unavailable${data.reason ? ` (${data.reason})` : ""}.`,
+    ``,
+    `Booking ID: ${data.bookingId}`,
+  ]
+
+  if (data.rescheduleLink) {
+    lines.push(
+      ``,
+      `You can reschedule your appointment${data.hasOpPass ? " *free of charge*" : ""} using the link below:`,
+      `${data.rescheduleLink}`,
+    )
+  } else {
+    lines.push(
+      ``,
+      `Please contact the hospital reception or reply to this message to reschedule your appointment.`,
+    )
+  }
+
+  lines.push(
+    ``,
+    `We sincerely apologize for the inconvenience.`,
+    ``,
+    `Regards,`,
+    `${data.hospitalName}`,
+  )
+
+  return sendText(phone, lines.join("\n"), config)
+}
+
 /** Get WhatsApp config for a specific tenant (for per-client numbers) */
 export async function getTenantWhatsAppConfig(
   tenantId: string,

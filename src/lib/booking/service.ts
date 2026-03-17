@@ -82,10 +82,20 @@ function minutesToTime(minutes: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`
 }
 
-/** Day of week string for schedule lookup */
-function getDayOfWeek(dateStr: string): string {
+/** Day of week number for schedule lookup (0=Sun, 1=Mon, ..., 6=Sat) */
+function getDayOfWeek(dateStr: string): number {
+  return new Date(dateStr + "T00:00:00").getDay()
+}
+
+/** Day of week name for display */
+function getDayName(dateStr: string): string {
   const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
   return days[new Date(dateStr + "T00:00:00").getDay()]
+}
+
+/** Trim "HH:MM:SS" to "HH:MM" */
+function trimTime(t: string): string {
+  return t.substring(0, 5)
 }
 
 // ─── Service Functions ────────────────────────────────────────────────────────
@@ -206,59 +216,54 @@ export async function checkAvailability(params: {
 
     for (const date of dates) {
       const dayOfWeek = getDayOfWeek(date)
+      const dayName = getDayName(date)
       const override = docOverrides.find((o) => o.override_date === date)
 
-      // Check if doctor is on leave
+      // Check if doctor is on leave (date override)
       if (override && !override.is_available) {
-        availability.push({ date, day: dayOfWeek, slots: [] })
+        availability.push({ date, day: dayName, slots: [] })
         continue
       }
 
-      // Get schedule: override custom hours > doctor_schedules > legacy fallback
-      let startTime: string
-      let endTime: string
-      let slotDuration: number
-
-      if (override?.start_time && override?.end_time) {
-        startTime = override.start_time
-        endTime = override.end_time
-        slotDuration = override.slot_duration_minutes || 20
-      } else {
-        const schedule = docSchedules.find((s) => s.day_of_week === dayOfWeek)
-        if (schedule) {
-          startTime = schedule.start_time
-          endTime = schedule.end_time
-          slotDuration = schedule.slot_duration || 20
-        } else {
-          // Legacy fallback: 10:30 AM – 9:00 PM, 20 min
-          startTime = "10:30"
-          endTime = "21:00"
-          slotDuration = 20
-        }
-      }
-
-      const startMin = timeToMinutes(startTime)
-      const endMin = timeToMinutes(endTime)
       const slots: SlotInfo[] = []
 
-      for (let min = startMin; min + slotDuration <= endMin; min += slotDuration) {
-        const timeStr = minutesToTime(min)
+      if (override?.start_time && override?.end_time) {
+        // Date override with custom hours
+        const startMin = timeToMinutes(trimTime(override.start_time))
+        const endMin = timeToMinutes(trimTime(override.end_time))
+        const slotDuration = override.slot_duration_minutes || 20
 
-        // Skip past slots for today
-        if (date === today && timeStr <= currentTime) continue
+        for (let min = startMin; min + slotDuration <= endMin; min += slotDuration) {
+          const timeStr = minutesToTime(min)
+          if (date === today && timeStr <= currentTime) continue
+          const key = `${docId}|${date}|${timeStr}`
+          slots.push({ date, time: timeStr, available: !bookedSet.has(key) && !lockedSet.has(key) })
+        }
+      } else {
+        // Get all sessions for this day from doctor_schedules
+        const daySessions = docSchedules
+          .filter((s) => s.day_of_week === dayOfWeek && s.is_working !== false)
+          .sort((a, b) => timeToMinutes(trimTime(a.start_time)) - timeToMinutes(trimTime(b.start_time)))
 
-        const key = `${docId}|${date}|${timeStr}`
-        const isBooked = bookedSet.has(key)
-        const isLocked = lockedSet.has(key)
+        if (daySessions.length > 0) {
+          // Generate slots from each session
+          for (const session of daySessions) {
+            const startMin = timeToMinutes(trimTime(session.start_time))
+            const endMin = timeToMinutes(trimTime(session.end_time))
+            const slotDuration = session.slot_duration_minutes || session.slot_duration || 20
 
-        slots.push({
-          date,
-          time: timeStr,
-          available: !isBooked && !isLocked,
-        })
+            for (let min = startMin; min + slotDuration <= endMin; min += slotDuration) {
+              const timeStr = minutesToTime(min)
+              if (date === today && timeStr <= currentTime) continue
+              const key = `${docId}|${date}|${timeStr}`
+              slots.push({ date, time: timeStr, available: !bookedSet.has(key) && !lockedSet.has(key) })
+            }
+          }
+        }
+        // No sessions configured = no availability (no legacy fallback)
       }
 
-      availability.push({ date, day: dayOfWeek, slots })
+      availability.push({ date, day: dayName, slots })
     }
 
     results[docId] = availability

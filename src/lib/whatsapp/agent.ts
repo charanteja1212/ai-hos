@@ -143,15 +143,17 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
       if (isEndChat) {
         reply = msg('live_agent_ended', language);
         nextState = 'MAIN_MENU';
+
+        // Close live chat if exists (must read liveChatId BEFORE wiping data)
+        const chatIdToClose = data.liveChatId;
         data = { _state: 'MAIN_MENU' };
 
-        // Close live chat if exists
-        if (data.liveChatId) {
+        if (chatIdToClose) {
           try {
             const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1';
             const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
             await fetch(
-              SUPABASE_URL + '/live_chats?id=eq.' + data.liveChatId,
+              SUPABASE_URL + '/live_chats?id=eq.' + chatIdToClose,
               {
                 method: 'PATCH',
                 headers: {
@@ -183,9 +185,10 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
             },
             body: JSON.stringify({
               phone: cleanPhone,
+              patient_name: data.patientName || cleanPhone,
               tenant_id: tenantId,
-              status: 'open',
-              messages: [{ role: 'user', content: messageBody, ts: new Date().toISOString() }],
+              status: 'active',
+              messages: [{ role: 'patient', content: messageBody, ts: new Date().toISOString() }],
             }),
             signal: AbortSignal.timeout(8000),
           });
@@ -228,7 +231,7 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
             const rows = await getRes.json();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const msgs = (Array.isArray(rows) && rows[0]?.messages) ? rows[0].messages as any[] : [];
-            msgs.push({ role: 'user', content: messageBody, ts: new Date().toISOString() });
+            msgs.push({ role: 'patient', content: messageBody, ts: new Date().toISOString() });
             await fetch(
               SUPABASE_URL + '/live_chats?id=eq.' + data.liveChatId,
               {

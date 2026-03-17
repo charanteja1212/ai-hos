@@ -125,15 +125,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
       {/* Content — offset by sidebar width */}
       <div
-        className="lg:pl-64 bg-background"
+        className="lg:pl-64 bg-background isolate"
         style={{ height: "100dvh", display: "flex", flexDirection: "column" }}
       >
-        <div style={{ flexShrink: 0 }}>
+        <div className="relative z-[60]" style={{ flexShrink: 0 }}>
           <Topbar user={user} onToggleMobile={toggleMobile} />
         </div>
         <main
           id="dashboard-main"
-          className="p-4 sm:p-6"
+          className="relative z-0 p-4 sm:p-6"
           style={{ flex: "1 1 0%", minHeight: 0, overflowY: "auto" }}
         >
           {children}

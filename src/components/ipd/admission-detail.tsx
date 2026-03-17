@@ -122,20 +122,26 @@ export function AdmissionDetail({ admission, open, onClose, tenantId }: Admissio
         </TabsList>
 
         {/* Overview */}
-        <TabsContent value="overview" className="space-y-3">
-          <div className="rounded-xl gradient-blue p-4 text-white">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-lg font-bold">
-                {(admission.patient_name || "P")[0]?.toUpperCase()}
-              </div>
-              <div>
-                <p className="font-semibold text-lg">{admission.patient_name}</p>
-                <p className="text-sm text-white/70">{admission.patient_phone}</p>
-              </div>
-              <div className="ml-auto text-right">
-                <Badge className={`${STATUS_COLORS[admission.status]} border-0`}>
-                  {admission.status}
-                </Badge>
+        <TabsContent value="overview" className="space-y-4">
+          {/* Premium patient hero */}
+          <div className="rounded-2xl overflow-hidden relative">
+            <div className="gradient-blue p-5 relative">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0id2hpdGUiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')] opacity-50" />
+              <div className="relative flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl font-black text-white ring-2 ring-white/20">
+                  {(admission.patient_name || "P")[0]?.toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-lg text-white tracking-tight">{admission.patient_name}</p>
+                  <p className="text-sm text-white/60 font-medium">{admission.patient_phone}</p>
+                  <p className="text-xs text-white/40 mt-0.5 font-mono">{admission.admission_id}</p>
+                </div>
+                <div className="text-right space-y-1.5">
+                  <Badge className={`${STATUS_COLORS[admission.status]} border-0 font-semibold`}>
+                    {admission.status}
+                  </Badge>
+                  <p className="text-xs text-white/50 font-bold">{days} day{days !== 1 ? "s" : ""}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -160,9 +166,9 @@ export function AdmissionDetail({ admission, open, onClose, tenantId }: Admissio
           </div>
 
           {admission.notes && (
-            <div className="glass rounded-lg p-3">
-              <p className="text-xs font-semibold mb-1">Notes</p>
-              <p className="text-sm text-muted-foreground">{admission.notes}</p>
+            <div className="glass rounded-xl p-3.5 border-l-2 border-primary/30">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Notes</p>
+              <p className="text-sm text-foreground/80 leading-relaxed">{admission.notes}</p>
             </div>
           )}
         </TabsContent>
@@ -317,12 +323,12 @@ export function AdmissionDetail({ admission, open, onClose, tenantId }: Admissio
 
 function InfoCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="glass rounded-lg p-3">
-      <div className="flex items-center gap-1.5 text-muted-foreground mb-0.5">
-        {icon}
-        <span className="text-[10px] uppercase tracking-wider">{label}</span>
+    <div className="glass rounded-xl p-3.5 hover:bg-muted/30 transition-colors group">
+      <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
+        <div className="text-primary/60 group-hover:text-primary transition-colors">{icon}</div>
+        <span className="text-[10px] font-semibold uppercase tracking-widest">{label}</span>
       </div>
-      <p className="text-sm font-medium">{value}</p>
+      <p className="text-sm font-semibold text-foreground">{value}</p>
     </div>
   )
 }
