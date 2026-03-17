@@ -309,13 +309,20 @@ export async function sendDoctorLeaveNotification(
 
   // Send as interactive button if reschedule link is available
   if (data.rescheduleLink) {
-    return sendInteractiveButton(
+    const result = await sendInteractiveButton(
       phone,
       lines.join("\n"),
-      "Reschedule Appointment",
+      "Reschedule Now",
       data.rescheduleLink,
       config
     )
+    // Fallback to plain text with link if interactive fails
+    if (!result.success) {
+      const fallbackLines = [...lines]
+      fallbackLines.splice(fallbackLines.length - 3, 0, ``, `Reschedule here: ${data.rescheduleLink}`)
+      return sendText(phone, fallbackLines.join("\n"), config)
+    }
+    return result
   }
 
   return sendText(phone, lines.join("\n"), config)
