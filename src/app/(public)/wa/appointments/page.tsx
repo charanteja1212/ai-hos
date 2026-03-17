@@ -370,6 +370,9 @@ export default function AppointmentsPage() {
   const activeAppointments = appointments.filter(
     (a) => !cancelledIds.has(a.booking_id) && ["confirmed", "pending_payment"].includes(a.status)
   );
+  const cancelledAppointments = appointments.filter(
+    (a) => !cancelledIds.has(a.booking_id) && a.status === "cancelled"
+  );
 
   return (
     <div className="animate-in fade-in duration-500">
@@ -412,7 +415,7 @@ export default function AppointmentsPage() {
           <Loader2 className="w-7 h-7 animate-spin text-blue-500" />
           <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">Fetching appointments...</p>
         </div>
-      ) : activeAppointments.length === 0 ? (
+      ) : activeAppointments.length === 0 && cancelledAppointments.length === 0 ? (
         /* Empty State */
         <div className="text-center py-16">
           <CalendarDays className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
@@ -570,6 +573,58 @@ export default function AppointmentsPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Cancelled appointments — available for reschedule */}
+      {cancelledAppointments.length > 0 && (
+        <div className="mt-4 space-y-3">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 px-1">Cancelled — Reschedule available</p>
+          {cancelledAppointments.map((appt) => (
+            <div
+              key={appt.booking_id}
+              className="bg-white dark:bg-slate-900 rounded-xl border border-red-200 dark:border-red-800/50 shadow-sm overflow-hidden"
+            >
+              <div className="p-4">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{appt.doctor_name}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{appt.specialty}</p>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full shrink-0 bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                    Cancelled
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4 text-slate-400 shrink-0" />
+                    <div>
+                      <p className="text-xs text-slate-400">Original Date</p>
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200 line-through">{appt.date}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+                    <div>
+                      <p className="text-xs text-slate-400">Original Time</p>
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200 line-through">{appt.time}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-3">
+                  <p className="text-xs text-amber-700 dark:text-amber-300">Doctor is on leave. Please reschedule to a new date.</p>
+                </div>
+                <Button
+                  onClick={() => startReschedule(appt)}
+                  className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Reschedule Appointment
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

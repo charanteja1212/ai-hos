@@ -832,11 +832,13 @@ export async function listAppointments(args: any): Promise<any> {
   if (!phone) return { success: false, appointments: [], message: 'Phone number is required' };
 
   try {
+    const todayStr = nowIST().dateStr;
     const result = await sbGet(
       '/appointments?or=(patient_phone.eq.' + phone + ',patient_phone.eq.%2B' + phone +
       ',booked_by_whatsapp_number.eq.' + phone + ',booked_by_whatsapp_number.eq.%2B' + phone +
       ')&tenant_id=eq.' + encodeURIComponent(tenantId) +
-      '&status=in.(confirmed,pending_payment)&order=date.asc,time.asc'
+      '&status=in.(confirmed,pending_payment,cancelled)&date=gte.' + todayStr +
+      '&order=date.asc,time.asc'
     );
     let appointments = Array.isArray(result) ? result : [];
     if (appointments.length === 0) {
@@ -970,9 +972,9 @@ export async function rescheduleAppointment(args: any): Promise<any> {
 
   try {
     // Get old appointment
-    const oldAppts = await sbGet('/appointments?booking_id=eq.' + encodeURIComponent(oldBookingId) + '&status=eq.confirmed&select=*');
+    const oldAppts = await sbGet('/appointments?booking_id=eq.' + encodeURIComponent(oldBookingId) + '&status=in.(confirmed,cancelled)&select=*');
     if (!Array.isArray(oldAppts) || oldAppts.length === 0) {
-      return { success: false, error: 'No confirmed appointment found with this booking ID.' };
+      return { success: false, error: 'No appointment found with this booking ID.' };
     }
     const old = oldAppts[0];
 
