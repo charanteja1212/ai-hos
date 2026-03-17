@@ -49,6 +49,8 @@ import {
   Copy,
   ChevronDown,
   RotateCcw,
+  Camera,
+  X,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { SectionHeader } from "@/components/shared/section-header"
@@ -262,6 +264,11 @@ export default function DoctorsManagementPage() {
   const [formPin, setFormPin] = useState("")
   const [formFee, setFormFee] = useState("200")
   const [formStatus, setFormStatus] = useState("active")
+  const [formDesignation, setFormDesignation] = useState("")
+  const [formImageUrl, setFormImageUrl] = useState("")
+  const [formImageFile, setFormImageFile] = useState<File | null>(null)
+  const [formImagePreview, setFormImagePreview] = useState("")
+  const [uploading, setUploading] = useState(false)
 
   const fetchDoctors = useCallback(async () => {
     try {
@@ -303,6 +310,10 @@ export default function DoctorsManagementPage() {
     setFormPin("")
     setFormFee("200")
     setFormStatus("active")
+    setFormDesignation("")
+    setFormImageUrl("")
+    setFormImageFile(null)
+    setFormImagePreview("")
     setEditing(null)
   }
 
@@ -315,7 +326,26 @@ export default function DoctorsManagementPage() {
     setFormPin(doc.pin || "")
     setFormFee(String(doc.consultation_fee || 200))
     setFormStatus(doc.status || "active")
+    setFormDesignation(doc.designation || "")
+    setFormImageUrl(doc.image_url || "")
+    setFormImagePreview(doc.image_url || "")
+    setFormImageFile(null)
     setShowForm(true)
+  }
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) { toast.error("Image must be under 2MB"); return }
+    if (!file.type.startsWith("image/")) { toast.error("Only image files allowed"); return }
+    setFormImageFile(file)
+    setFormImagePreview(URL.createObjectURL(file))
+  }
+
+  const removeImage = () => {
+    setFormImageFile(null)
+    setFormImagePreview("")
+    setFormImageUrl("")
   }
 
   const handleSave = useCallback(async () => {
@@ -328,6 +358,39 @@ export default function DoctorsManagementPage() {
       return
     }
     setSaving(true)
+
+    // Upload image if a new file was selected
+    let imageUrl = formImageUrl
+    if (formImageFile) {
+      setUploading(true)
+      try {
+        const doctorSlug = formName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-")
+        const ext = formImageFile.name.split(".").pop() || "jpg"
+        const path = `${tenantId}/${doctorSlug}-${Date.now()}.${ext}`
+        const fd = new FormData()
+        fd.append("file", formImageFile)
+        fd.append("bucket", "doctor-images")
+        fd.append("path", path)
+        const res = await fetch("/api/upload", { method: "POST", body: fd })
+        const json = await res.json()
+        if (json.url) {
+          imageUrl = json.url
+        } else {
+          toast.error("Image upload failed: " + (json.error || "Unknown error"))
+          setSaving(false)
+          setUploading(false)
+          return
+        }
+      } catch (err) {
+        console.error("[doctors] image upload failed:", err)
+        toast.error("Image upload failed")
+        setSaving(false)
+        setUploading(false)
+        return
+      }
+      setUploading(false)
+    }
+
     const supabase = createBrowserClient()
 
     const data: Record<string, unknown> = {
@@ -338,6 +401,8 @@ export default function DoctorsManagementPage() {
       email: formEmail.trim() || null,
       consultation_fee: parseInt(formFee) || 200,
       status: formStatus,
+      designation: formDesignation.trim() || null,
+      image_url: imageUrl || null,
     }
     if (formPin) data.pin = formPin
 
@@ -369,7 +434,7 @@ export default function DoctorsManagementPage() {
     } finally {
       setSaving(false)
     }
-  }, [formName, formSpecialty, formPhone, formEmail, formPin, formFee, formStatus, editing, tenantId, fetchDoctors])
+  }, [formName, formSpecialty, formPhone, formEmail, formPin, formFee, formStatus, formDesignation, formImageUrl, formImageFile, editing, tenantId, fetchDoctors])
 
   // ---------- Schedule editor functions ----------
   const openSchedule = useCallback(async (doc: Doctor) => {
@@ -534,10 +599,17 @@ export default function DoctorsManagementPage() {
                 >
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-xl ${SPECIALTY_GRADIENTS[doc.specialty] || "gradient-blue"} flex items-center justify-center text-white font-bold text-sm`}>
-                        {doc.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                      {doc.image_url ? (
+                        <img src={doc.image_url} alt={doc.name} className="w-9 h-9 rounded-xl object-cover border border-border/50" />
+                      ) : (
+                        <div className={`w-9 h-9 rounded-xl ${SPECIALTY_GRADIENTS[doc.specialty] || "gradient-blue"} flex items-center justify-center text-white font-bold text-sm`}>
+                          {doc.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-medium text-sm">{doc.name}</p>
+                        {doc.designation && <p className="text-[10px] text-muted-foreground">{doc.designation}</p>}
                       </div>
-                      <p className="font-medium text-sm">{doc.name}</p>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -596,11 +668,31 @@ export default function DoctorsManagementPage() {
         maxWidth="sm:max-w-lg"
       >
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5 col-span-2">
+          {/* Photo Upload */}
+          <div className="flex items-center gap-4">
+            <div className="relative group">
+              {formImagePreview ? (
+                <div className="relative">
+                  <img src={formImagePreview} alt="Doctor" className="w-20 h-20 rounded-2xl object-cover border-2 border-primary/20" />
+                  <button onClick={removeImage} className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <label className="w-20 h-20 rounded-2xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 flex flex-col items-center justify-center cursor-pointer transition-colors bg-muted/20">
+                  <Camera className="w-5 h-5 text-muted-foreground/50" />
+                  <span className="text-[9px] text-muted-foreground/50 mt-0.5">Photo</span>
+                  <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageSelect} />
+                </label>
+              )}
+            </div>
+            <div className="flex-1 space-y-1.5">
               <Label>Full Name *</Label>
               <Input placeholder="Dr. John Doe" value={formName} onChange={(e) => setFormName(e.target.value)} />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Specialty *</Label>
               <Select value={formSpecialty} onValueChange={setFormSpecialty}>
@@ -611,6 +703,10 @@ export default function DoctorsManagementPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Designation</Label>
+              <Input placeholder="e.g. Senior Cardiologist" value={formDesignation} onChange={(e) => setFormDesignation(e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label>Consultation Fee (Rs)</Label>
@@ -641,9 +737,9 @@ export default function DoctorsManagementPage() {
             </div>
           </div>
 
-          <Button onClick={handleSave} disabled={saving} className="w-full">
+          <Button onClick={handleSave} disabled={saving || uploading} className="w-full">
             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
-            {editing ? "Update Doctor" : "Add Doctor"}
+            {uploading ? "Uploading photo..." : editing ? "Update Doctor" : "Add Doctor"}
           </Button>
         </div>
       </PremiumDialog>
