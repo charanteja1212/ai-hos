@@ -410,9 +410,18 @@ export async function bookAppointment(args: any): Promise<any> {
   if (!VALID_RELS.includes(relationship)) relationship = 'OTHER';
   if (relationship === 'SELF' && bookedBy && phone !== bookedBy) relationship = 'OTHER';
 
-  // WhatsApp config for sending confirmations
-  const waApiUrl = args.wa_api_url || '';
-  const waToken = args.wa_token || '';
+  // WhatsApp config for sending confirmations — fetch from tenant if not provided
+  let waApiUrl = args.wa_api_url || '';
+  let waToken = args.wa_token || '';
+  if (!waApiUrl || !waToken) {
+    try {
+      const tRows = await sbGet('/tenants?tenant_id=eq.' + encodeURIComponent(tenantId) + '&select=wa_api_url,wa_token');
+      if (Array.isArray(tRows) && tRows.length > 0) {
+        if (!waApiUrl) waApiUrl = tRows[0].wa_api_url || '';
+        if (!waToken) waToken = tRows[0].wa_token || '';
+      }
+    } catch { /* ok */ }
+  }
 
   if (!startTime) return { success: false, error: 'start_time is required (YYYY-MM-DD HH:MM)' };
   if (!doctorId) return { success: false, error: 'doctor_id is required' };
