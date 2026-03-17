@@ -512,14 +512,12 @@ export async function bookAppointment(args: any): Promise<any> {
   let hospitalName = 'Care Hospital';
   let tenantConsultationFee = 0;
   let tenantRzpAuth = '';
-  let tenantCallbackUrl = '';
   try {
-    const tRows = await sbGet('/tenants?tenant_id=eq.' + encodeURIComponent(tenantId) + '&select=hospital_name,consultation_fee,razorpay_auth,razorpay_callback_url');
+    const tRows = await sbGet('/tenants?tenant_id=eq.' + encodeURIComponent(tenantId) + '&select=hospital_name,consultation_fee,razorpay_auth');
     if (Array.isArray(tRows) && tRows.length > 0) {
       if (tRows[0].hospital_name) hospitalName = tRows[0].hospital_name;
       if (tRows[0].consultation_fee) tenantConsultationFee = tRows[0].consultation_fee;
       if (tRows[0].razorpay_auth) tenantRzpAuth = tRows[0].razorpay_auth;
-      if (tRows[0].razorpay_callback_url) tenantCallbackUrl = tRows[0].razorpay_callback_url;
     }
   } catch { /* ok */ }
   const cleanDrName = (doctorName || '').replace(/^Dr\.?\s*/i, '').trim();
@@ -1041,25 +1039,111 @@ export async function rescheduleAppointment(args: any): Promise<any> {
     try { await sbPatch('/reminders?id=like.' + encodeURIComponent(oldBookingId) + '*&sent=eq.no', { sent: 'skipped' }); } catch { /* ok */ }
 
     // Send WhatsApp confirmation for reschedule
-    const reschMsg = hasValidOpPass
-      ? '*Appointment Rescheduled* ✅\n\n'
-        + '*Patient:* ' + (old.patient_name || 'N/A') + '\n'
-        + '*Doctor:* ' + (newDoctorName || 'N/A') + '\n'
-        + '*New Date:* ' + (bookResult.date || 'N/A') + '\n'
-        + '*New Time:* ' + (bookResult.time || 'N/A') + '\n'
-        + '*Booking ID:* ' + newBookingId + '\n'
-        + '*OP Pass:* ' + opPassId + '\n'
-        + '*Reschedules Remaining:* ' + (5 - newRescheduleCount) + '\n'
-        + '\n_Present your OP Pass at reception._'
-      : '*Appointment Rescheduled* 🔄\n\n'
+    const reschNotifyPhone = normalizePhone(old.booked_by_whatsapp_number || old.patient_phone || senderPhone);
+
+    if (hasValidOpPass) {
+      // Get tenant info + OP Pass expiry for card
+      let hospitalName = 'Hospital';
+      let passExpiry = '';
+      let tenantWaApiUrl = waApiUrl;
+      let tenantWaToken = waToken;
+      try {
+        const tRows = await sbGet('/tenants?tenant_id=eq.' + encodeURIComponent(tenantId) + '&select=hospital_name,wa_api_url,wa_token');
+        if (Array.isArray(tRows) && tRows.length > 0) {
+          hospitalName = tRows[0].hospital_name || 'Hospital';
+          if (!tenantWaApiUrl) tenantWaApiUrl = tRows[0].wa_api_url || '';
+          if (!tenantWaToken) tenantWaToken = tRows[0].wa_token || '';
+        }
+      } catch { /* ok */ }
+      try {
+        const passRows = await sbGet('/op_passes?op_pass_id=eq.' + encodeURIComponent(opPassId) + '&select=expiry_date');
+        if (Array.isArray(passRows) && passRows.length > 0) passExpiry = passRows[0].expiry_date || '';
+      } catch { /* ok */ }
+
+      const expiryDisplay = passExpiry ? new Date(passExpiry + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+      const verifyUrl = 'https://ainewworld.in/webhook/verify-appointment?id=' + encodeURIComponent(opPassId);
+      const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(verifyUrl);
+      const cleanDrName = (newDoctorName || 'Doctor').replace(/^Dr\.?\s*/i, '');
+      const patientName = old.patient_name || 'Patient';
+      const newDate = bookResult.date || 'N/A';
+      const newTime = bookResult.time || 'N/A';
+
+      // Generate card image
+      let cardImageUrl = qrUrl; // fallback to QR
+      try {
+        const cardHtml = '<div style="width:800px;height:600px;font-family:Segoe UI,Roboto,Arial,sans-serif;display:flex;overflow:hidden">'
+          + '<div style="flex:1;background:linear-gradient(170deg,#0f172a 0%,#1e293b 100%);display:flex;flex-direction:column">'
+          + '<div style="padding:24px 28px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.06)">'
+          + '<div><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:3px;font-weight:600">Appointment Pass</div>'
+          + '<div style="font-size:22px;font-weight:800;color:#f8fafc;margin-top:2px">' + hospitalName + '</div></div>'
+          + '<div style="background:#059669;color:#ecfdf5;padding:5px 16px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase">RESCHEDULED</div></div>'
+          + '<div style="padding:18px 28px;flex:1;display:flex;flex-direction:column;justify-content:center">'
+          + '<div style="display:flex;margin-bottom:16px">'
+          + '<div style="flex:1"><div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:2px;font-weight:600;margin-bottom:4px">Patient</div><div style="font-size:16px;font-weight:700;color:#f1f5f9">' + patientName + '</div></div>'
+          + '<div style="flex:1"><div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:2px;font-weight:600;margin-bottom:4px">Doctor</div><div style="font-size:16px;font-weight:700;color:#f1f5f9">Dr. ' + cleanDrName + '</div></div></div>'
+          + '<div style="display:flex;margin-bottom:16px">'
+          + '<div style="flex:1"><div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:2px;font-weight:600;margin-bottom:4px">Department</div><div style="font-size:14px;font-weight:700;color:#f1f5f9">' + (newSpecialty || 'General Medicine') + '</div></div>'
+          + '<div style="flex:1"><div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:2px;font-weight:600;margin-bottom:4px">Amount</div><div style="font-size:20px;font-weight:800;color:#34d399">OP Pass</div></div></div>'
+          + '<div style="height:1px;background:linear-gradient(90deg,#334155,transparent);margin-bottom:16px"></div>'
+          + '<div style="display:flex;gap:12px">'
+          + '<div style="flex:1;background:rgba(30,41,59,0.8);border-radius:10px;padding:12px 14px;border:1px solid #334155">'
+          + '<div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:2px;font-weight:600;margin-bottom:4px">Date</div>'
+          + '<div style="font-size:15px;font-weight:700;color:#f8fafc">' + newDate + '</div></div>'
+          + '<div style="flex:0 0 120px;background:rgba(30,41,59,0.8);border-radius:10px;padding:12px 14px;border:1px solid #334155;text-align:center">'
+          + '<div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:2px;font-weight:600;margin-bottom:4px">Time</div>'
+          + '<div style="font-size:15px;font-weight:700;color:#f8fafc">' + newTime + '</div></div></div></div>'
+          + '<div style="padding:10px 28px;background:rgba(2,6,23,0.5);border-top:1px solid rgba(255,255,255,0.04)">'
+          + '<div style="font-size:10px;color:#475569;letter-spacing:0.5px">Present this pass at hospital reception</div></div></div>'
+          + '<div style="width:28px;background:#0f172a;position:relative;flex-shrink:0">'
+          + '<div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:28px;height:28px;background:#0f172a;border-radius:50%"></div>'
+          + '<div style="position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);width:28px;height:28px;background:#0f172a;border-radius:50%"></div>'
+          + '<div style="position:absolute;top:28px;bottom:28px;left:50%;border-left:2px dashed #334155"></div></div>'
+          + '<div style="width:220px;background:linear-gradient(170deg,#1e293b 0%,#0f172a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;flex-shrink:0">'
+          + '<div style="background:#ffffff;border-radius:10px;padding:8px;margin-bottom:16px">'
+          + '<img src="' + qrUrl + '" width="130" height="130" style="display:block;border-radius:4px" /></div>'
+          + '<div style="text-align:center;margin-bottom:10px;width:100%">'
+          + '<div style="font-size:8px;color:#64748b;text-transform:uppercase;letter-spacing:2px;font-weight:600;margin-bottom:2px">Booking ID</div>'
+          + '<div style="font-size:12px;font-weight:700;color:#e2e8f0;font-family:monospace">' + newBookingId + '</div></div>'
+          + '<div style="text-align:center;margin-bottom:10px;width:100%"><div style="font-size:8px;color:#64748b;text-transform:uppercase;letter-spacing:2px;font-weight:600;margin-bottom:2px">OP Pass</div><div style="font-size:12px;font-weight:700;color:#e2e8f0;font-family:monospace">' + opPassId + '</div></div>'
+          + (expiryDisplay ? '<div style="text-align:center;width:100%"><div style="font-size:8px;color:#64748b;text-transform:uppercase;letter-spacing:2px;font-weight:600;margin-bottom:2px">Valid Until</div><div style="font-size:13px;font-weight:700;color:#fbbf24">' + expiryDisplay + '</div></div>' : '')
+          + '</div></div>';
+        const imgRes = await fetch('http://html2img:3000/render', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ html: cardHtml, vw: 800, vh: 600 }),
+          signal: AbortSignal.timeout(20000),
+        });
+        if (imgRes.ok) {
+          const imgData = await imgRes.json();
+          if (imgData && imgData.url) cardImageUrl = imgData.url;
+        }
+      } catch { /* fallback to QR */ }
+
+      // Send card image via WhatsApp
+      const caption = '*' + hospitalName + '*\nAppointment Rescheduled ✅\n\n'
+        + '*Patient:* ' + patientName + '\n*Doctor:* Dr. ' + cleanDrName + '\n*Date:* ' + newDate + '\n*Time:* ' + newTime + '\n\n'
+        + '*Booking ID:* ' + newBookingId + '\n*OP Pass:* ' + opPassId + '\n*Valid Until:* ' + expiryDisplay + '\n*Reschedules Remaining:* ' + (5 - newRescheduleCount) + '\n\n'
+        + '_No payment needed (OP Pass active)._\n_Present this digital pass at reception._';
+      if (tenantWaApiUrl && tenantWaToken) {
+        try {
+          await fetch(tenantWaApiUrl, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + tenantWaToken, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messaging_product: 'whatsapp', to: reschNotifyPhone, type: 'image', image: { link: cardImageUrl, caption } }),
+            signal: AbortSignal.timeout(15000),
+          });
+        } catch { /* non-critical */ }
+      }
+    } else {
+      // No OP Pass: send text-only message
+      const reschMsg = '*Appointment Rescheduled* 🔄\n\n'
         + '*Patient:* ' + (old.patient_name || 'N/A') + '\n'
         + '*Doctor:* ' + (newDoctorName || 'N/A') + '\n'
         + '*New Date:* ' + (bookResult.date || 'N/A') + '\n'
         + '*New Time:* ' + (bookResult.time || 'N/A') + '\n'
         + '*Booking ID:* ' + newBookingId + '\n'
         + '\nPlease complete payment to confirm your appointment.';
-    const reschNotifyPhone = normalizePhone(old.booked_by_whatsapp_number || old.patient_phone || senderPhone);
-    sendWA(reschNotifyPhone, reschMsg, tenantId).catch(() => {});
+      sendWA(reschNotifyPhone, reschMsg, tenantId).catch(() => {});
+    }
 
     return {
       success: true, old_booking_id: oldBookingId, new_booking_id: newBookingId,

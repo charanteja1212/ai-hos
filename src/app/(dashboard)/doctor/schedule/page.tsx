@@ -62,16 +62,21 @@ interface DaySchedule {
 type WeekSchedule = Record<number, DaySchedule>
 
 interface DateOverride {
-  id?: number
+  override_id?: string
   doctor_id: string
   tenant_id: string
-  date: string
-  type: string
+  override_date: string
   reason?: string
   start_time?: string
   end_time?: string
   is_available?: boolean
   slot_duration_minutes?: number
+}
+
+/** Derive type from is_available + start/end times */
+function getOverrideType(ov: DateOverride): "leave" | "custom_hours" {
+  if (ov.is_available && ov.start_time && ov.end_time) return "custom_hours"
+  return "leave"
 }
 
 // ---------- Constants ----------
@@ -228,7 +233,7 @@ export default function SchedulePage() {
   const [customEnd, setCustomEnd] = useState("21:00")
   const [affectedCount, setAffectedCount] = useState(0)
   const [savingOverride, setSavingOverride] = useState(false)
-  const [removeOverrideId, setRemoveOverrideId] = useState<number | null>(null)
+  const [removeOverrideId, setRemoveOverrideId] = useState<string | null>(null)
 
   // Load data
   useEffect(() => {
@@ -236,7 +241,7 @@ export default function SchedulePage() {
     const supabase = createBrowserClient()
     Promise.all([
       supabase.from("doctor_schedules").select("*").eq("doctor_id", doctorId).eq("tenant_id", tenantId).order("day_of_week").order("session_number").limit(100),
-      supabase.from("date_overrides").select("*").eq("doctor_id", doctorId).eq("tenant_id", tenantId).in("type", ["leave", "custom_hours"]).gte("date", new Date().toISOString().split("T")[0]).order("date").limit(200),
+      supabase.from("date_overrides").select("*").eq("doctor_id", doctorId).eq("tenant_id", tenantId).gte("override_date", new Date().toISOString().split("T")[0]).order("override_date").limit(200),
     ]).then(([schedRes, overrideRes]) => {
       const w = rowsToWeek((schedRes.data || []) as ScheduleRow[])
       setWeek(w)
@@ -357,7 +362,7 @@ export default function SchedulePage() {
   // --- Leave/Override logic (unchanged) ---
   const fetchOverrides = useCallback(async () => {
     const supabase = createBrowserClient()
-    const { data } = await supabase.from("date_overrides").select("*").eq("doctor_id", doctorId).eq("tenant_id", tenantId).in("type", ["leave", "custom_hours"]).gte("date", new Date().toISOString().split("T")[0]).order("date").limit(200)
+    const { data } = await supabase.from("date_overrides").select("*").eq("doctor_id", doctorId).eq("tenant_id", tenantId).gte("override_date", new Date().toISOString().split("T")[0]).order("override_date").limit(200)
     if (data) setOverrides(data as DateOverride[])
   }, [doctorId, tenantId])
 
@@ -377,22 +382,45 @@ export default function SchedulePage() {
   const addOverride = useCallback(async () => {
     if (!overrideDate) return
     setSavingOverride(true)
-    const supabase = createBrowserClient()
-    const record: Record<string, unknown> = { doctor_id: doctorId, tenant_id: tenantId, date: overrideDate, type: overrideType, reason: overrideReason || (overrideType === "leave" ? "Personal" : "Custom hours") }
-    if (overrideType === "custom_hours") { record.start_time = customStart; record.end_time = customEnd; record.is_available = true } else { record.is_available = false }
-    const { error } = await supabase.from("date_overrides").insert(record)
-    if (error) { toast.error("Failed to add override") } else { toast.success(overrideType === "leave" ? "Leave added" : "Custom hours set"); setOverrideDate(""); setOverrideReason(""); setOverrideType("leave"); fetchOverrides() }
+    try {
+      const res = await fetch("/api/doctor/leave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          doctor_id: doctorId,
+          tenant_id: tenantId,
+          date: overrideDate,
+          type: overrideType,
+          reason: overrideReason || (overrideType === "leave" ? "Personal" : "Custom hours"),
+          ...(overrideType === "custom_hours" ? { start_time: customStart, end_time: customEnd } : {}),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        toast.error(data.error || "Failed to add override")
+      } else {
+        const affected = data.cancelled_count || data.total_affected || 0
+        if (affected > 0) {
+          toast.success(`${overrideType === "leave" ? "Leave" : "Custom hours"} saved — ${affected} appointment(s) cancelled, ${data.notified_count || 0} patient(s) notified via WhatsApp`, { duration: 6000 })
+        } else {
+          toast.success(overrideType === "leave" ? "Leave added — no appointments affected" : "Custom hours set — no appointments affected")
+        }
+        setOverrideDate(""); setOverrideReason(""); setOverrideType("leave"); fetchOverrides()
+      }
+    } catch {
+      toast.error("Failed to save leave")
+    }
     setSavingOverride(false)
   }, [overrideDate, overrideType, overrideReason, customStart, customEnd, doctorId, tenantId, fetchOverrides])
 
-  const removeOverride = useCallback(async (id: number) => {
+  const removeOverride = useCallback(async (id: string) => {
     const supabase = createBrowserClient()
-    const { error } = await supabase.from("date_overrides").delete().eq("id", id).eq("tenant_id", tenantId)
+    const { error } = await supabase.from("date_overrides").delete().eq("override_id", id).eq("tenant_id", tenantId)
     if (error) {
       toast.error("Failed to remove override")
       return
     }
-    setOverrides((prev) => prev.filter((o) => o.id !== id))
+    setOverrides((prev) => prev.filter((o) => o.override_id !== id))
     toast.success("Override removed")
   }, [tenantId])
 
@@ -691,25 +719,28 @@ export default function SchedulePage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {overrides.map((ov) => (
-                <motion.div key={ov.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className={`flex items-center justify-between py-2.5 px-3 rounded-lg bg-muted/30 border border-border/50 border-l-4 card-hover ${ov.type === "leave" ? "border-l-destructive/50" : "border-l-amber-500/50"}`}>
+              {overrides.map((ov) => {
+                const ovType = getOverrideType(ov)
+                return (
+                <motion.div key={ov.override_id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className={`flex items-center justify-between py-2.5 px-3 rounded-lg bg-muted/30 border border-border/50 border-l-4 card-hover ${ovType === "leave" ? "border-l-destructive/50" : "border-l-amber-500/50"}`}>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">{formatDate(ov.date)}</p>
-                      <Badge variant={ov.type === "leave" ? "destructive" : "secondary"} className="text-[10px] h-5">
-                        {ov.type === "leave" ? "Leave" : "Custom Hours"}
+                      <p className="text-sm font-medium">{formatDate(ov.override_date)}</p>
+                      <Badge variant={ovType === "leave" ? "destructive" : "secondary"} className="text-[10px] h-5">
+                        {ovType === "leave" ? "Leave" : "Custom Hours"}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {ov.type === "custom_hours" && ov.start_time && ov.end_time ? `${fmt24to12(ov.start_time)} — ${fmt24to12(ov.end_time)}` : ov.reason || "No reason"}
-                      {ov.type === "custom_hours" && ov.reason ? ` • ${ov.reason}` : ""}
+                      {ovType === "custom_hours" && ov.start_time && ov.end_time ? `${fmt24to12(ov.start_time)} — ${fmt24to12(ov.end_time)}` : ov.reason || "No reason"}
+                      {ovType === "custom_hours" && ov.reason ? ` • ${ov.reason}` : ""}
                     </p>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => ov.id && setRemoveOverrideId(ov.id)} className="h-8 w-8 text-destructive">
+                  <Button variant="ghost" size="icon" onClick={() => ov.override_id && setRemoveOverrideId(ov.override_id)} className="h-8 w-8 text-destructive">
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </motion.div>
-              ))}
+                )
+              })}
             </div>
           )}
         </CardContent>
