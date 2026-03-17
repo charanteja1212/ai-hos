@@ -580,9 +580,6 @@ export default function BookPage() {
                             {doc.designation && (
                               <p className="text-[11px] text-blue-600 dark:text-blue-400">{doc.designation}</p>
                             )}
-                            {doc.consultation_fee ? (
-                              <p className="text-[11px] text-muted-foreground mt-0.5">{"\u20B9"}{doc.consultation_fee}</p>
-                            ) : null}
                           </>
                         ) : (
                           <p className="text-xs text-muted-foreground mt-0.5">
@@ -630,7 +627,6 @@ export default function BookPage() {
                       )}
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {selectedSpecialty.specialty}
-                        {doc.consultation_fee ? ` · ₹${doc.consultation_fee}` : ""}
                       </p>
                     </div>
                     <ChevronLeft className="w-4 h-4 rotate-180 text-slate-400 shrink-0" />
