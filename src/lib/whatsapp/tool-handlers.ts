@@ -402,6 +402,7 @@ export async function bookAppointment(args: any): Promise<any> {
   const email = args.email || '';
   const excludeApptId = args.exclude_appointment_id || '';
   const source = args.source || 'whatsapp';
+  const skipNotifications = args.skip_notifications === true;
   let bookedBy = normalizePhone(args.booked_by_whatsapp_number || '');
   if (bookedBy.length === 10) bookedBy = '91' + bookedBy;
 
@@ -647,13 +648,15 @@ export async function bookAppointment(args: any): Promise<any> {
     try { await sbDelete('/slot_locks?lock_id=eq.' + lockId); } catch { /* ok */ }
     await createReminders();
 
-    // Generate card image (same design as payment confirmation)
-    const cardImageUrl = await generateCardImage(qrUrl, bookingId, opPassId, expiryDisplay, 'OP Pass');
+    // Generate card image and send (skip if called from reschedule)
+    if (!skipNotifications) {
+      const cardImageUrl = await generateCardImage(qrUrl, bookingId, opPassId, expiryDisplay, 'OP Pass');
 
-    const caption = '*' + hospitalName + '*\nAppointment Confirmed\n\n*Patient:* ' + name + '\n*Doctor:* Dr. ' + cleanDrName + '\n*Department:* ' + specialty + '\n*Date:* ' + formattedDate + '\n*Time:* ' + time + '\n\n*Booking ID:* ' + bookingId + '\n*OP Pass:* ' + opPassId + '\n*Valid Until:* ' + expiryDisplay + '\n\n_No payment needed (OP Pass active)._\n_Present this digital pass at reception._';
-    await sendWA(phone, { type: 'image', image: { link: cardImageUrl, caption } });
-    if (bookedBy && bookedBy !== phone) {
-      await sendWA(bookedBy, { type: 'image', image: { link: cardImageUrl, caption: '*' + hospitalName + '*\nBooking Confirmed for ' + name + '\n\n*Doctor:* Dr. ' + cleanDrName + '\n*Date:* ' + formattedDate + '\n*Time:* ' + time + '\n*Booking ID:* ' + bookingId + '\n\n_Present this pass at reception._' } });
+      const caption = '*' + hospitalName + '*\nAppointment Confirmed\n\n*Patient:* ' + name + '\n*Doctor:* Dr. ' + cleanDrName + '\n*Department:* ' + specialty + '\n*Date:* ' + formattedDate + '\n*Time:* ' + time + '\n\n*Booking ID:* ' + bookingId + '\n*OP Pass:* ' + opPassId + '\n*Valid Until:* ' + expiryDisplay + '\n\n_No payment needed (OP Pass active)._\n_Present this digital pass at reception._';
+      await sendWA(phone, { type: 'image', image: { link: cardImageUrl, caption } });
+      if (bookedBy && bookedBy !== phone) {
+        await sendWA(bookedBy, { type: 'image', image: { link: cardImageUrl, caption: '*' + hospitalName + '*\nBooking Confirmed for ' + name + '\n\n*Doctor:* Dr. ' + cleanDrName + '\n*Date:* ' + formattedDate + '\n*Time:* ' + time + '\n*Booking ID:* ' + bookingId + '\n\n_Present this pass at reception._' } });
+      }
     }
 
     return {
@@ -675,12 +678,14 @@ export async function bookAppointment(args: any): Promise<any> {
     try { await sbDelete('/slot_locks?lock_id=eq.' + lockId); } catch { /* ok */ }
     await createReminders();
 
-    const verifyUrl = 'https://ainewworld.in/webhook/verify-appointment?id=' + encodeURIComponent(bookingId);
-    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(verifyUrl);
-    const cardImageUrl = await generateCardImage(qrUrl, bookingId, '', '', 'Pay at Counter');
+    if (!skipNotifications) {
+      const verifyUrl = 'https://ainewworld.in/webhook/verify-appointment?id=' + encodeURIComponent(bookingId);
+      const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(verifyUrl);
+      const cardImageUrl = await generateCardImage(qrUrl, bookingId, '', '', 'Pay at Counter');
 
-    const caption = '*' + hospitalName + '*\nAppointment Confirmed\n\n*Patient:* ' + name + '\n*Doctor:* Dr. ' + cleanDrName + '\n*Date:* ' + formattedDate + '\n*Time:* ' + time + '\n*Booking ID:* ' + bookingId + '\n\n_Please arrive 10 minutes early._\n_Present this pass at reception._';
-    await sendWA(phone, { type: 'image', image: { link: cardImageUrl, caption } });
+      const caption = '*' + hospitalName + '*\nAppointment Confirmed\n\n*Patient:* ' + name + '\n*Doctor:* Dr. ' + cleanDrName + '\n*Date:* ' + formattedDate + '\n*Time:* ' + time + '\n*Booking ID:* ' + bookingId + '\n\n_Please arrive 10 minutes early._\n_Present this pass at reception._';
+      await sendWA(phone, { type: 'image', image: { link: cardImageUrl, caption } });
+    }
 
     return {
       success: true, booking_id: bookingId, date: formattedDate, time,
@@ -1013,6 +1018,7 @@ export async function rescheduleAppointment(args: any): Promise<any> {
       patient_type: old.patient_type || 'SELF', dependent_id: old.dependent_id,
       exclude_appointment_id: oldBookingId, source: 'whatsapp',
       tenant_id: tenantId, wa_api_url: waApiUrl, wa_token: waToken,
+      skip_notifications: true,
     });
 
     if (!bookResult.success) return { success: false, error: 'Could not book new slot: ' + bookResult.error };
