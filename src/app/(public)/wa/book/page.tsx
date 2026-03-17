@@ -548,22 +548,53 @@ export default function BookPage() {
               <p className="text-sm text-muted-foreground">Loading departments...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {specialties.map((spec) => (
-                <button
-                  key={spec.specialty}
-                  onClick={() => handleSpecialtySelect(spec)}
-                  className="text-left p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-blue-300 dark:hover:border-blue-700 active:scale-[0.97] transition-all"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center mb-3">
-                    <Stethoscope className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <p className="font-medium text-sm text-slate-900 dark:text-white">{spec.specialty}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {spec.doctor_count} doctor{spec.doctor_count > 1 ? "s" : ""}
-                  </p>
-                </button>
-              ))}
+            <div className="space-y-3">
+              {specialties.map((spec) => {
+                const doc = spec.doctors[0];
+                const initials = doc ? doc.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "";
+                return (
+                  <button
+                    key={spec.specialty}
+                    onClick={() => handleSpecialtySelect(spec)}
+                    className="w-full text-left p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-blue-300 dark:hover:border-blue-700 active:scale-[0.98] transition-all"
+                  >
+                    <div className="flex items-center gap-3">
+                      {spec.doctor_count === 1 && doc ? (
+                        doc.image_url ? (
+                          <img src={doc.image_url} alt={doc.name} className="w-12 h-12 rounded-full object-cover shrink-0 border border-slate-200 dark:border-slate-700" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center shrink-0">
+                            <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm">{initials}</span>
+                          </div>
+                        )
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center shrink-0">
+                          <Stethoscope className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-slate-900 dark:text-white">{spec.specialty}</p>
+                        {spec.doctor_count === 1 && doc ? (
+                          <>
+                            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">{doc.name}</p>
+                            {doc.designation && (
+                              <p className="text-[11px] text-blue-600 dark:text-blue-400">{doc.designation}</p>
+                            )}
+                            {doc.consultation_fee ? (
+                              <p className="text-[11px] text-muted-foreground mt-0.5">{"\u20B9"}{doc.consultation_fee}</p>
+                            ) : null}
+                          </>
+                        ) : (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {spec.doctor_count} doctors
+                          </p>
+                        )}
+                      </div>
+                      <ChevronLeft className="w-4 h-4 rotate-180 text-slate-400 shrink-0" />
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
