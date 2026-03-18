@@ -7,8 +7,6 @@ import { toast } from "sonner"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { useLabOrders } from "@/hooks/use-lab-orders"
 import { formatDate } from "@/lib/utils/date"
-import { SectionHeader } from "@/components/shared/section-header"
-import { StatCard } from "@/components/reception/stat-card"
 import { StatusPipeline } from "@/components/ui/status-pipeline"
 import { ViewToggle } from "@/components/ui/view-toggle"
 import { KanbanColumn } from "@/components/pharmacy/kanban-column"
@@ -51,7 +49,9 @@ import {
   FileText,
   FlaskConical,
   Download,
+  Activity,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { useTenant } from "@/hooks/use-tenant"
 import { PrintButton } from "@/components/print/print-button"
 import { PrintLayout } from "@/components/print/print-layout"
@@ -302,31 +302,58 @@ export default function LabPage() {
   }, [allOrders])
 
   return (
-    <div className="space-y-4">
-      <SectionHeader
-        title="Lab Management"
-        subtitle="Lab orders, sample collection & results"
-        action={
-          <Button onClick={exportCSV} disabled={exporting} variant="outline" size="sm" className="gap-2 rounded-xl">
+    <div className="space-y-5">
+      {/* ══════ HEADER ══════ */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+            Lab Management
+          </h1>
+          <p className="text-sm text-gray-400 mt-0.5 flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500" />
+            </span>
+            Sample collection &amp; results &middot; {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}
+          </p>
+        </motion.div>
+        <div className="flex items-center gap-2">
+          <Button onClick={exportCSV} disabled={exporting} variant="outline" size="sm" className="gap-2 rounded-xl h-10">
             {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             Export CSV
           </Button>
-        }
-      />
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard label="New Orders" value={orderedCount} gradient="gradient-orange" icon={<Clock className="w-10 h-10" />} index={0} />
-        <StatCard label="In Progress" value={inProgressCount} gradient="gradient-blue" icon={<FlaskConical className="w-10 h-10" />} index={1} />
-        <StatCard label="Completed" value={completedCount} gradient="gradient-green" icon={<CheckCircle2 className="w-10 h-10" />} index={2} />
-        <StatCard label="Total" value={allOrders.length} gradient="gradient-purple" icon={<TestTube className="w-10 h-10" />} index={3} />
+        </div>
       </div>
 
+      {/* ══════ INLINE STATS BAR ══════ */}
+      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="flex items-center gap-3 flex-wrap">
+        {[
+          { label: "Ordered", val: orderedCount, icon: Clock, accent: "bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400" },
+          { label: "In Progress", val: inProgressCount, icon: Activity, accent: "bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400" },
+          { label: "Completed", val: completedCount, icon: CheckCircle2, accent: "bg-green-100 text-green-600 dark:bg-green-950/40 dark:text-green-400" },
+          { label: "Total", val: allOrders.length, icon: TestTube, accent: "bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400" },
+        ].map((s) => (
+          <div key={s.label} className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-full pl-1.5 pr-3.5 py-1.5 border border-gray-100 dark:border-gray-800 shadow-sm">
+            <div className={cn("w-7 h-7 rounded-full flex items-center justify-center", s.accent)}>
+              <s.icon className="w-3.5 h-3.5" />
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-sm font-extrabold text-gray-900 dark:text-white tabular-nums">
+                {s.val > 0 ? s.val : "\u2014"}
+              </span>
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{s.label}</span>
+            </div>
+          </div>
+        ))}
+      </motion.div>
+
+      {/* ══════ CONTROLS ══════ */}
       <div className="flex flex-wrap items-center gap-3">
         <ViewToggle value={viewMode} onChange={setViewMode} options={["board", "table"]} />
-        <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="relative flex-1 min-w-[200px] max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
-            className="pl-9 input-focus-glow"
+            className="pl-9 h-10 rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm"
             placeholder="Search patient, doctor, or order..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

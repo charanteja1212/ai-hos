@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { EmptyState } from "@/components/shared/empty-state"
 import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
 
@@ -32,27 +31,37 @@ export function KanbanColumn({
   children,
 }: KanbanColumnProps) {
   return (
-    <div className="flex flex-col min-w-[260px]">
-      <div className={cn("flex items-center gap-2 mb-3 p-2 rounded-xl", headerBg)}>
-        <div className={cn("w-2.5 h-2.5 rounded-full", dotColor)} />
-        <h3 className="font-semibold text-foreground text-sm">{title}</h3>
+    <div className="flex flex-col bg-[#F7F8FA] dark:bg-gray-900/60 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800/60">
+      {/* Column header */}
+      <div className="flex items-center justify-between px-4 py-3 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className={cn("w-2.5 h-2.5 rounded-full", dotColor)} />
+          <span className="text-[13px] font-bold text-gray-700 dark:text-gray-200">{title}</span>
+        </div>
         <motion.span
           key={count}
           initial={{ scale: 1.3 }}
           animate={{ scale: 1 }}
-          className={cn("ml-auto text-xs font-bold px-2 py-0.5 rounded-full", countBg, countText)}
+          className={cn("text-[11px] font-bold px-2 py-0.5 rounded-full tabular-nums", countBg, countText)}
         >
           {count}
         </motion.span>
       </div>
-      <ScrollArea className="h-[calc(100vh-320px)]">
-        <div className="space-y-2.5 pr-2">
+
+      {/* Cards area */}
+      <ScrollArea className="flex-1 max-h-[520px]">
+        <div className="px-2.5 pt-2.5 pb-2.5 space-y-2.5">
           {count === 0 ? (
-            <EmptyState
-              icon={emptyIcon}
-              title={emptyTitle}
-              description={emptyDescription}
-            />
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center py-12 text-center"
+            >
+              <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-3", headerBg)}>
+                <div className="text-gray-400">{emptyIcon}</div>
+              </div>
+              <p className="text-xs font-medium text-gray-400">{emptyTitle}</p>
+            </motion.div>
           ) : (
             children
           )}

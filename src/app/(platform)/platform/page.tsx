@@ -5,8 +5,6 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { SectionHeader } from "@/components/shared/section-header"
-import { StatCard } from "@/components/shared/stat-card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -33,6 +31,7 @@ import {
   ArrowRight,
   Shield,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 import type { SessionUser } from "@/types/auth"
 import type { Client, Tenant } from "@/types/database"
 
@@ -117,46 +116,42 @@ export default function PlatformDashboardPage() {
     branches.filter((b) => b.client_id === clientId).length
 
   return (
-    <div className="space-y-6">
-      <SectionHeader
-        variant="glass"
-        icon={<Globe className="w-6 h-6" />}
-        gradient="gradient-purple"
-        title="Platform Dashboard"
-        subtitle="Manage your healthcare SaaS platform"
-      />
+    <div className="space-y-5">
+      {/* ══════ HEADER ══════ */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+          Platform Dashboard
+        </h1>
+        <p className="text-sm text-gray-400 mt-0.5 flex items-center gap-2">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" />
+          </span>
+          Healthcare SaaS management &middot; {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}
+        </p>
+      </motion.div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total Clients"
-          value={clients.length}
-          gradient="gradient-blue"
-          icon={<Building2 className="w-10 h-10" />}
-          index={0}
-        />
-        <StatCard
-          label="Total Branches"
-          value={branches.length}
-          gradient="gradient-green"
-          icon={<GitBranch className="w-10 h-10" />}
-          index={1}
-        />
-        <StatCard
-          label="Total Doctors"
-          value={doctorCount}
-          gradient="gradient-orange"
-          icon={<Stethoscope className="w-10 h-10" />}
-          index={2}
-        />
-        <StatCard
-          label="Total Patients"
-          value={patientCount}
-          gradient="gradient-purple"
-          icon={<Users className="w-10 h-10" />}
-          index={3}
-        />
-      </div>
+      {/* ══════ INLINE STATS BAR ══════ */}
+      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="flex items-center gap-3 flex-wrap">
+        {[
+          { label: "Clients", val: clients.length, icon: Building2, accent: "bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400" },
+          { label: "Branches", val: branches.length, icon: GitBranch, accent: "bg-green-100 text-green-600 dark:bg-green-950/40 dark:text-green-400" },
+          { label: "Doctors", val: doctorCount, icon: Stethoscope, accent: "bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400" },
+          { label: "Patients", val: patientCount, icon: Users, accent: "bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400" },
+        ].map((s) => (
+          <div key={s.label} className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-full pl-1.5 pr-3.5 py-1.5 border border-gray-100 dark:border-gray-800 shadow-sm">
+            <div className={cn("w-7 h-7 rounded-full flex items-center justify-center", s.accent)}>
+              <s.icon className="w-3.5 h-3.5" />
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-sm font-extrabold text-gray-900 dark:text-white tabular-nums">
+                {s.val > 0 ? s.val : "\u2014"}
+              </span>
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{s.label}</span>
+            </div>
+          </div>
+        ))}
+      </motion.div>
 
       {/* Quick Controls */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>

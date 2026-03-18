@@ -7,9 +7,7 @@ import { motion } from "framer-motion"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { getTodayIST, formatDate } from "@/lib/utils/date"
 import { humanizeStatus, statusColors, getInitials, formatCurrency } from "@/lib/utils/format"
-import { StatCard } from "@/components/reception/stat-card"
 import { AnimatedCounter } from "@/components/ui/animated-counter"
-import { SectionHeader } from "@/components/shared/section-header"
 import { DoctorPerformanceCard } from "@/components/admin/doctor-performance-card"
 import { BranchStatCard } from "@/components/admin/branch-stat-card"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
@@ -461,50 +459,35 @@ export default function AdminPage() {
       {/* CLIENT_ADMIN Cross-Branch Overview */}
       {isClientAdmin && crossData && crossData.branches.length > 1 && (
         <div className="space-y-4">
-          <SectionHeader
-            title={`${user?.clientName || "All Branches"} — Overview`}
-            subtitle="Cross-branch performance overview"
-            icon={<Building2 className="w-6 h-6" />}
-            gradient="gradient-purple"
-            variant="glass"
-            badge={
-              <Badge variant="secondary" className="text-xs">
-                {crossData.branches.length} branches
-              </Badge>
-            }
-          />
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{user?.clientName || "All Branches"} — Overview</h2>
+              <p className="text-xs text-gray-400">Cross-branch performance &middot; {crossData.branches.length} branches</p>
+            </div>
+          </motion.div>
 
-          {/* Aggregate KPI row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <StatCard
-              label="Total Patients"
-              value={crossData.totals.patients}
-              gradient="gradient-blue"
-              icon={<Users className="w-10 h-10" />}
-              index={0}
-            />
-            <StatCard
-              label="Total Doctors"
-              value={crossData.totals.doctors}
-              gradient="gradient-green"
-              icon={<Stethoscope className="w-10 h-10" />}
-              index={1}
-            />
-            <StatCard
-              label="Today's Appointments"
-              value={crossData.totals.appointments}
-              gradient="gradient-purple"
-              icon={<CalendarDays className="w-10 h-10" />}
-              index={2}
-            />
-            <StatCard
-              label="Today's Revenue"
-              value={formatCurrency(crossData.totals.revenue)}
-              gradient="gradient-orange"
-              icon={<IndianRupee className="w-10 h-10" />}
-              index={3}
-            />
-          </div>
+          {/* Aggregate KPI pills */}
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="flex items-center gap-3 flex-wrap">
+            {[
+              { label: "Patients", val: crossData.totals.patients, icon: Users, accent: "bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400" },
+              { label: "Doctors", val: crossData.totals.doctors, icon: Stethoscope, accent: "bg-green-100 text-green-600 dark:bg-green-950/40 dark:text-green-400" },
+              { label: "Appointments", val: crossData.totals.appointments, icon: CalendarDays, accent: "bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400" },
+              { label: "Revenue", val: formatCurrency(crossData.totals.revenue), icon: IndianRupee, accent: "bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400" },
+            ].map((s) => (
+              <div key={s.label} className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-full pl-1.5 pr-3.5 py-1.5 border border-gray-100 dark:border-gray-800 shadow-sm">
+                <div className={cn("w-7 h-7 rounded-full flex items-center justify-center", s.accent)}>
+                  <s.icon className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-sm font-extrabold text-gray-900 dark:text-white tabular-nums">{s.val || "\u2014"}</span>
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{s.label}</span>
+                </div>
+              </div>
+            ))}
+          </motion.div>
 
           {/* Branch comparison cards — horizontal scroll */}
           <ScrollArea className="w-full">
@@ -527,18 +510,27 @@ export default function AdminPage() {
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <SectionHeader
-          title="Hospital Analytics"
-          subtitle={datePreset === "today" ? `Performance overview — ${formatDate(today)}` : `${formatDate(dateFrom)} — ${formatDate(dateTo)}`}
-        />
+      {/* ══════ HEADER ══════ */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+            Hospital Analytics
+          </h1>
+          <p className="text-sm text-gray-400 mt-0.5 flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+            </span>
+            {datePreset === "today" ? `Performance overview \u2014 ${formatDate(today)}` : `${formatDate(dateFrom)} \u2014 ${formatDate(dateTo)}`}
+          </p>
+        </motion.div>
         <div className="flex items-center gap-2">
           <DateRangeFilter from={dateFrom} to={dateTo} preset={datePreset} onChange={handleDateChange} />
           {data && data.rawAppointments.length > 0 && (
             <Button
               variant="outline"
               size="sm"
-              className="h-8 text-xs rounded-lg gap-1"
+              className="h-8 text-xs rounded-xl gap-1"
               onClick={() => downloadCSV(data.rawAppointments, `appointments-${dateFrom}-to-${dateTo}`)}
             >
               <Download className="w-3.5 h-3.5" />
@@ -548,42 +540,28 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Main KPIs with sparklines and trends */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total Patients"
-          value={data.totalPatients}
-          gradient="gradient-blue"
-          icon={<Users className="w-10 h-10" />}
-          sparklineData={data.sparklinePatients}
-          index={0}
-        />
-        <StatCard
-          label="Active Doctors"
-          value={data.totalDoctors}
-          gradient="gradient-green"
-          icon={<Stethoscope className="w-10 h-10" />}
-          index={1}
-        />
-        <StatCard
-          label={datePreset === "today" ? "Today's Revenue" : "Revenue"}
-          value={formatCurrency(data.todayRevenue)}
-          gradient="gradient-orange"
-          icon={<IndianRupee className="w-10 h-10" />}
-          sparklineData={data.sparklineRevenue}
-          subtitle={datePreset === "today" && revTrend !== 0 ? `${revTrend > 0 ? "+" : ""}${revTrend}% vs yesterday` : undefined}
-          index={2}
-        />
-        <StatCard
-          label={datePreset === "today" ? "Today's Appointments" : "Appointments"}
-          value={data.todayAppointments}
-          gradient="gradient-purple"
-          icon={<CalendarDays className="w-10 h-10" />}
-          sparklineData={data.sparklinePatients}
-          subtitle={datePreset === "today" && apptTrend !== 0 ? `${apptTrend > 0 ? "+" : ""}${apptTrend}% vs yesterday` : undefined}
-          index={3}
-        />
-      </div>
+      {/* ══════ INLINE STATS BAR ══════ */}
+      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="flex items-center gap-3 flex-wrap">
+        {[
+          { label: "Patients", val: data.totalPatients, icon: Users, accent: "bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400", sub: undefined as string | undefined },
+          { label: "Doctors", val: data.totalDoctors, icon: Stethoscope, accent: "bg-green-100 text-green-600 dark:bg-green-950/40 dark:text-green-400", sub: undefined as string | undefined },
+          { label: datePreset === "today" ? "Revenue" : "Revenue", val: formatCurrency(data.todayRevenue), icon: IndianRupee, accent: "bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400", sub: datePreset === "today" && revTrend !== 0 ? `${revTrend > 0 ? "+" : ""}${revTrend}%` : undefined },
+          { label: "Appointments", val: data.todayAppointments, icon: CalendarDays, accent: "bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400", sub: datePreset === "today" && apptTrend !== 0 ? `${apptTrend > 0 ? "+" : ""}${apptTrend}%` : undefined },
+        ].map((s) => (
+          <div key={s.label} className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-full pl-1.5 pr-3.5 py-1.5 border border-gray-100 dark:border-gray-800 shadow-sm">
+            <div className={cn("w-7 h-7 rounded-full flex items-center justify-center", s.accent)}>
+              <s.icon className="w-3.5 h-3.5" />
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-sm font-extrabold text-gray-900 dark:text-white tabular-nums">{s.val || "\u2014"}</span>
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{s.label}</span>
+              {s.sub && (
+                <span className={cn("text-[10px] font-bold", s.sub.startsWith("+") ? "text-green-500" : "text-red-500")}>{s.sub}</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </motion.div>
 
       {/* Charts Row: Line Chart (2/3) + Donut (1/3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

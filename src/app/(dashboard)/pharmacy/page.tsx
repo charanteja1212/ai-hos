@@ -3,12 +3,10 @@
 import { useState, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useBranch } from "@/components/providers/branch-context"
-import { AnimatePresence } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 import { toast } from "sonner"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { usePharmacyOrders } from "@/hooks/use-pharmacy"
-import { SectionHeader } from "@/components/shared/section-header"
-import { StatCard } from "@/components/reception/stat-card"
 import { StatusPipeline } from "@/components/ui/status-pipeline"
 import { KanbanColumn } from "@/components/pharmacy/kanban-column"
 import { OrderKanbanCard } from "@/components/pharmacy/order-kanban-card"
@@ -26,6 +24,7 @@ import {
   ShoppingBag,
   Pill,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 import type { SessionUser } from "@/types/auth"
 import { createNotification } from "@/lib/notifications"
 import type { PharmacyOrder } from "@/types/database"
@@ -169,30 +168,53 @@ export default function PharmacyPage() {
   )
 
   return (
-    <div className="space-y-4">
-      <SectionHeader
-        title="Pharmacy"
-        subtitle="Prescription orders & dispensing"
-      />
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard label="Pending" value={pending.length} gradient="gradient-orange" icon={<Clock className="w-10 h-10" />} index={0} />
-        <StatCard label="Preparing" value={preparing.length} gradient="gradient-blue" icon={<Package className="w-10 h-10" />} index={1} />
-        <StatCard label="Ready" value={ready.length} gradient="gradient-green" icon={<CheckCircle2 className="w-10 h-10" />} index={2} />
-        <StatCard label="Total" value={allOrders.length} gradient="gradient-purple" icon={<ShoppingBag className="w-10 h-10" />} index={3} />
+    <div className="space-y-5">
+      {/* ══════ HEADER ══════ */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+            Pharmacy
+          </h1>
+          <p className="text-sm text-gray-400 mt-0.5 flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+            </span>
+            Prescription orders &middot; {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}
+          </p>
+        </motion.div>
+        <div className="relative max-w-xs w-full sm:w-auto">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            className="pl-9 h-10 rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm"
+            placeholder="Search patient or order..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          className="pl-9 input-focus-glow"
-          placeholder="Search patient, phone, or order ID..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
+      {/* ══════ INLINE STATS BAR ══════ */}
+      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="flex items-center gap-3 flex-wrap">
+        {[
+          { label: "Pending", val: pending.length, icon: Clock, accent: "bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400" },
+          { label: "Preparing", val: preparing.length, icon: Package, accent: "bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400" },
+          { label: "Ready", val: ready.length, icon: CheckCircle2, accent: "bg-green-100 text-green-600 dark:bg-green-950/40 dark:text-green-400" },
+          { label: "Total", val: allOrders.length, icon: ShoppingBag, accent: "bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400" },
+        ].map((s) => (
+          <div key={s.label} className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-full pl-1.5 pr-3.5 py-1.5 border border-gray-100 dark:border-gray-800 shadow-sm">
+            <div className={cn("w-7 h-7 rounded-full flex items-center justify-center", s.accent)}>
+              <s.icon className="w-3.5 h-3.5" />
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-sm font-extrabold text-gray-900 dark:text-white tabular-nums">
+                {s.val > 0 ? s.val : "\u2014"}
+              </span>
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{s.label}</span>
+            </div>
+          </div>
+        ))}
+      </motion.div>
 
       {/* Kanban Board */}
       {isLoading ? (
