@@ -219,22 +219,22 @@ export function QueueBoard() {
         {/* Kanban Columns */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Waiting */}
-          <div className="bg-white dark:bg-card rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-            <div className="flex items-center gap-2.5 mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
-              <div className="w-2 h-2 rounded-full bg-amber-500" />
+          <div className="bg-white dark:bg-card rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-3 flex items-center gap-2.5">
+              <div className="w-2 h-2 rounded-full bg-white/80" />
               <div className="flex-1">
-                <h3 className="font-semibold text-foreground text-sm">Waiting</h3>
-                <p className="text-[10px] text-muted-foreground leading-tight">Click &quot;Start Consult&quot; when ready</p>
+                <h3 className="font-semibold text-white text-sm">Waiting</h3>
               </div>
               <motion.span
                 key={waitingEntries.length}
                 initial={{ scale: 1.3 }}
                 animate={{ scale: 1 }}
-                className="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center"
+                className="bg-white/20 text-white text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center"
               >
                 {waitingEntries.length}
               </motion.span>
             </div>
+            <div className="p-3">
             <ScrollArea className="max-h-[50vh] lg:max-h-[calc(100vh-480px)]">
               <div className="space-y-3 pr-1">
                 <AnimatePresence mode="popLayout">
@@ -258,25 +258,26 @@ export function QueueBoard() {
                 </AnimatePresence>
               </div>
             </ScrollArea>
+            </div>
           </div>
 
           {/* In Consultation */}
-          <div className="bg-white dark:bg-card rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-            <div className="flex items-center gap-2.5 mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
-              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+          <div className="bg-white dark:bg-card rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-3 flex items-center gap-2.5">
+              <div className="w-2 h-2 rounded-full bg-white/80 animate-pulse" />
               <div className="flex-1">
-                <h3 className="font-semibold text-foreground text-sm">In Consultation</h3>
-                <p className="text-[10px] text-muted-foreground leading-tight">Click &quot;Mark Done&quot; when finished</p>
+                <h3 className="font-semibold text-white text-sm">In Consultation</h3>
               </div>
               <motion.span
                 key={inConsultation.length}
                 initial={{ scale: 1.3 }}
                 animate={{ scale: 1 }}
-                className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center"
+                className="bg-white/20 text-white text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center"
               >
                 {inConsultation.length}
               </motion.span>
             </div>
+            <div className="p-3">
             <ScrollArea className="max-h-[50vh] lg:max-h-[calc(100vh-480px)]">
               <div className="space-y-3 pr-1">
                 <AnimatePresence mode="popLayout">
@@ -298,25 +299,26 @@ export function QueueBoard() {
                 </AnimatePresence>
               </div>
             </ScrollArea>
+            </div>
           </div>
 
           {/* Completed */}
-          <div className="bg-white dark:bg-card rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-            <div className="flex items-center gap-2.5 mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
-              <div className="w-2 h-2 rounded-full bg-green-500" />
+          <div className="bg-white dark:bg-card rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-emerald-500 to-green-600 px-4 py-3 flex items-center gap-2.5">
+              <div className="w-2 h-2 rounded-full bg-white/80" />
               <div className="flex-1">
-                <h3 className="font-semibold text-foreground text-sm">Completed</h3>
-                <p className="text-[10px] text-muted-foreground leading-tight">Today&apos;s finished patients</p>
+                <h3 className="font-semibold text-white text-sm">Completed</h3>
               </div>
               <motion.span
                 key={completedEntries.length}
                 initial={{ scale: 1.3 }}
                 animate={{ scale: 1 }}
-                className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center"
+                className="bg-white/20 text-white text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center"
               >
                 {completedEntries.length}
               </motion.span>
             </div>
+            <div className="p-3">
             <ScrollArea className="max-h-[50vh] lg:max-h-[calc(100vh-480px)]">
               <div className="space-y-3 pr-1">
                 <AnimatePresence mode="popLayout">
@@ -338,6 +340,7 @@ export function QueueBoard() {
                 </AnimatePresence>
               </div>
             </ScrollArea>
+            </div>
           </div>
         </div>
 

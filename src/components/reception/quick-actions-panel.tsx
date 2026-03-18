@@ -113,18 +113,18 @@ export function QuickActionsPanel({ tenantId, nextPatient, onStatusChange }: Qui
 
       {/* Next Up */}
       {nextPatient && (
-        <div className="bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-200 dark:border-blue-800/40 p-4 space-y-3">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-4 space-y-3 text-white shadow-lg">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            <h3 className="text-sm font-semibold text-foreground">Next Up</h3>
+            <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <h3 className="text-sm font-semibold text-white">Next Up</h3>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center font-bold">
               {nextPatient.queue_number}
             </div>
             <div className="min-w-0">
-              <p className="font-semibold text-sm truncate">{nextPatient.patient_name}</p>
-              <p className="text-xs text-muted-foreground">{nextPatient.patient_phone}</p>
+              <p className="font-semibold text-sm truncate text-white">{nextPatient.patient_name}</p>
+              <p className="text-xs text-white/60">{nextPatient.patient_phone}</p>
             </div>
           </div>
           {nextPatient.priority > 0 && (
@@ -135,7 +135,7 @@ export function QuickActionsPanel({ tenantId, nextPatient, onStatusChange }: Qui
           <div className="flex gap-2">
             <Button
               size="sm"
-              className="flex-1 gap-1.5 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+              className="flex-1 gap-1.5 h-9 rounded-xl bg-white text-blue-700 hover:bg-white/90 font-semibold"
               onClick={() => onStatusChange(nextPatient.queue_id, "in_consultation")}
             >
               <Play className="w-4 h-4" />
@@ -144,7 +144,7 @@ export function QuickActionsPanel({ tenantId, nextPatient, onStatusChange }: Qui
             <Button
               variant="ghost"
               size="sm"
-              className="h-9 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+              className="h-9 rounded-xl text-white/70 hover:text-white hover:bg-white/10"
               onClick={() => onStatusChange(nextPatient.queue_id, "no_show")}
             >
               <XCircle className="w-4 h-4" />

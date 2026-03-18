@@ -75,11 +75,11 @@ export function BranchSwitcher({ role, clientId, collapsed }: BranchSwitcherProp
 
   if (collapsed) {
     return (
-      <div className="px-2 py-2 border-b border-border/50">
+      <div className="px-2 py-2 border-b border-white/10">
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center cursor-pointer mx-auto">
-              <GitBranch className="w-4 h-4 text-primary" />
+            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center cursor-pointer mx-auto">
+              <GitBranch className="w-4 h-4 text-blue-300" />
             </div>
           </TooltipTrigger>
           <TooltipContent side="right">
@@ -99,14 +99,14 @@ export function BranchSwitcher({ role, clientId, collapsed }: BranchSwitcherProp
         initial={{ opacity: 0, height: 0 }}
         animate={{ opacity: 1, height: "auto" }}
         exit={{ opacity: 0, height: 0 }}
-        className="px-3 py-2 border-b border-border/50"
+        className="px-3 py-2 border-b border-white/10"
       >
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 px-1">
+        <p className="text-[10px] font-semibold text-blue-300/40 uppercase tracking-wider mb-1.5 px-1">
           Branch
         </p>
         <Select value={activeTenantId} onValueChange={handleChange}>
-          <SelectTrigger className="h-9 rounded-xl bg-accent/30 border-0 text-sm gap-2 focus:ring-1 focus:ring-primary/30">
-            <GitBranch className="w-3.5 h-3.5 text-primary shrink-0" />
+          <SelectTrigger className="h-9 rounded-xl bg-white/10 border-0 text-sm gap-2 text-white focus:ring-1 focus:ring-blue-400/30">
+            <GitBranch className="w-3.5 h-3.5 text-blue-300 shrink-0" />
             <SelectValue placeholder="Select branch" />
           </SelectTrigger>
           <SelectContent>
