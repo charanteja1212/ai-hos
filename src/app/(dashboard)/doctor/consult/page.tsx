@@ -346,28 +346,32 @@ function ConsultPageContent() {
           .eq("tenant_id", tenantId)
       }
 
-      // Fire-and-forget: Send post-consultation notifications via internal API
-      fetch("/api/notifications/post-consultation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prescription_id: prescriptionId,
-          booking_id: bookingId,
-          patient_phone: patientPhone,
-          patient_name: patient?.name || "",
-          doctor_id: user?.doctorId || "",
-          doctor_name: user?.name || "",
-          diagnosis,
-          symptoms,
-          vitals,
-          items: validMedicines,
-          lab_tests: labTests,
-          follow_up_date: followUpDate,
-          notes,
-          tenant_id: tenantId,
-        }),
-        signal: AbortSignal.timeout(15000),
-      }).catch((err) => console.error("Post-consultation notification failed:", err))
+      // Send post-consultation notifications (must await before navigating away)
+      try {
+        await fetch("/api/notifications/post-consultation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prescription_id: prescriptionId,
+            booking_id: bookingId,
+            patient_phone: patientPhone,
+            patient_name: patient?.name || "",
+            doctor_id: user?.doctorId || "",
+            doctor_name: user?.name || "",
+            diagnosis,
+            symptoms,
+            vitals,
+            items: validMedicines,
+            lab_tests: labTests,
+            follow_up_date: followUpDate,
+            notes,
+            tenant_id: tenantId,
+          }),
+          signal: AbortSignal.timeout(15000),
+        })
+      } catch (err) {
+        console.error("Post-consultation notification failed:", err)
+      }
 
       // Clear draft
       localStorage.removeItem(`consult-draft-${queueId}`)
