@@ -873,17 +873,17 @@ function LoginPageContent() {
                           }}
                           className="gap-5"
                         >
-                          <TabsList className="w-full bg-gray-100 rounded-lg h-11 p-1">
+                          <TabsList className="w-full bg-gray-50 border border-gray-200 rounded-lg h-11 p-1">
                             <TabsTrigger
                               value="pin"
-                              className="flex-1 text-xs font-medium rounded-md h-full data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                              className="flex-1 text-xs font-semibold rounded-md h-full text-gray-500 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=active]:border-gray-200"
                             >
                               <KeyRound className="w-3.5 h-3.5 mr-1.5" />
                               PIN Login
                             </TabsTrigger>
                             <TabsTrigger
                               value="password"
-                              className="flex-1 text-xs font-medium rounded-md h-full data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                              className="flex-1 text-xs font-semibold rounded-md h-full text-gray-500 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=active]:border-gray-200"
                             >
                               <Mail className="w-3.5 h-3.5 mr-1.5" />
                               Email & Password
@@ -905,7 +905,7 @@ function LoginPageContent() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     autoFocus
-                                    className="h-11 rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500/20"
+                                    className="h-11 rounded-lg bg-white border-gray-300 text-gray-900 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                   />
                                 </div>
                               )}
@@ -921,7 +921,7 @@ function LoginPageContent() {
                                     value={doctorId}
                                     onChange={(e) => setDoctorId(e.target.value)}
                                     autoFocus
-                                    className="h-11 rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500/20"
+                                    className="h-11 rounded-lg bg-white border-gray-300 text-gray-900 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                   />
                                 </div>
                               )}
@@ -942,7 +942,7 @@ function LoginPageContent() {
                                     !(selectedRole.loginMode === "branch" && selectedRole.id === "DOCTOR")
                                   }
                                   maxLength={10}
-                                  className="h-11 rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500/20"
+                                  className="h-11 rounded-lg bg-white border-gray-300 text-gray-900 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                 />
                               </div>
 
@@ -960,10 +960,10 @@ function LoginPageContent() {
                               <Button
                                 type="submit"
                                 disabled={loading || !pin || (selectedRole.loginMode === "super_admin" && !email)}
-                                className="w-full h-11 rounded-lg font-semibold text-white text-sm border-0 transition-all duration-200 disabled:opacity-40"
+                                className="w-full h-12 rounded-lg font-bold text-white text-sm border-0 transition-all duration-200 disabled:opacity-30 hover:opacity-90 hover:translate-y-[-1px] active:translate-y-0"
                                 style={{
                                   backgroundColor: activeColor,
-                                  boxShadow: `0 2px 8px ${activeColor}40`,
+                                  boxShadow: `0 4px 14px ${activeColor}50`,
                                 }}
                               >
                                 {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
@@ -986,7 +986,7 @@ function LoginPageContent() {
                                   value={loginEmail}
                                   onChange={(e) => setLoginEmail(e.target.value)}
                                   autoFocus={authMethod === "password"}
-                                  className="h-11 rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500/20"
+                                  className="h-11 rounded-lg bg-white border-gray-300 text-gray-900 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                 />
                               </div>
 
@@ -1000,7 +1000,7 @@ function LoginPageContent() {
                                   placeholder="Enter your password"
                                   value={loginPassword}
                                   onChange={(e) => setLoginPassword(e.target.value)}
-                                  className="h-11 rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500/20"
+                                  className="h-11 rounded-lg bg-white border-gray-300 text-gray-900 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                 />
                               </div>
 
@@ -1018,10 +1018,10 @@ function LoginPageContent() {
                               <Button
                                 type="submit"
                                 disabled={loading || !loginEmail || !loginPassword}
-                                className="w-full h-11 rounded-lg font-semibold text-white text-sm border-0 transition-all duration-200 disabled:opacity-40"
+                                className="w-full h-12 rounded-lg font-bold text-white text-sm border-0 transition-all duration-200 disabled:opacity-30 hover:opacity-90 hover:translate-y-[-1px] active:translate-y-0"
                                 style={{
                                   backgroundColor: activeColor,
-                                  boxShadow: `0 2px 8px ${activeColor}40`,
+                                  boxShadow: `0 4px 14px ${activeColor}50`,
                                 }}
                               >
                                 {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
