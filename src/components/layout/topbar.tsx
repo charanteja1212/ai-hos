@@ -169,7 +169,7 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
   const filteredNavCommands = navCommands.filter((a) => a.roles.includes(user.role))
 
   return (
-    <header className="h-14 sm:h-16 border-b border-border bg-white dark:bg-[var(--card)] flex items-center justify-between px-4 sm:px-6 shrink-0">
+    <header className="h-16 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-[var(--card)] flex items-center justify-between px-4 sm:px-6 shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
       <div className="flex items-center gap-3 min-w-0">
         {onToggleMobile && (
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={onToggleMobile}>
@@ -219,17 +219,16 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
 
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Search */}
-        <Button
-          variant="ghost"
+        <button
           onClick={() => setSearchOpen(true)}
-          className="gap-2 text-muted-foreground hover:text-foreground hidden sm:flex"
+          className="hidden sm:flex items-center gap-2 h-9 px-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
         >
-          <Search className="w-4 h-4" />
+          <Search className="w-3.5 h-3.5" />
           <span className="text-xs">Search...</span>
-          <kbd className="pointer-events-none hidden md:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+          <kbd className="pointer-events-none hidden md:inline-flex h-5 select-none items-center gap-1 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-1.5 font-mono text-[10px] font-medium text-muted-foreground ml-4">
             <span className="text-xs">Ctrl</span>K
           </kbd>
-        </Button>
+        </button>
 
         <ISTClock />
 
@@ -253,7 +252,7 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="gap-2 px-2">
               <Avatar className="w-8 h-8">
-                <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
+                <AvatarFallback className="text-xs bg-blue-600 text-white font-semibold">
                   {initials}
                 </AvatarFallback>
               </Avatar>

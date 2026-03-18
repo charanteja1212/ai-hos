@@ -166,7 +166,7 @@ export function PendingArrivals({ tenantId, onCheckInComplete }: PendingArrivals
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-amber-50/80 dark:bg-amber-950/20 p-3"
+      className="rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-white dark:bg-card p-4"
     >
       <div className="flex items-center gap-2 mb-2">
         <Smartphone className="w-4 h-4 text-amber-600 dark:text-amber-400" />
@@ -191,7 +191,7 @@ export function PendingArrivals({ tenantId, onCheckInComplete }: PendingArrivals
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9, x: -20 }}
-                className="flex items-center gap-3 rounded-xl bg-white dark:bg-card border border-border px-3 py-2 min-w-[280px] shrink-0"
+                className="flex items-center gap-3 rounded-xl bg-amber-50/60 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/30 px-3 py-2.5 min-w-[280px] shrink-0"
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{appt.patient_name}</p>

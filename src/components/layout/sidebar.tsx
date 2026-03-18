@@ -67,23 +67,23 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
   return (
     <aside
       className={cn(
-        "h-screen flex flex-col shrink-0 bg-[var(--sidebar)] border-r border-border transition-[width] duration-200 ease-in-out",
+        "h-screen flex flex-col shrink-0 bg-white dark:bg-[#1E293B] border-r border-gray-200 dark:border-gray-700 transition-[width] duration-200 ease-in-out",
         collapsed ? "w-[72px]" : "w-64"
       )}
     >
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 h-14 border-b border-border shrink-0">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 shrink-0 overflow-hidden">
+      <div className="flex items-center gap-3 px-4 h-16 border-b border-gray-100 dark:border-gray-700 shrink-0">
+        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-blue-600 shrink-0 overflow-hidden">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt="" className="w-full h-full object-contain p-0.5" />
           ) : (
-            <Heart className="w-4 h-4 text-primary" />
+            <Heart className="w-4 h-4 text-white" />
           )}
         </div>
         {!collapsed && (
           <div className="overflow-hidden whitespace-nowrap min-w-0">
-            <p className="font-semibold text-sm text-foreground">AI-HOS</p>
+            <p className="font-bold text-sm text-foreground tracking-tight">AI-HOS</p>
             <p className="text-[11px] text-muted-foreground truncate max-w-[160px]">
               {hospitalName}
             </p>
@@ -95,7 +95,7 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
       <BranchSwitcher role={role} clientId={clientId} collapsed={collapsed} />
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto sidebar-scroll py-2 px-2">
+      <div className="flex-1 overflow-y-auto sidebar-scroll py-3 px-3">
         {navConfig.sections.map((section, sIdx) => (
           <SidebarSectionBlock
             key={section.id}
@@ -112,14 +112,14 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
 
       {/* User */}
       {userName && (
-        <div className="border-t border-border p-3 shrink-0">
+        <div className="border-t border-gray-100 dark:border-gray-700 p-3 shrink-0">
           <div
             className={cn(
-              "flex items-center gap-2.5 rounded-lg p-2",
-              collapsed && "justify-center"
+              "flex items-center gap-2.5 rounded-xl p-2.5 bg-gray-50 dark:bg-gray-800/50",
+              collapsed && "justify-center bg-transparent dark:bg-transparent"
             )}
           >
-            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary shrink-0">
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-[11px] font-bold text-white shrink-0">
               {userName
                 .split(" ")
                 .map((n) => n[0])
@@ -129,11 +129,11 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
             </div>
             {!collapsed && (
               <div className="overflow-hidden min-w-0">
-                <p className="text-[13px] font-medium text-foreground truncate max-w-[140px]">
+                <p className="text-[13px] font-semibold text-foreground truncate max-w-[140px]">
                   {userName}
                 </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {role.replace(/_/g, " ")}
+                <p className="text-[11px] text-muted-foreground capitalize">
+                  {role.replace(/_/g, " ").toLowerCase()}
                 </p>
               </div>
             )}
@@ -142,17 +142,17 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
       )}
 
       {/* Language Switcher */}
-      <div className="border-t border-border px-2 pt-2 shrink-0">
+      <div className="border-t border-gray-100 dark:border-gray-700 px-3 pt-2 shrink-0">
         <LanguageSwitcher compact={collapsed} />
       </div>
 
       {/* Collapse Toggle */}
-      <div className="px-2 pb-2 shrink-0">
+      <div className="px-3 pb-3 shrink-0">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full justify-center text-muted-foreground hover:text-foreground"
+          className="w-full justify-center text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl"
         >
           {collapsed ? (
             <ChevronRight className="w-4 h-4" />
@@ -183,28 +183,28 @@ function SidebarSectionBlock({
   isFirst: boolean
 }) {
   return (
-    <div className={cn(!isFirst && "mt-4")}>
+    <div className={cn(!isFirst && "mt-5")}>
       {!collapsed ? (
         <button
           onClick={onToggleSection}
           className="w-full flex items-center justify-between px-3 py-1.5 group cursor-pointer"
         >
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 select-none">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/50 select-none">
             {section.label}
           </span>
           <ChevronDown
             className={cn(
-              "w-3 h-3 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-all duration-150",
+              "w-3 h-3 text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-all duration-150",
               sectionCollapsed && "-rotate-90"
             )}
           />
         </button>
       ) : (
-        !isFirst && <div className="mx-auto w-6 h-px bg-border my-2" />
+        !isFirst && <div className="mx-auto w-6 h-px bg-gray-200 dark:bg-gray-700 my-2" />
       )}
 
       {!sectionCollapsed && (
-        <nav className="space-y-0.5">
+        <nav className="space-y-1 mt-1">
           {section.items.map((item) => (
             <SidebarNavLink
               key={item.href}
@@ -233,20 +233,20 @@ function SidebarNavLink({
     <Link
       href={item.href}
       className={cn(
-        "relative flex items-center gap-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors duration-100",
+        "relative flex items-center gap-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150",
         collapsed ? "justify-center px-2" : "px-3",
         active
-          ? "text-primary bg-primary/8 font-semibold"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+          ? "text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 font-semibold shadow-sm"
+          : "text-gray-600 dark:text-gray-400 hover:text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
       )}
     >
       {active && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full bg-primary" />
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-blue-600" />
       )}
       <item.icon
         className={cn(
           "w-[18px] h-[18px] shrink-0",
-          active ? "text-primary" : "text-muted-foreground"
+          active ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"
         )}
       />
       {!collapsed && <span>{item.label}</span>}

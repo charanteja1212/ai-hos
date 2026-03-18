@@ -40,36 +40,26 @@ export function QueueCard({ entry, onStatusChange, onPriorityChange, estimatedWa
       transition={{ duration: 0.2 }}
       className={cn(
         "relative rounded-xl overflow-hidden",
-        "bg-card border border-border/60",
-        "shadow-sm transition-all duration-200",
-        isActive && "ring-2 ring-blue-400/30 border-blue-200 dark:border-blue-800/40",
-        isEmergency && !isActive && "ring-2 ring-red-400/40",
-        isUrgent && !isActive && "ring-2 ring-amber-400/40",
+        "bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700",
+        "transition-all duration-200",
+        isActive && "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800/40",
+        isEmergency && !isActive && "border-red-200 dark:border-red-800/40 bg-red-50/30 dark:bg-red-900/10",
+        isUrgent && !isActive && "border-amber-200 dark:border-amber-800/40 bg-amber-50/30 dark:bg-amber-900/10",
       )}
     >
-      {/* Top accent bar */}
-      <div className={cn(
-        "h-[3px] w-full bg-gradient-to-r",
-        entry.status === "waiting" && "from-amber-400 to-orange-500",
-        isActive && "from-blue-400 to-indigo-500",
-        entry.status === "completed" && "from-emerald-400 to-green-500",
-        entry.status === "no_show" && "from-red-400 to-rose-500",
-        entry.status === "cancelled" && "from-gray-400 to-slate-500",
-      )} />
-
       <div className="p-3 space-y-2.5">
         {/* Header: queue number + name + badges */}
         <div className="flex items-center gap-2.5">
           {/* Queue number */}
           <div className={cn(
-            "relative flex items-center justify-center w-9 h-9 rounded-lg font-bold text-sm shrink-0",
+            "relative flex items-center justify-center w-9 h-9 rounded-xl font-bold text-sm shrink-0",
             isActive
-              ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-sm"
+              ? "bg-blue-600 text-white"
               : isEmergency
-                ? "bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-sm"
+                ? "bg-red-600 text-white"
                 : isUrgent
-                  ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-sm"
-                  : "bg-primary/10 text-primary"
+                  ? "bg-amber-500 text-white"
+                  : "bg-white dark:bg-gray-700 text-foreground border border-gray-200 dark:border-gray-600"
           )}>
             {entry.queue_number}
             {isActive && (
@@ -83,7 +73,7 @@ export function QueueCard({ entry, onStatusChange, onPriorityChange, estimatedWa
             </p>
             {entry.doctor_name && (
               <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1 mt-0.5">
-                <Stethoscope className="w-3 h-3 shrink-0 text-primary/50" />
+                <Stethoscope className="w-3 h-3 shrink-0 text-blue-400" />
                 {entry.doctor_name}
               </p>
             )}
@@ -92,7 +82,7 @@ export function QueueCard({ entry, onStatusChange, onPriorityChange, estimatedWa
           {/* Badges */}
           <div className="flex flex-col items-end gap-1 shrink-0">
             {entry.walk_in && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
                 Walk-in
               </span>
             )}
@@ -103,10 +93,10 @@ export function QueueCard({ entry, onStatusChange, onPriorityChange, estimatedWa
                   onPriorityChange(entry.queue_id, nextPriority)
                 }}
                 className={cn(
-                  "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold cursor-pointer transition-colors",
+                  "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition-colors",
                   isEmergency ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200"
                     : isUrgent ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 hover:bg-amber-200"
-                    : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200"
+                    : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-300"
                 )}
                 title="Click to change priority"
               >
@@ -115,7 +105,7 @@ export function QueueCard({ entry, onStatusChange, onPriorityChange, estimatedWa
               </button>
             ) : entry.priority > 0 ? (
               <span className={cn(
-                "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold",
+                "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold",
                 isEmergency ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400" : "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
               )}>
                 {isEmergency ? <Zap className="w-2.5 h-2.5" /> : <AlertTriangle className="w-2.5 h-2.5" />}
@@ -146,7 +136,7 @@ export function QueueCard({ entry, onStatusChange, onPriorityChange, estimatedWa
             </span>
           )}
           {entry.status === "waiting" && estimatedWaitMin !== undefined && estimatedWaitMin > 0 && (
-            <span className="text-[10px] font-medium text-primary/70 bg-primary/5 rounded px-1.5 py-0.5">
+            <span className="text-[10px] font-medium text-blue-600/70 bg-blue-50 dark:bg-blue-900/20 rounded-full px-2 py-0.5">
               ~{estimatedWaitMin}m wait
             </span>
           )}
@@ -158,14 +148,14 @@ export function QueueCard({ entry, onStatusChange, onPriorityChange, estimatedWa
           )}
         </div>
 
-        {/* === ACTION BUTTONS — clear, visible, no guessing === */}
+        {/* === ACTION BUTTONS === */}
         {!isCompleted && (
-          <div className="flex gap-2 pt-1 border-t border-border/40">
+          <div className="flex gap-2 pt-2">
             {entry.status === "waiting" && (
               <>
                 <Button
                   size="sm"
-                  className="flex-1 h-8 gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
+                  className="flex-1 h-8 gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
                   onClick={() => onStatusChange(entry.queue_id, "in_consultation")}
                 >
                   <Play className="w-3.5 h-3.5" />
@@ -173,8 +163,8 @@ export function QueueCard({ entry, onStatusChange, onPriorityChange, estimatedWa
                 </Button>
                 <Button
                   size="sm"
-                  variant="outline"
-                  className="h-8 px-2.5 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                  variant="ghost"
+                  className="h-8 px-2.5 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg"
                   onClick={() => onStatusChange(entry.queue_id, "no_show")}
                 >
                   <XCircle className="w-3.5 h-3.5" />
@@ -185,7 +175,7 @@ export function QueueCard({ entry, onStatusChange, onPriorityChange, estimatedWa
               <>
                 <Button
                   size="sm"
-                  className="flex-1 h-8 gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold"
+                  className="flex-1 h-8 gap-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold"
                   onClick={() => onStatusChange(entry.queue_id, "completed")}
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
@@ -193,8 +183,8 @@ export function QueueCard({ entry, onStatusChange, onPriorityChange, estimatedWa
                 </Button>
                 <Button
                   size="sm"
-                  variant="outline"
-                  className="h-8 px-2.5 text-xs text-gray-500 hover:text-gray-600"
+                  variant="ghost"
+                  className="h-8 px-2.5 text-xs text-gray-400 hover:text-gray-600 rounded-lg"
                   onClick={() => onStatusChange(entry.queue_id, "cancelled")}
                 >
                   <XCircle className="w-3.5 h-3.5" />

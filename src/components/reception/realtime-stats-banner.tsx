@@ -16,17 +16,17 @@ export function RealtimeStatsBanner({ total, waiting, inConsultation, completed,
     : 0
 
   return (
-    <div className="glass rounded-2xl px-5 py-3 flex items-center gap-6 flex-wrap">
+    <div className="rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-gray-700 px-5 py-3.5 flex items-center gap-6 flex-wrap">
       {/* LIVE indicator */}
-      <div className="flex items-center gap-2">
-        <span className="relative flex h-2.5 w-2.5">
+      <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-full">
+        <span className="relative flex h-2 w-2">
           <span className="animate-ping-dot absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
         </span>
-        <span className="text-xs font-bold text-green-600 dark:text-green-400 uppercase tracking-wider">Live</span>
+        <span className="text-[11px] font-bold text-green-700 dark:text-green-400 uppercase tracking-wider">Live</span>
       </div>
 
-      <div className="h-4 w-px bg-border" />
+      <div className="h-5 w-px bg-gray-200 dark:bg-gray-700" />
 
       {/* Inline stats */}
       <div className="flex items-center gap-6 flex-wrap">
