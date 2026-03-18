@@ -578,8 +578,8 @@ function LoginPageContent() {
           </div>
         </div>
 
-        {/* Center the form vertically */}
-        <div className="flex-1 flex items-center justify-center px-6 sm:px-10 py-8">
+        {/* Form area — top-aligned on mobile, vertically centered on desktop */}
+        <div className="flex-1 flex items-start lg:items-center justify-center px-6 sm:px-10 py-8 lg:py-12">
           <div className="w-full max-w-[400px]">
             <AnimatePresence mode="wait">
               {/* ============================================================ */}
@@ -942,7 +942,7 @@ function LoginPageContent() {
                       <Button
                         type="submit"
                         disabled={loading || !pin || (selectedRole.loginMode === "super_admin" && !email)}
-                        className="w-full h-11 rounded-lg font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-30 hover:opacity-90"
+                        className="w-full h-11 rounded-lg font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-50 hover:opacity-90"
                         style={{ backgroundColor: activeColor }}
                       >
                         {loading ? (
@@ -1015,7 +1015,7 @@ function LoginPageContent() {
                       <Button
                         type="submit"
                         disabled={loading || !loginEmail || !loginPassword}
-                        className="w-full h-11 rounded-lg font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-30 hover:opacity-90"
+                        className="w-full h-11 rounded-lg font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-50 hover:opacity-90"
                         style={{ backgroundColor: activeColor }}
                       >
                         {loading ? (
