@@ -184,7 +184,7 @@ export async function checkAvailability(params: {
       .in("doctor_id", doctorIds)
       .eq("tenant_id", tenant_id)
       .in("date", dates)
-      .in("status", ["confirmed", "pending_payment"]),
+      .in("status", ["confirmed", "pending_payment", "completed"]),
     supabase
       .from("slot_locks")
       .select("doctor_id, slot_date, slot_time")
@@ -300,14 +300,14 @@ export async function bookAppointment(params: BookingParams) {
     return { error: "Failed to reserve slot" }
   }
 
-  // 2. Double-check no existing confirmed appointment
+  // 2. Double-check no existing appointment at this slot
   const { data: existing } = await supabase
     .from("appointments")
     .select("booking_id")
     .eq("doctor_id", params.doctor_id)
     .eq("date", params.date)
     .eq("time", params.time)
-    .eq("status", "confirmed")
+    .in("status", ["confirmed", "pending_payment", "completed"])
     .limit(1)
 
   if (existing && existing.length > 0) {
