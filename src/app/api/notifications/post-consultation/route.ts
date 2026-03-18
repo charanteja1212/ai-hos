@@ -47,16 +47,18 @@ export async function POST(req: NextRequest) {
 
   // 2. Build WhatsApp message
   const medicineList = items?.length
-    ? items.map((m: { name: string; dosage?: string }) => `  - ${m.name}${m.dosage ? ` (${m.dosage})` : ""}`).join("\n")
+    ? items.map((m: { medicine_name?: string; name?: string; dosage?: string }) => `  - ${m.medicine_name || m.name || "Medicine"}${m.dosage ? ` (${m.dosage})` : ""}`).join("\n")
     : "  None"
 
   const labList = lab_tests?.length
-    ? lab_tests.map((t: { test_name?: string; name?: string }) => `  - ${t.test_name || t.name}`).join("\n")
+    ? lab_tests.map((t: string | { test_name?: string; name?: string }) => `  - ${typeof t === "string" ? t : (t.test_name || t.name)}`).join("\n")
     : ""
+
+  const displayDoctor = doctor_name?.startsWith("Dr.") ? doctor_name : `Dr. ${doctor_name}`
 
   let message = `*${hospitalName}*\n*Consultation Summary*\n\n`
   message += `Dear ${patient_name || "Patient"},\n\n`
-  message += `Your consultation with Dr. ${doctor_name} has been completed.\n`
+  message += `Your consultation with ${displayDoctor} has been completed.\n`
 
   if (prescription_id) {
     message += `Prescription Ref: ${prescription_id}\n`
