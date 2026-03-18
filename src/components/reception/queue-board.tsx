@@ -37,6 +37,9 @@ import {
   User,
   Calendar,
   Hash,
+  CircleDot,
+  ArrowRight,
+  HeartPulse,
 } from "lucide-react"
 import type { QueueEntry } from "@/types/database"
 
@@ -352,15 +355,7 @@ export function QueueBoard() {
                 }
               />
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-                <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-950/20 flex items-center justify-center mb-4">
-                  <User className="w-7 h-7 text-blue-400" />
-                </div>
-                <p className="text-base font-semibold text-gray-900 dark:text-white">Select a patient</p>
-                <p className="text-sm text-gray-400 mt-1 max-w-[240px]">
-                  Choose a patient from the list to view details and take action
-                </p>
-              </div>
+              <TodayPulse stats={stats} throughput={throughput} nextUp={nextUp} onCallNext={(id) => handleStatusChange(id, "in_consultation")} />
             )}
           </div>
         </div>
@@ -370,7 +365,123 @@ export function QueueBoard() {
 }
 
 /* ══════════════════════════════════════════════════════
-   PATIENT DETAIL PANEL
+   TODAY'S PULSE — Empty state for right panel
+   ══════════════════════════════════════════════════════ */
+function TodayPulse({ stats, throughput, nextUp, onCallNext }: {
+  stats: { total: number; waiting: number; inConsultation: number; completed: number; noShow: number; avgWaitMinutes: number }
+  throughput: number
+  nextUp: QueueEntry | undefined
+  onCallNext: (id: string) => void
+}) {
+  const circumference = 2 * Math.PI * 40
+  const progress = stats.total > 0 ? throughput : 0
+  const offset = circumference - (progress / 100) * circumference
+
+  return (
+    <div className="flex-1 flex flex-col p-6 overflow-y-auto">
+      {/* Pulse header */}
+      <div className="flex items-center gap-2 mb-6">
+        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+          <HeartPulse className="w-4 h-4 text-white" />
+        </div>
+        <div>
+          <p className="text-sm font-bold text-gray-900 dark:text-white">Today&apos;s Pulse</p>
+          <p className="text-[11px] text-gray-400">Real-time overview</p>
+        </div>
+      </div>
+
+      {/* Circular progress + stats */}
+      <div className="flex items-center gap-8 mb-8">
+        <div className="relative w-28 h-28 shrink-0">
+          <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="8" className="text-blue-50 dark:text-blue-950/30" />
+            <motion.circle
+              cx="50" cy="50" r="40" fill="none" strokeWidth="8" strokeLinecap="round"
+              className="text-blue-600"
+              stroke="currentColor"
+              strokeDasharray={circumference}
+              initial={{ strokeDashoffset: circumference }}
+              animate={{ strokeDashoffset: offset }}
+              transition={{ duration: 1, ease: "easeOut" }}
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-2xl font-bold text-gray-900 dark:text-white">{progress}%</span>
+            <span className="text-[9px] font-semibold text-gray-400 uppercase">Done</span>
+          </div>
+        </div>
+
+        <div className="flex-1 space-y-3">
+          <PulseStat label="Completed" value={stats.completed} color="bg-blue-600" />
+          <PulseStat label="Waiting" value={stats.waiting} color="bg-sky-400" />
+          <PulseStat label="In Consult" value={stats.inConsultation} color="bg-indigo-500" />
+          <PulseStat label="No Show" value={stats.noShow} color="bg-gray-300 dark:bg-gray-600" />
+        </div>
+      </div>
+
+      {/* Quick stats row */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="bg-blue-50 dark:bg-blue-950/20 rounded-xl p-3.5 text-center">
+          <p className="text-2xl font-bold text-blue-600">{stats.total}</p>
+          <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider mt-0.5">Patients Today</p>
+        </div>
+        <div className="bg-blue-50 dark:bg-blue-950/20 rounded-xl p-3.5 text-center">
+          <p className="text-2xl font-bold text-blue-600">{stats.avgWaitMinutes > 0 ? `${stats.avgWaitMinutes}m` : "\u2014"}</p>
+          <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider mt-0.5">Avg Wait</p>
+        </div>
+      </div>
+
+      {/* Next up quick action */}
+      {nextUp ? (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-4 text-white"
+        >
+          <p className="text-[10px] font-bold uppercase tracking-wider text-white/50 mb-2">Next in Queue</p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-bold text-sm shrink-0">{nextUp.queue_number}</div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm truncate">{nextUp.patient_name}</p>
+              <p className="text-[11px] text-white/50 truncate">{nextUp.doctor_name || "No doctor"}</p>
+            </div>
+            <button
+              onClick={() => onCallNext(nextUp.queue_id)}
+              className="h-9 px-4 rounded-xl bg-white text-blue-700 text-xs font-bold flex items-center gap-1.5 hover:bg-blue-50 transition-colors shrink-0"
+            >
+              Call <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </motion.div>
+      ) : (
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-5 text-center">
+          <CheckCircle2 className="w-8 h-8 text-blue-400 mx-auto mb-2" />
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">All caught up!</p>
+          <p className="text-xs text-gray-400 mt-0.5">No patients waiting in queue</p>
+        </div>
+      )}
+
+      {/* Hint */}
+      <div className="mt-auto pt-6 flex items-center justify-center gap-2 text-gray-300 dark:text-gray-600">
+        <ArrowLeft className="w-3.5 h-3.5" />
+        <p className="text-[11px] font-medium">Select a patient to view details</p>
+      </div>
+    </div>
+  )
+}
+
+function PulseStat({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className={cn("w-2.5 h-2.5 rounded-full shrink-0", color)} />
+      <span className="text-xs text-gray-500 dark:text-gray-400 flex-1">{label}</span>
+      <span className="text-sm font-bold text-gray-900 dark:text-white tabular-nums">{value}</span>
+    </div>
+  )
+}
+
+/* ══════════════════════════════════════════════════════
+   PATIENT DETAIL — Journey Timeline Design
    ══════════════════════════════════════════════════════ */
 function PatientDetail({
   entry,
@@ -388,6 +499,15 @@ function PatientDetail({
   const isActive = entry.status === "in_consultation"
   const isDone = entry.status === "completed" || entry.status === "no_show" || entry.status === "cancelled"
 
+  const journeySteps = [
+    { key: "checked_in", label: "Checked In", icon: UserPlus, time: entry.check_in_time },
+    { key: "waiting", label: "Waiting", icon: Clock, time: entry.check_in_time },
+    { key: "in_consultation", label: "Consultation", icon: Stethoscope, time: entry.consultation_start },
+    { key: "completed", label: "Completed", icon: CheckCircle2, time: entry.consultation_end },
+  ]
+  const statusOrder = ["checked_in", "waiting", "in_consultation", "completed"]
+  const currentIdx = entry.status === "completed" ? 3 : entry.status === "in_consultation" ? 2 : entry.status === "waiting" ? 1 : 0
+
   return (
     <motion.div
       key={entry.queue_id}
@@ -396,94 +516,129 @@ function PatientDetail({
       transition={{ duration: 0.2 }}
       className="flex flex-col h-full"
     >
-      {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
-        <button onClick={onBack} className="lg:hidden w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-        </button>
-        <div className={cn(
-          "w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg shrink-0",
-          isActive ? "bg-indigo-600 text-white" :
-          entry.priority === 2 ? "bg-red-500 text-white" :
-          entry.priority === 1 ? "bg-blue-700 text-white" :
-          isDone ? "bg-gray-100 dark:bg-gray-800 text-gray-400" :
-          "bg-blue-50 dark:bg-blue-950/30 text-blue-600"
-        )}>
-          {entry.queue_number}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-lg font-bold text-gray-900 dark:text-white truncate">{entry.patient_name || "Unknown"}</p>
-          <div className="flex items-center gap-2 mt-0.5">
-            <DetailStatusBadge status={entry.status} />
-            {entry.walk_in && (
-              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/30 px-2 py-0.5 rounded-full">Walk-in</span>
-            )}
-            {entry.priority === 2 && (
-              <span className="text-[10px] font-bold text-red-600 bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded-full flex items-center gap-0.5"><Zap className="w-3 h-3" /> Emergency</span>
-            )}
-            {entry.priority === 1 && (
-              <span className="text-[10px] font-bold text-blue-700 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded-full flex items-center gap-0.5"><AlertTriangle className="w-3 h-3" /> Urgent</span>
-            )}
+      {/* Header — gradient card */}
+      <div className="mx-4 mt-4 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-4 text-white relative overflow-hidden">
+        <div className="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-white/5" />
+        <div className="absolute -right-2 -bottom-6 w-16 h-16 rounded-full bg-white/5" />
+        <div className="relative flex items-center gap-3">
+          <button onClick={onBack} className="lg:hidden w-8 h-8 rounded-lg flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center font-bold text-lg shrink-0">
+            {entry.queue_number}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-lg font-bold truncate">{entry.patient_name || "Unknown"}</p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">{entry.status.replace("_", " ").toUpperCase()}</span>
+              {entry.walk_in && <span className="text-[10px] font-bold bg-white/15 px-2 py-0.5 rounded-full">Walk-in</span>}
+              {entry.priority === 2 && <span className="text-[10px] font-bold bg-red-400/30 px-2 py-0.5 rounded-full flex items-center gap-0.5"><Zap className="w-3 h-3" /> Emergency</span>}
+              {entry.priority === 1 && <span className="text-[10px] font-bold bg-blue-300/30 px-2 py-0.5 rounded-full flex items-center gap-0.5"><AlertTriangle className="w-3 h-3" /> Urgent</span>}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Info Grid */}
+      {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
-        <div className="grid grid-cols-2 gap-4">
-          <InfoField icon={<Stethoscope className="w-4 h-4 text-blue-500" />} label="Doctor" value={entry.doctor_name || "Not assigned"} />
-          <InfoField icon={<Phone className="w-4 h-4 text-blue-500" />} label="Phone" value={entry.patient_phone || "N/A"} />
-          <InfoField icon={<Calendar className="w-4 h-4 text-blue-500" />} label="Check-in" value={entry.check_in_time ? formatTime(new Date(entry.check_in_time).toTimeString().slice(0, 5)) : "N/A"} />
-          <InfoField icon={<Hash className="w-4 h-4 text-blue-500" />} label="Queue #" value={String(entry.queue_number)} />
+        {/* Journey Timeline */}
+        <div>
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Patient Journey</p>
+          <div className="flex items-center gap-0">
+            {journeySteps.map((step, i) => {
+              const isCompleted = i <= currentIdx
+              const isCurrent = i === currentIdx
+              const StepIcon = step.icon
+              return (
+                <div key={step.key} className="flex items-center flex-1 last:flex-none">
+                  <div className="flex flex-col items-center">
+                    <motion.div
+                      initial={{ scale: 0.8 }}
+                      animate={{ scale: isCurrent ? 1.1 : 1 }}
+                      className={cn(
+                        "w-9 h-9 rounded-full flex items-center justify-center transition-all",
+                        isCompleted
+                          ? isCurrent ? "bg-blue-600 text-white shadow-md shadow-blue-500/30" : "bg-blue-100 dark:bg-blue-900/30 text-blue-600"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600"
+                      )}
+                    >
+                      <StepIcon className="w-4 h-4" />
+                    </motion.div>
+                    <span className={cn(
+                      "text-[9px] font-semibold mt-1.5 text-center leading-tight",
+                      isCurrent ? "text-blue-600" : isCompleted ? "text-gray-500" : "text-gray-300 dark:text-gray-600"
+                    )}>{step.label}</span>
+                  </div>
+                  {i < journeySteps.length - 1 && (
+                    <div className={cn(
+                      "flex-1 h-0.5 mx-1 rounded-full -mt-4",
+                      i < currentIdx ? "bg-blue-400" : "bg-gray-200 dark:bg-gray-700"
+                    )} />
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
 
-        {/* Live timer */}
+        {/* Info tiles */}
+        <div className="grid grid-cols-2 gap-3">
+          <InfoTile icon={<Stethoscope className="w-4 h-4" />} label="Doctor" value={entry.doctor_name || "Not assigned"} />
+          <InfoTile icon={<Phone className="w-4 h-4" />} label="Phone" value={entry.patient_phone || "N/A"} />
+          <InfoTile icon={<Calendar className="w-4 h-4" />} label="Check-in" value={entry.check_in_time ? formatTime(new Date(entry.check_in_time).toTimeString().slice(0, 5)) : "N/A"} />
+          <InfoTile icon={<Hash className="w-4 h-4" />} label="Queue #" value={String(entry.queue_number)} />
+        </div>
+
+        {/* Live timer — large format */}
         {entry.status === "waiting" && entry.check_in_time && (
-          <div className="bg-blue-50 dark:bg-blue-950/20 rounded-xl p-4 flex items-center justify-between">
-            <div>
-              <p className="text-[11px] font-semibold text-blue-600 uppercase tracking-wider">Waiting Time</p>
-              <div className="mt-1">
-                <ElapsedTimer startTime={entry.check_in_time} warningMinutes={20} dangerMinutes={40} className="text-2xl font-bold" />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-gradient-to-br from-blue-50 to-sky-50 dark:from-blue-950/20 dark:to-sky-950/20 rounded-2xl p-5 border border-blue-100/50 dark:border-blue-800/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <CircleDot className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
+                  <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Waiting</p>
+                </div>
+                <ElapsedTimer startTime={entry.check_in_time} warningMinutes={20} dangerMinutes={40} className="text-3xl font-bold" />
               </div>
+              {estimatedWaitMin !== undefined && estimatedWaitMin > 0 && (
+                <div className="text-right bg-white dark:bg-gray-900 rounded-xl px-4 py-2.5 shadow-sm border border-blue-100 dark:border-blue-800/20">
+                  <p className="text-[9px] font-bold text-blue-400 uppercase tracking-wider">Est. Wait</p>
+                  <p className="text-xl font-bold text-blue-600">~{Math.round(estimatedWaitMin)}m</p>
+                </div>
+              )}
             </div>
-            {estimatedWaitMin !== undefined && estimatedWaitMin > 0 && (
-              <div className="text-right">
-                <p className="text-[11px] font-semibold text-blue-500 uppercase tracking-wider">Estimated</p>
-                <p className="text-lg font-bold text-blue-600 mt-1">~{Math.round(estimatedWaitMin)}m</p>
-              </div>
-            )}
-          </div>
+          </motion.div>
         )}
 
         {isActive && entry.consultation_start && (
-          <div className="bg-indigo-50 dark:bg-indigo-950/20 rounded-xl p-4 flex items-center gap-3">
-            <Activity className="w-5 h-5 text-indigo-500" />
-            <div>
-              <p className="text-[11px] font-semibold text-indigo-600 uppercase tracking-wider">Consultation Time</p>
-              <div className="mt-1">
-                <ElapsedTimer startTime={entry.consultation_start} warningMinutes={15} dangerMinutes={30} className="text-2xl font-bold" />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20 rounded-2xl p-5 border border-indigo-100/50 dark:border-indigo-800/20">
+            <div className="flex items-center gap-3">
+              <Activity className="w-5 h-5 text-indigo-500 animate-pulse" />
+              <div>
+                <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">In Consultation</p>
+                <ElapsedTimer startTime={entry.consultation_start} warningMinutes={15} dangerMinutes={30} className="text-3xl font-bold" />
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
-        {/* Priority control (waiting only) */}
+        {/* Priority control */}
         {entry.status === "waiting" && (
           <div>
-            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Priority</p>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Priority Level</p>
             <div className="flex items-center gap-2">
               {[
-                { val: 0, label: "Normal", cls: "bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800/30" },
-                { val: 1, label: "Urgent", cls: "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:border-blue-700/30" },
-                { val: 2, label: "Emergency", cls: "bg-red-50 text-red-600 border-red-200 dark:bg-red-950/20 dark:border-red-800/30" },
+                { val: 0, label: "Normal", activeCls: "bg-blue-50 text-blue-600 border-blue-200 ring-blue-400 dark:bg-blue-950/20 dark:border-blue-800/30" },
+                { val: 1, label: "Urgent", activeCls: "bg-blue-100 text-blue-700 border-blue-300 ring-blue-500 dark:bg-blue-900/30 dark:border-blue-700/30" },
+                { val: 2, label: "Emergency", activeCls: "bg-red-50 text-red-600 border-red-200 ring-red-400 dark:bg-red-950/20 dark:border-red-800/30" },
               ].map((p) => (
                 <button
                   key={p.val}
                   onClick={() => onPriorityChange(entry.queue_id, p.val)}
                   className={cn(
-                    "px-3 py-2 rounded-xl text-xs font-bold border transition-all",
+                    "flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all text-center",
                     entry.priority === p.val
-                      ? `${p.cls} ring-2 ring-offset-1 ${p.val === 2 ? "ring-red-400" : "ring-blue-400"}`
+                      ? `${p.activeCls} ring-2 ring-offset-1`
                       : "bg-gray-50 dark:bg-gray-800 text-gray-400 border-gray-200 dark:border-gray-700 hover:border-blue-300"
                   )}
                 >
@@ -499,23 +654,23 @@ function PatientDetail({
 
       {/* Action Footer */}
       {!isDone && (
-        <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+        <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-800">
           {entry.status === "waiting" && (
             <div className="flex items-center gap-3">
-              <Button className="flex-1 h-11 gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 text-sm" onClick={() => onStatusChange(entry.queue_id, "in_consultation")}>
+              <Button className="flex-1 h-12 gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-500/25 text-sm" onClick={() => onStatusChange(entry.queue_id, "in_consultation")}>
                 <Play className="w-4 h-4" /> Start Consultation
               </Button>
-              <Button variant="outline" className="h-11 px-4 rounded-xl border-gray-200 dark:border-gray-700 text-gray-500 hover:text-red-500 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-950/20" onClick={() => onStatusChange(entry.queue_id, "no_show")}>
+              <Button variant="outline" className="h-12 px-5 rounded-2xl border-gray-200 dark:border-gray-700 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-950/20" onClick={() => onStatusChange(entry.queue_id, "no_show")}>
                 <XCircle className="w-4 h-4" />
               </Button>
             </div>
           )}
           {isActive && (
             <div className="flex items-center gap-3">
-              <Button className="flex-1 h-11 gap-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-bold shadow-md shadow-blue-600/20 text-sm" onClick={() => onStatusChange(entry.queue_id, "completed")}>
+              <Button className="flex-1 h-12 gap-2 rounded-2xl bg-blue-700 hover:bg-blue-800 text-white font-bold shadow-lg shadow-blue-600/25 text-sm" onClick={() => onStatusChange(entry.queue_id, "completed")}>
                 <CheckCircle2 className="w-4 h-4" /> Mark Complete
               </Button>
-              <Button variant="outline" className="h-11 px-4 rounded-xl border-gray-200 dark:border-gray-700 text-gray-500 hover:text-red-500 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-950/20" onClick={() => onStatusChange(entry.queue_id, "cancelled")}>
+              <Button variant="outline" className="h-12 px-5 rounded-2xl border-gray-200 dark:border-gray-700 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-950/20" onClick={() => onStatusChange(entry.queue_id, "cancelled")}>
                 <XCircle className="w-4 h-4" />
               </Button>
             </div>
@@ -529,10 +684,10 @@ function PatientDetail({
 /* ══════════════════════════════════════════════════════
    HELPERS
    ══════════════════════════════════════════════════════ */
-function InfoField({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function InfoTile({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
-      <div className="flex items-center gap-1.5 mb-1">
+    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700/30">
+      <div className="flex items-center gap-1.5 mb-1 text-blue-500">
         {icon}
         <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{label}</span>
       </div>
@@ -553,17 +708,6 @@ function ListStatusBadge({ status }: { status: string }) {
   return <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded", c.cls)}>{c.label}</span>
 }
 
-function DetailStatusBadge({ status }: { status: string }) {
-  const m: Record<string, { label: string; cls: string }> = {
-    waiting: { label: "Waiting", cls: "bg-sky-50 text-sky-600 dark:bg-sky-950/30 dark:text-sky-400 ring-1 ring-sky-200/60 dark:ring-sky-800/30" },
-    in_consultation: { label: "In Consultation", cls: "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400 ring-1 ring-indigo-200/60 dark:ring-indigo-800/30" },
-    completed: { label: "Completed", cls: "bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400 ring-1 ring-blue-200/60 dark:ring-blue-800/30" },
-    no_show: { label: "No Show", cls: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 ring-1 ring-gray-200/60 dark:ring-gray-700/30" },
-    cancelled: { label: "Cancelled", cls: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 ring-1 ring-gray-200/60 dark:ring-gray-700/30" },
-  }
-  const c = m[status] || m.waiting
-  return <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", c.cls)}>{c.label}</span>
-}
 
 const STAT_ACCENT: Record<string, { bar: string; iconBg: string; iconText: string }> = {
   "blue-600":  { bar: "bg-blue-600",  iconBg: "bg-blue-50 dark:bg-blue-600/10",    iconText: "text-blue-600" },
