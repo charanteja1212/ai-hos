@@ -844,12 +844,14 @@ export async function listAppointments(args: any): Promise<any> {
 
   try {
     const todayStr = nowIST().dateStr;
+    // Calculate 30 days ago for showing recent past appointments
+    const past30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const result = await sbGet(
       '/appointments?or=(patient_phone.eq.' + phone + ',patient_phone.eq.%2B' + phone +
       ',booked_by_whatsapp_number.eq.' + phone + ',booked_by_whatsapp_number.eq.%2B' + phone +
       ')&tenant_id=eq.' + encodeURIComponent(tenantId) +
-      '&status=in.(confirmed,pending_payment,cancelled)&date=gte.' + todayStr +
-      '&order=date.asc,time.asc'
+      '&date=gte.' + past30 +
+      '&order=date.desc,time.desc'
     );
     let appointments = Array.isArray(result) ? result : [];
     if (appointments.length === 0) {

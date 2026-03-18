@@ -370,6 +370,9 @@ export default function AppointmentsPage() {
   const activeAppointments = appointments.filter(
     (a) => !cancelledIds.has(a.booking_id) && ["confirmed", "pending_payment"].includes(a.status)
   );
+  const completedAppointments = appointments.filter(
+    (a) => !cancelledIds.has(a.booking_id) && ["completed", "expired"].includes(a.status)
+  );
   const cancelledAppointments = appointments.filter(
     (a) => !cancelledIds.has(a.booking_id) && a.status === "cancelled"
   );
@@ -390,7 +393,7 @@ export default function AppointmentsPage() {
         {!loading && (
           <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {activeAppointments.length} upcoming appointment{activeAppointments.length !== 1 ? "s" : ""}
+              {activeAppointments.length} upcoming{completedAppointments.length > 0 ? `, ${completedAppointments.length} past` : ""}
             </p>
           </div>
         )}
@@ -415,7 +418,7 @@ export default function AppointmentsPage() {
           <Loader2 className="w-7 h-7 animate-spin text-blue-500" />
           <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">Fetching appointments...</p>
         </div>
-      ) : activeAppointments.length === 0 && cancelledAppointments.length === 0 ? (
+      ) : activeAppointments.length === 0 && completedAppointments.length === 0 && cancelledAppointments.length === 0 ? (
         /* Empty State */
         <div className="text-center py-16">
           <CalendarDays className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
@@ -569,6 +572,63 @@ export default function AppointmentsPage() {
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Completed / Expired appointments */}
+      {completedAppointments.length > 0 && (
+        <div className="mt-4 space-y-3">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 px-1">Past Appointments</p>
+          {completedAppointments.map((appt) => {
+            const isCompleted = appt.status === "completed";
+            return (
+              <div
+                key={appt.booking_id}
+                className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden opacity-75"
+              >
+                <div className="p-4">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{appt.doctor_name}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{appt.specialty}</p>
+                    </div>
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${
+                      isCompleted
+                        ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                        : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${isCompleted ? "bg-slate-400" : "bg-amber-500"}`} />
+                      {isCompleted ? "Completed" : "Expired"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mb-2">
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="w-4 h-4 text-slate-400 shrink-0" />
+                      <div>
+                        <p className="text-xs text-slate-400">Date</p>
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{appt.date}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+                      <div>
+                        <p className="text-xs text-slate-400">Time</p>
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{appt.time}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 col-span-2">
+                      <User className="w-4 h-4 text-slate-400 shrink-0" />
+                      <div>
+                        <p className="text-xs text-slate-400">Patient</p>
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{appt.patient_name}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">{appt.booking_id}</span>
                 </div>
               </div>
             );
