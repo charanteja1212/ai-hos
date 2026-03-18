@@ -167,14 +167,10 @@ export async function POST(req: NextRequest) {
     }
   } catch { /* continue */ }
 
-  // 4. Get payment link details from Razorpay
+  // 4. Get payment link details from webhook payload (no API call needed)
   try {
-    const rzp = await fetch('https://api.razorpay.com/v1/payment_links/' + paymentLinkId, {
-      headers: { Authorization: RZP_AUTH() }, signal: AbortSignal.timeout(10000),
-    });
-    if (!rzp.ok) throw new Error('Razorpay API ' + rzp.status);
-    const link = await rzp.json();
-
+    // Razorpay webhook payload includes the full payment_link entity
+    const link = event.payload?.payment_link?.entity || {};
     const notes = link.notes || {};
     const type = notes.type || 'appointment';
     const bookingId = notes.reference_id || '';
