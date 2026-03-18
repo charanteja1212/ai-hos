@@ -557,12 +557,12 @@ function LoginPageContent() {
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* RIGHT: Login Form                                                  */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <div className="flex-1 flex flex-col bg-white">
+      <div className="flex-1 flex flex-col bg-[#F8FAFC]">
         {/* Mobile: thin blue bar at top */}
         <div className="lg:hidden h-1 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600" />
 
         {/* Mobile: logo */}
-        <div className="lg:hidden px-6 pt-6 pb-2">
+        <div className="lg:hidden px-6 pt-5 pb-2">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
               {directClient?.logo_url ? (
@@ -578,9 +578,9 @@ function LoginPageContent() {
           </div>
         </div>
 
-        {/* Form area — top-aligned on mobile, vertically centered on desktop */}
-        <div className="flex-1 flex items-start lg:items-center justify-center px-6 sm:px-10 py-8 lg:py-12">
-          <div className="w-full max-w-[400px]">
+        {/* Form area */}
+        <div className="flex-1 flex items-start lg:items-center justify-center px-5 sm:px-8 py-6 lg:py-10">
+          <div className="w-full max-w-[440px]">
             <AnimatePresence mode="wait">
               {/* ============================================================ */}
               {/* STEP: Role Selection                                         */}
@@ -600,41 +600,43 @@ function LoginPageContent() {
                     </div>
                   ) : (
                   <>
-                    <div className="mb-4">
+                    <div className="mb-5">
                       <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
                         Welcome back
                       </h1>
-                      <p className="text-sm text-gray-400 mt-0.5">
+                      <p className="text-[13px] text-gray-400 mt-1">
                         Choose your role to continue
                       </p>
                     </div>
 
-                    <div className="space-y-0.5">
+                    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)" }}>
                       {roles
                         .filter((role) => !directClient || (role.loginMode !== "super_admin" && role.loginMode !== "client_admin"))
-                        .map((role, i) => {
+                        .map((role, i, arr) => {
                           const Icon = role.icon
                           return (
                             <motion.button
                               key={role.id}
-                              initial={{ opacity: 0, y: 8 }}
-                              animate={{ opacity: 1, y: 0 }}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
                               transition={{ delay: i * 0.04, duration: 0.25 }}
                               onClick={() => handleRoleSelect(role)}
                               disabled={fetchingClients}
-                              className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-150 border border-transparent hover:border-gray-100 hover:bg-gray-50/80 active:scale-[0.99] disabled:opacity-40 disabled:cursor-wait cursor-pointer"
+                              className={`group w-full flex items-center gap-3.5 px-5 py-3.5 text-left transition-all duration-150 hover:bg-blue-50/50 active:bg-blue-50 disabled:opacity-40 disabled:cursor-wait cursor-pointer ${
+                                i < arr.length - 1 ? "border-b border-gray-100" : ""
+                              }`}
                             >
                               <div
-                                className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:scale-[1.05]"
+                                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                                 style={{ backgroundColor: role.lightBg, color: role.color }}
                               >
-                                <Icon className="w-4 h-4" strokeWidth={2} />
+                                <Icon className="w-[18px] h-[18px]" strokeWidth={2} />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-[13px] font-semibold text-gray-900">{role.label}</p>
+                                <p className="text-[14px] font-semibold text-gray-900">{role.label}</p>
                                 <p className="text-[11px] text-gray-400 leading-tight">{role.description}</p>
                               </div>
-                              <ChevronRight className="w-4 h-4 text-gray-200 shrink-0 group-hover:text-gray-400 group-hover:translate-x-0.5 transition-all duration-150" />
+                              <ChevronRight className="w-4 h-4 text-gray-300 shrink-0 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all duration-150" />
                             </motion.button>
                           )
                         })}
@@ -647,7 +649,7 @@ function LoginPageContent() {
                       </div>
                     )}
 
-                    <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-center gap-4">
+                    <div className="mt-5 flex items-center justify-center gap-4">
                       <Link
                         href="/patient-login"
                         className="inline-flex items-center gap-1.5 text-[12px] text-gray-400 hover:text-blue-600 transition-colors"
@@ -679,31 +681,33 @@ function LoginPageContent() {
                 >
                   <button
                     onClick={handleBack}
-                    className="group flex items-center gap-1.5 text-gray-400 hover:text-gray-700 transition-colors mb-5"
+                    className="group flex items-center gap-1.5 text-gray-400 hover:text-gray-700 transition-colors mb-4"
                   >
                     <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
                     <span className="text-sm font-medium">Back</span>
                   </button>
 
-                  <div className="mb-5">
+                  <div className="mb-4">
                     <h2 className="text-xl font-bold text-gray-900 tracking-tight">Select Hospital Group</h2>
-                    <p className="text-sm text-gray-400 mt-1">
+                    <p className="text-[13px] text-gray-400 mt-0.5">
                       {selectedRole?.loginMode === "client_admin"
                         ? "Choose the organization to manage"
                         : "Choose your hospital group"}
                     </p>
                   </div>
 
-                  <div className="space-y-1.5">
+                  <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)" }}>
                     {clients.map((client, i) => (
                       <motion.button
                         key={client.client_id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
                         transition={{ delay: i * 0.04, duration: 0.25 }}
                         onClick={() => handleClientSelect(client)}
                         disabled={fetchingBranches}
-                        className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-150 border border-transparent hover:border-gray-100 hover:bg-gray-50/80 disabled:opacity-40 disabled:cursor-wait cursor-pointer"
+                        className={`group w-full flex items-center gap-3.5 px-5 py-3.5 text-left transition-all duration-150 hover:bg-blue-50/50 disabled:opacity-40 disabled:cursor-wait cursor-pointer ${
+                          i < clients.length - 1 ? "border-b border-gray-100" : ""
+                        }`}
                       >
                         <div
                           className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
@@ -718,11 +722,11 @@ function LoginPageContent() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[14px] font-semibold text-gray-900">{client.name}</p>
-                          <p className="text-[12px] text-gray-400">
+                          <p className="text-[11px] text-gray-400">
                             {client.branch_count === 1 ? "1 branch" : `${client.branch_count || 0} branches`}
                           </p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-gray-200 shrink-0 group-hover:text-gray-400 group-hover:translate-x-0.5 transition-all duration-150" />
+                        <ChevronRight className="w-4 h-4 text-gray-300 shrink-0 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all duration-150" />
                       </motion.button>
                     ))}
                   </div>
@@ -749,28 +753,30 @@ function LoginPageContent() {
                 >
                   <button
                     onClick={handleBack}
-                    className="group flex items-center gap-1.5 text-gray-400 hover:text-gray-700 transition-colors mb-5"
+                    className="group flex items-center gap-1.5 text-gray-400 hover:text-gray-700 transition-colors mb-4"
                   >
                     <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
                     <span className="text-sm font-medium">Back</span>
                   </button>
 
-                  <div className="mb-5">
+                  <div className="mb-4">
                     <h2 className="text-xl font-bold text-gray-900 tracking-tight">Select Branch</h2>
-                    <p className="text-sm text-gray-400 mt-1">
+                    <p className="text-[13px] text-gray-400 mt-0.5">
                       {selectedClient?.name} &mdash; choose your hospital branch
                     </p>
                   </div>
 
-                  <div className="space-y-1.5">
+                  <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)" }}>
                     {branches.map((branch, i) => (
                       <motion.button
                         key={branch.tenant_id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
                         transition={{ delay: i * 0.04, duration: 0.25 }}
                         onClick={() => handleBranchSelect(branch)}
-                        className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-150 border border-transparent hover:border-gray-100 hover:bg-gray-50/80 cursor-pointer"
+                        className={`group w-full flex items-center gap-3.5 px-5 py-3.5 text-left transition-all duration-150 hover:bg-blue-50/50 cursor-pointer ${
+                          i < branches.length - 1 ? "border-b border-gray-100" : ""
+                        }`}
                       >
                         <div
                           className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
@@ -780,11 +786,11 @@ function LoginPageContent() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[14px] font-semibold text-gray-900">{branch.hospital_name}</p>
-                          <p className="text-[12px] text-gray-400">
+                          <p className="text-[11px] text-gray-400">
                             {branch.city}{branch.branch_code ? ` \u00B7 ${branch.branch_code}` : ""}
                           </p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-gray-200 shrink-0 group-hover:text-gray-400 group-hover:translate-x-0.5 transition-all duration-150" />
+                        <ChevronRight className="w-4 h-4 text-gray-300 shrink-0 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all duration-150" />
                       </motion.button>
                     ))}
                   </div>
@@ -802,236 +808,247 @@ function LoginPageContent() {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
                 >
-                  {/* Back + role badge */}
-                  <div className="flex items-center gap-3 mb-6">
-                    <button
-                      onClick={handleBack}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all shrink-0"
-                    >
-                      <ArrowLeft className="w-4 h-4" />
-                    </button>
-                    {(() => {
-                      const Icon = selectedRole.icon
-                      return (
-                        <>
-                          <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                            style={{ backgroundColor: selectedRole.lightBg, color: selectedRole.color }}
-                          >
-                            <Icon className="w-[18px] h-[18px]" strokeWidth={2} />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[15px] font-bold text-gray-900">{selectedRole.label}</p>
-                            <p className="text-[12px] text-gray-400 truncate">
-                              {selectedRole.loginMode === "super_admin"
-                                ? "Platform access"
-                                : selectedRole.loginMode === "client_admin"
-                                  ? selectedClient?.name || "Sign in"
-                                  : selectedBranch?.hospital_name || "Sign in"}
-                            </p>
-                          </div>
-                        </>
-                      )
-                    })()}
-                  </div>
-
-                  {/* Auth method toggle */}
-                  <div className="flex rounded-lg bg-gray-50 p-1 mb-5 border border-gray-100">
-                    <button
-                      type="button"
-                      onClick={() => { setAuthMethod("pin"); setError("") }}
-                      className={`flex-1 flex items-center justify-center gap-1.5 text-[13px] font-medium py-2 rounded-md transition-all duration-150 ${
-                        authMethod === "pin"
-                          ? "bg-white text-gray-900 shadow-sm border border-gray-200"
-                          : "text-gray-400 hover:text-gray-600"
-                      }`}
-                    >
-                      <KeyRound className="w-3.5 h-3.5" />
-                      PIN Login
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setAuthMethod("password"); setError("") }}
-                      className={`flex-1 flex items-center justify-center gap-1.5 text-[13px] font-medium py-2 rounded-md transition-all duration-150 ${
-                        authMethod === "password"
-                          ? "bg-white text-gray-900 shadow-sm border border-gray-200"
-                          : "text-gray-400 hover:text-gray-600"
-                      }`}
-                    >
-                      <Mail className="w-3.5 h-3.5" />
-                      Email
-                    </button>
-                  </div>
-
-                  {/* PIN Form */}
-                  {authMethod === "pin" ? (
-                    <form onSubmit={handleLogin} className="space-y-4">
-                      {selectedRole.loginMode === "super_admin" && (
-                        <div className="space-y-1.5">
-                          <Label htmlFor="email" className="text-[13px] font-medium text-gray-600">
-                            Email
-                          </Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            placeholder="admin@example.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            autoFocus
-                            className="h-11 rounded-lg bg-white border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
-                          />
-                        </div>
-                      )}
-
-                      {selectedRole.loginMode === "branch" && selectedRole.id === "DOCTOR" && (
-                        <div className="space-y-1.5">
-                          <Label htmlFor="doctorId" className="text-[13px] font-medium text-gray-600">
-                            Doctor ID
-                          </Label>
-                          <Input
-                            id="doctorId"
-                            placeholder="e.g. DOC004"
-                            value={doctorId}
-                            onChange={(e) => setDoctorId(e.target.value)}
-                            autoFocus
-                            className="h-11 rounded-lg bg-white border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
-                          />
-                        </div>
-                      )}
-
-                      <div className="space-y-1.5">
-                        <Label htmlFor="pin" className="text-[13px] font-medium text-gray-600">
-                          PIN
-                        </Label>
-                        <div className="relative">
-                          <Input
-                            id="pin"
-                            type={showPin ? "text" : "password"}
-                            placeholder="Enter your PIN"
-                            value={pin}
-                            onChange={(e) => setPin(e.target.value)}
-                            autoFocus={
-                              authMethod === "pin" &&
-                              selectedRole.loginMode !== "super_admin" &&
-                              !(selectedRole.loginMode === "branch" && selectedRole.id === "DOCTOR")
-                            }
-                            maxLength={10}
-                            className="h-11 rounded-lg bg-white border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 pr-10"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPin(!showPin)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 transition-colors"
-                          >
-                            {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      {error && authMethod === "pin" && (
-                        <motion.p
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="text-[13px] text-red-500 flex items-center gap-1.5"
-                        >
-                          <span className="w-1 h-1 rounded-full bg-red-500 shrink-0" />
-                          {error}
-                        </motion.p>
-                      )}
-
-                      <Button
-                        type="submit"
-                        disabled={loading || !pin || (selectedRole.loginMode === "super_admin" && !email)}
-                        className="w-full h-11 rounded-lg font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-50 hover:opacity-90"
-                        style={{ backgroundColor: "#2563EB" }}
+                  <div
+                    className="bg-white rounded-2xl border border-gray-200 overflow-hidden"
+                    style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)" }}
+                  >
+                    {/* Card header with role info */}
+                    <div className="px-6 pt-6 pb-4 flex items-center gap-3 border-b border-gray-100">
+                      <button
+                        onClick={handleBack}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all shrink-0"
                       >
-                        {loading ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          "Sign in"
-                        )}
-                      </Button>
-                    </form>
-                  ) : (
-                    /* Password Form */
-                    <form onSubmit={handlePasswordLogin} className="space-y-4">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="loginEmail" className="text-[13px] font-medium text-gray-600">
+                        <ArrowLeft className="w-4 h-4" />
+                      </button>
+                      {(() => {
+                        const Icon = selectedRole.icon
+                        return (
+                          <>
+                            <div
+                              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                              style={{ backgroundColor: selectedRole.lightBg, color: selectedRole.color }}
+                            >
+                              <Icon className="w-[18px] h-[18px]" strokeWidth={2} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[15px] font-bold text-gray-900">{selectedRole.label}</p>
+                              <p className="text-[12px] text-gray-400 truncate">
+                                {selectedRole.loginMode === "super_admin"
+                                  ? "Platform access"
+                                  : selectedRole.loginMode === "client_admin"
+                                    ? selectedClient?.name || "Sign in"
+                                    : selectedBranch?.hospital_name || "Sign in"}
+                              </p>
+                            </div>
+                          </>
+                        )
+                      })()}
+                    </div>
+
+                    {/* Card body */}
+                    <div className="px-6 py-5">
+                      {/* Auth method toggle */}
+                      <div className="flex rounded-lg bg-gray-50 p-1 mb-5 border border-gray-100">
+                        <button
+                          type="button"
+                          onClick={() => { setAuthMethod("pin"); setError("") }}
+                          className={`flex-1 flex items-center justify-center gap-1.5 text-[13px] font-medium py-2 rounded-md transition-all duration-150 ${
+                            authMethod === "pin"
+                              ? "bg-white text-gray-900 shadow-sm border border-gray-200"
+                              : "text-gray-400 hover:text-gray-600"
+                          }`}
+                        >
+                          <KeyRound className="w-3.5 h-3.5" />
+                          PIN Login
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setAuthMethod("password"); setError("") }}
+                          className={`flex-1 flex items-center justify-center gap-1.5 text-[13px] font-medium py-2 rounded-md transition-all duration-150 ${
+                            authMethod === "password"
+                              ? "bg-white text-gray-900 shadow-sm border border-gray-200"
+                              : "text-gray-400 hover:text-gray-600"
+                          }`}
+                        >
+                          <Mail className="w-3.5 h-3.5" />
                           Email
-                        </Label>
-                        <Input
-                          id="loginEmail"
-                          type="email"
-                          placeholder="you@example.com"
-                          value={loginEmail}
-                          onChange={(e) => setLoginEmail(e.target.value)}
-                          autoFocus={authMethod === "password"}
-                          className="h-11 rounded-lg bg-white border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
-                        />
+                        </button>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="loginPassword" className="text-[13px] font-medium text-gray-600">
-                            Password
-                          </Label>
-                          <Link
-                            href="/forgot-password"
-                            className="text-[12px] text-blue-600 hover:text-blue-700 transition-colors"
-                          >
-                            Forgot password?
-                          </Link>
-                        </div>
-                        <div className="relative">
-                          <Input
-                            id="loginPassword"
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Enter your password"
-                            value={loginPassword}
-                            onChange={(e) => setLoginPassword(e.target.value)}
-                            className="h-11 rounded-lg bg-white border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 pr-10"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 transition-colors"
-                          >
-                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
+                      {/* PIN Form */}
+                      {authMethod === "pin" ? (
+                        <form onSubmit={handleLogin} className="space-y-4">
+                          {selectedRole.loginMode === "super_admin" && (
+                            <div className="space-y-1.5">
+                              <Label htmlFor="email" className="text-[13px] font-medium text-gray-700">
+                                Email
+                              </Label>
+                              <Input
+                                id="email"
+                                type="email"
+                                placeholder="admin@example.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                autoFocus
+                                className="h-12 rounded-xl bg-gray-50 border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+                              />
+                            </div>
+                          )}
 
-                      {error && authMethod === "password" && (
-                        <motion.p
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="text-[13px] text-red-500 flex items-center gap-1.5"
-                        >
-                          <span className="w-1 h-1 rounded-full bg-red-500 shrink-0" />
-                          {error}
-                        </motion.p>
+                          {selectedRole.loginMode === "branch" && selectedRole.id === "DOCTOR" && (
+                            <div className="space-y-1.5">
+                              <Label htmlFor="doctorId" className="text-[13px] font-medium text-gray-700">
+                                Doctor ID
+                              </Label>
+                              <Input
+                                id="doctorId"
+                                placeholder="e.g. DOC004"
+                                value={doctorId}
+                                onChange={(e) => setDoctorId(e.target.value)}
+                                autoFocus
+                                className="h-12 rounded-xl bg-gray-50 border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+                              />
+                            </div>
+                          )}
+
+                          <div className="space-y-1.5">
+                            <Label htmlFor="pin" className="text-[13px] font-medium text-gray-700">
+                              PIN
+                            </Label>
+                            <div className="relative">
+                              <Input
+                                id="pin"
+                                type={showPin ? "text" : "password"}
+                                placeholder="Enter your PIN"
+                                value={pin}
+                                onChange={(e) => setPin(e.target.value)}
+                                autoFocus={
+                                  authMethod === "pin" &&
+                                  selectedRole.loginMode !== "super_admin" &&
+                                  !(selectedRole.loginMode === "branch" && selectedRole.id === "DOCTOR")
+                                }
+                                maxLength={10}
+                                className="h-12 rounded-xl bg-gray-50 border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 pr-10"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPin(!showPin)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                              >
+                                {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </div>
+                          </div>
+
+                          {error && authMethod === "pin" && (
+                            <motion.p
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="text-[13px] text-red-500 flex items-center gap-1.5"
+                            >
+                              <span className="w-1 h-1 rounded-full bg-red-500 shrink-0" />
+                              {error}
+                            </motion.p>
+                          )}
+
+                          <Button
+                            type="submit"
+                            disabled={loading || !pin || (selectedRole.loginMode === "super_admin" && !email)}
+                            className="w-full h-12 rounded-xl font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-50 hover:brightness-110 shadow-md shadow-blue-600/20"
+                            style={{ backgroundColor: "#2563EB" }}
+                          >
+                            {loading ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              "Sign in"
+                            )}
+                          </Button>
+                        </form>
+                      ) : (
+                        /* Password Form */
+                        <form onSubmit={handlePasswordLogin} className="space-y-4">
+                          <div className="space-y-1.5">
+                            <Label htmlFor="loginEmail" className="text-[13px] font-medium text-gray-700">
+                              Email
+                            </Label>
+                            <Input
+                              id="loginEmail"
+                              type="email"
+                              placeholder="you@example.com"
+                              value={loginEmail}
+                              onChange={(e) => setLoginEmail(e.target.value)}
+                              autoFocus={authMethod === "password"}
+                              className="h-12 rounded-xl bg-gray-50 border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor="loginPassword" className="text-[13px] font-medium text-gray-700">
+                                Password
+                              </Label>
+                              <Link
+                                href="/forgot-password"
+                                className="text-[12px] text-blue-600 hover:text-blue-700 transition-colors"
+                              >
+                                Forgot password?
+                              </Link>
+                            </div>
+                            <div className="relative">
+                              <Input
+                                id="loginPassword"
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Enter your password"
+                                value={loginPassword}
+                                onChange={(e) => setLoginPassword(e.target.value)}
+                                className="h-12 rounded-xl bg-gray-50 border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 pr-10"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                              >
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </div>
+                          </div>
+
+                          {error && authMethod === "password" && (
+                            <motion.p
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="text-[13px] text-red-500 flex items-center gap-1.5"
+                            >
+                              <span className="w-1 h-1 rounded-full bg-red-500 shrink-0" />
+                              {error}
+                            </motion.p>
+                          )}
+
+                          <Button
+                            type="submit"
+                            disabled={loading || !loginEmail || !loginPassword}
+                            className="w-full h-12 rounded-xl font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-50 hover:brightness-110 shadow-md shadow-blue-600/20"
+                            style={{ backgroundColor: "#2563EB" }}
+                          >
+                            {loading ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              "Sign in"
+                            )}
+                          </Button>
+                        </form>
                       )}
+                    </div>
 
-                      <Button
-                        type="submit"
-                        disabled={loading || !loginEmail || !loginPassword}
-                        className="w-full h-11 rounded-lg font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-50 hover:opacity-90"
-                        style={{ backgroundColor: "#2563EB" }}
-                      >
-                        {loading ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          "Sign in"
-                        )}
-                      </Button>
-                    </form>
-                  )}
-
-                  {selectedRole.loginMode === "branch" && selectedBranch && (
-                    <p className="text-center text-[11px] text-gray-300 mt-5">
-                      {selectedBranch.hospital_name}{selectedBranch.city ? ` \u2022 ${selectedBranch.city}` : ""}
-                    </p>
-                  )}
+                    {/* Card footer */}
+                    {selectedRole.loginMode === "branch" && selectedBranch && (
+                      <div className="px-6 pb-4">
+                        <p className="text-center text-[11px] text-gray-300">
+                          {selectedBranch.hospital_name}{selectedBranch.city ? ` \u2022 ${selectedBranch.city}` : ""}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
