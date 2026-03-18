@@ -482,310 +482,379 @@ function LoginPageContent() {
   const activeColor = selectedRole?.color || "#2563EB"
 
   // ---------------------------------------------------------------------------
-  // Step title helper
-  // ---------------------------------------------------------------------------
-  const getStepLabel = () => {
-    if (step === "role") return null
-    if (step === "client") return "Select hospital"
-    if (step === "branch") return "Select branch"
-    return selectedRole?.label || "Sign in"
-  }
-
-  // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-white relative overflow-hidden">
-      {/* Very subtle background pattern */}
-      <div
-        className="absolute inset-0 opacity-[0.015]"
-        style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, #94a3b8 0.5px, transparent 0)`,
-          backgroundSize: "24px 24px",
-        }}
-      />
+    <div className="min-h-[100dvh] flex flex-col lg:flex-row select-none">
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* LEFT: Blue Brand Panel (desktop only)                              */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <div className="hidden lg:flex lg:w-[45%] xl:w-[40%] relative bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex-col justify-between p-12 overflow-hidden">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-[0.07]" style={{
+          backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+          backgroundSize: "32px 32px",
+        }} />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-white/5 rounded-full translate-y-1/3 -translate-x-1/4" />
 
-      <div className="relative z-10 w-full max-w-[440px] mx-auto px-6 py-12">
-        {/* Logo & brand - always visible */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 mb-5 shadow-lg shadow-blue-600/20">
-            {directClient?.logo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={directClient.logo_url} alt="" className="w-9 h-9 object-contain" />
-            ) : (
-              <Activity className="w-7 h-7 text-white" strokeWidth={2} />
-            )}
+        {/* Top: Logo */}
+        <div className="relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
+              {directClient?.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={directClient.logo_url} alt="" className="w-7 h-7 object-contain" />
+              ) : (
+                <Activity className="w-5 h-5 text-white" />
+              )}
+            </div>
+            <div>
+              <h2 className="text-white font-bold text-lg tracking-tight">
+                {directClient ? directClient.name : "AI-HOS"}
+              </h2>
+              <p className="text-blue-200 text-xs">Hospital Operating System</p>
+            </div>
           </div>
-          <h1 className="text-[22px] font-semibold text-gray-900 tracking-tight">
-            {directClient ? directClient.name : "AI-HOS"}
-          </h1>
-          <p className="text-[13px] text-gray-400 mt-1">Hospital Management Platform</p>
         </div>
 
-        {/* Main card */}
-        <div
-          className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden"
-          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.04)" }}
-        >
-          <AnimatePresence mode="wait">
-            {/* ================================================================ */}
-            {/* STEP: Role Selection                                             */}
-            {/* ================================================================ */}
-            {step === "role" && (
-              <motion.div
-                key="roles"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                className="p-6"
-              >
-                {directClientLoading ? (
-                  <div className="flex flex-col items-center justify-center py-16 gap-3">
-                    <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
-                    <p className="text-sm text-gray-400">Loading...</p>
-                  </div>
-                ) : (
-                <>
-                  <p className="text-[15px] font-medium text-gray-900 mb-4">
-                    Sign in as
-                  </p>
+        {/* Center: Tagline */}
+        <div className="relative z-10 -mt-8">
+          <h1 className="text-white text-4xl xl:text-5xl font-bold leading-[1.1] tracking-tight">
+            Smarter<br />Healthcare<br />Management
+          </h1>
+          <p className="text-blue-200 text-base mt-4 max-w-sm leading-relaxed">
+            Streamline your hospital operations with AI-powered tools for every department.
+          </p>
 
-                  <div className="space-y-1">
-                    {roles
-                      .filter((role) => !directClient || (role.loginMode !== "super_admin" && role.loginMode !== "client_admin"))
-                      .map((role, i) => {
-                        const Icon = role.icon
-                        return (
-                          <motion.button
-                            key={role.id}
-                            initial={{ opacity: 0, y: 6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.03, duration: 0.2 }}
-                            onClick={() => handleRoleSelect(role)}
-                            disabled={fetchingClients}
-                            className="group w-full flex items-center gap-3.5 px-3.5 py-3 rounded-xl text-left transition-all duration-150 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-40 disabled:cursor-wait cursor-pointer"
-                          >
-                            <div
-                              className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:scale-105"
-                              style={{ backgroundColor: role.lightBg, color: role.color }}
-                            >
-                              <Icon className="w-[18px] h-[18px]" strokeWidth={2} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[14px] font-medium text-gray-900">{role.label}</p>
-                              <p className="text-[11px] text-gray-400 leading-tight">{role.description}</p>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-gray-300 shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150" />
-                          </motion.button>
-                        )
-                      })}
-                  </div>
+          {/* Stats */}
+          <div className="flex items-center gap-8 mt-10">
+            <div>
+              <p className="text-white text-2xl font-bold">50+</p>
+              <p className="text-blue-300 text-xs mt-0.5">Hospitals</p>
+            </div>
+            <div className="w-px h-10 bg-white/15" />
+            <div>
+              <p className="text-white text-2xl font-bold">200+</p>
+              <p className="text-blue-300 text-xs mt-0.5">Doctors</p>
+            </div>
+            <div className="w-px h-10 bg-white/15" />
+            <div>
+              <p className="text-white text-2xl font-bold">1M+</p>
+              <p className="text-blue-300 text-xs mt-0.5">Patients</p>
+            </div>
+          </div>
+        </div>
 
-                  {fetchingClients && (
-                    <div className="flex items-center justify-center gap-2 mt-4 text-gray-400 text-sm">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Loading...</span>
+        {/* Bottom: Trust */}
+        <div className="relative z-10 flex items-center gap-2 text-blue-300 text-xs">
+          <Lock className="w-3.5 h-3.5" />
+          <span>HIPAA Compliant &middot; End-to-end Encrypted</span>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* RIGHT: Login Form                                                  */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <div className="flex-1 flex flex-col bg-white">
+        {/* Mobile: thin blue bar at top */}
+        <div className="lg:hidden h-1 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600" />
+
+        {/* Mobile: logo */}
+        <div className="lg:hidden px-6 pt-6 pb-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
+              {directClient?.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={directClient.logo_url} alt="" className="w-6 h-6 object-contain" />
+              ) : (
+                <Activity className="w-5 h-5 text-white" />
+              )}
+            </div>
+            <span className="text-lg font-bold text-gray-900">
+              {directClient ? directClient.name : "AI-HOS"}
+            </span>
+          </div>
+        </div>
+
+        {/* Center the form vertically */}
+        <div className="flex-1 flex items-center justify-center px-6 sm:px-10 py-8">
+          <div className="w-full max-w-[400px]">
+            <AnimatePresence mode="wait">
+              {/* ============================================================ */}
+              {/* STEP: Role Selection                                         */}
+              {/* ============================================================ */}
+              {step === "role" && (
+                <motion.div
+                  key="roles"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                >
+                  {directClientLoading ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-3">
+                      <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+                      <p className="text-sm text-gray-400">Loading...</p>
                     </div>
-                  )}
-                </>
-                )}
-              </motion.div>
-            )}
+                  ) : (
+                  <>
+                    <div className="mb-6">
+                      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                        Welcome back
+                      </h1>
+                      <p className="text-sm text-gray-400 mt-1">
+                        Choose your role to continue
+                      </p>
+                    </div>
 
-            {/* ================================================================ */}
-            {/* STEP: Client Picker                                              */}
-            {/* ================================================================ */}
-            {step === "client" && (
-              <motion.div
-                key="client-picker"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                className="p-6"
-              >
-                <div className="flex items-center gap-3 mb-5">
+                    <div className="space-y-1.5">
+                      {roles
+                        .filter((role) => !directClient || (role.loginMode !== "super_admin" && role.loginMode !== "client_admin"))
+                        .map((role, i) => {
+                          const Icon = role.icon
+                          return (
+                            <motion.button
+                              key={role.id}
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: i * 0.04, duration: 0.25 }}
+                              onClick={() => handleRoleSelect(role)}
+                              disabled={fetchingClients}
+                              className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-150 border border-transparent hover:border-gray-100 hover:bg-gray-50/80 active:scale-[0.99] disabled:opacity-40 disabled:cursor-wait cursor-pointer"
+                            >
+                              <div
+                                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:scale-[1.05]"
+                                style={{ backgroundColor: role.lightBg, color: role.color }}
+                              >
+                                <Icon className="w-[18px] h-[18px]" strokeWidth={2} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[14px] font-semibold text-gray-900">{role.label}</p>
+                                <p className="text-[12px] text-gray-400 leading-tight">{role.description}</p>
+                              </div>
+                              <ChevronRight className="w-4 h-4 text-gray-200 shrink-0 group-hover:text-gray-400 group-hover:translate-x-0.5 transition-all duration-150" />
+                            </motion.button>
+                          )
+                        })}
+                    </div>
+
+                    {fetchingClients && (
+                      <div className="flex items-center justify-center gap-2 mt-5 text-gray-400 text-sm">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Loading...</span>
+                      </div>
+                    )}
+
+                    <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col items-center gap-2.5">
+                      <Link
+                        href="/patient-login"
+                        className="inline-flex items-center gap-1.5 text-[13px] text-gray-400 hover:text-blue-600 transition-colors group"
+                      >
+                        <Heart className="w-3.5 h-3.5" />
+                        <span>Patient Portal</span>
+                        <ChevronRight className="w-3 h-3 opacity-0 -ml-1 group-hover:opacity-100 group-hover:ml-0 transition-all" />
+                      </Link>
+                      <div className="flex items-center gap-1.5 text-[11px] text-gray-300">
+                        <Lock className="w-3 h-3" />
+                        <span>Secure &middot; Encrypted</span>
+                      </div>
+                    </div>
+                  </>
+                  )}
+                </motion.div>
+              )}
+
+              {/* ============================================================ */}
+              {/* STEP: Client Picker                                          */}
+              {/* ============================================================ */}
+              {step === "client" && (
+                <motion.div
+                  key="client-picker"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                >
                   <button
                     onClick={handleBack}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all"
+                    className="group flex items-center gap-1.5 text-gray-400 hover:text-gray-700 transition-colors mb-5"
                   >
-                    <ArrowLeft className="w-4 h-4" />
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                    <span className="text-sm font-medium">Back</span>
                   </button>
-                  <div>
-                    <p className="text-[15px] font-medium text-gray-900">{getStepLabel()}</p>
-                    <p className="text-[11px] text-gray-400">
+
+                  <div className="mb-5">
+                    <h2 className="text-xl font-bold text-gray-900 tracking-tight">Select Hospital Group</h2>
+                    <p className="text-sm text-gray-400 mt-1">
                       {selectedRole?.loginMode === "client_admin"
                         ? "Choose the organization to manage"
                         : "Choose your hospital group"}
                     </p>
                   </div>
-                </div>
 
-                <div className="space-y-1">
-                  {clients.map((client, i) => (
-                    <motion.button
-                      key={client.client_id}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.03, duration: 0.2 }}
-                      onClick={() => handleClientSelect(client)}
-                      disabled={fetchingBranches}
-                      className="group w-full flex items-center gap-3.5 px-3.5 py-3 rounded-xl text-left transition-all duration-150 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-40 disabled:cursor-wait cursor-pointer"
-                    >
-                      <div
-                        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: selectedRole?.lightBg || "#EFF6FF", color: selectedRole?.color || "#2563EB" }}
+                  <div className="space-y-1.5">
+                    {clients.map((client, i) => (
+                      <motion.button
+                        key={client.client_id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.04, duration: 0.25 }}
+                        onClick={() => handleClientSelect(client)}
+                        disabled={fetchingBranches}
+                        className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-150 border border-transparent hover:border-gray-100 hover:bg-gray-50/80 disabled:opacity-40 disabled:cursor-wait cursor-pointer"
                       >
-                        {client.logo_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={client.logo_url} alt={client.name} className="w-5 h-5 rounded object-contain" />
-                        ) : (
-                          <Building2 className="w-[18px] h-[18px]" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[14px] font-medium text-gray-900">{client.name}</p>
-                        <p className="text-[11px] text-gray-400">
-                          {client.branch_count === 1 ? "1 branch" : `${client.branch_count || 0} branches`}
-                        </p>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-gray-300 shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150" />
-                    </motion.button>
-                  ))}
-                </div>
-
-                {fetchingBranches && (
-                  <div className="flex items-center justify-center gap-2 mt-4 text-gray-400 text-sm">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Loading branches...</span>
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            {/* ================================================================ */}
-            {/* STEP: Branch Picker                                              */}
-            {/* ================================================================ */}
-            {step === "branch" && (
-              <motion.div
-                key="branch-picker"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                className="p-6"
-              >
-                <div className="flex items-center gap-3 mb-5">
-                  <button
-                    onClick={handleBack}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                  </button>
-                  <div>
-                    <p className="text-[15px] font-medium text-gray-900">{getStepLabel()}</p>
-                    <p className="text-[11px] text-gray-400">{selectedClient?.name}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  {branches.map((branch, i) => (
-                    <motion.button
-                      key={branch.tenant_id}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.03, duration: 0.2 }}
-                      onClick={() => handleBranchSelect(branch)}
-                      className="group w-full flex items-center gap-3.5 px-3.5 py-3 rounded-xl text-left transition-all duration-150 hover:bg-gray-50 active:bg-gray-100 cursor-pointer"
-                    >
-                      <div
-                        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: selectedRole?.lightBg || "#EFF6FF", color: selectedRole?.color || "#2563EB" }}
-                      >
-                        <Heart className="w-[18px] h-[18px]" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[14px] font-medium text-gray-900">{branch.hospital_name}</p>
-                        <p className="text-[11px] text-gray-400">
-                          {branch.city}{branch.branch_code ? ` \u00B7 ${branch.branch_code}` : ""}
-                        </p>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-gray-300 shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150" />
-                    </motion.button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* ================================================================ */}
-            {/* STEP: Credentials                                                */}
-            {/* ================================================================ */}
-            {step === "credentials" && selectedRole && (
-              <motion.div
-                key="form"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-              >
-                {/* Header inside card */}
-                <div className="px-6 pt-5 pb-4 flex items-center gap-3">
-                  <button
-                    onClick={handleBack}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all shrink-0"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                  </button>
-                  {(() => {
-                    const Icon = selectedRole.icon
-                    return (
-                      <>
                         <div
-                          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                          style={{ backgroundColor: selectedRole.lightBg, color: selectedRole.color }}
+                          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                          style={{ backgroundColor: selectedRole?.lightBg || "#EFF6FF", color: selectedRole?.color || "#2563EB" }}
                         >
-                          <Icon className="w-[18px] h-[18px]" strokeWidth={2} />
+                          {client.logo_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={client.logo_url} alt={client.name} className="w-5 h-5 rounded object-contain" />
+                          ) : (
+                            <Building2 className="w-[18px] h-[18px]" />
+                          )}
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-[14px] font-medium text-gray-900">{selectedRole.label}</p>
-                          <p className="text-[11px] text-gray-400 truncate">
-                            {selectedRole.loginMode === "super_admin"
-                              ? "Platform access"
-                              : selectedRole.loginMode === "client_admin"
-                                ? selectedClient?.name || "Sign in"
-                                : selectedBranch?.hospital_name || "Sign in"}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[14px] font-semibold text-gray-900">{client.name}</p>
+                          <p className="text-[12px] text-gray-400">
+                            {client.branch_count === 1 ? "1 branch" : `${client.branch_count || 0} branches`}
                           </p>
                         </div>
-                      </>
-                    )
-                  })()}
-                </div>
+                        <ChevronRight className="w-4 h-4 text-gray-200 shrink-0 group-hover:text-gray-400 group-hover:translate-x-0.5 transition-all duration-150" />
+                      </motion.button>
+                    ))}
+                  </div>
 
-                <div className="h-px bg-gray-100" />
+                  {fetchingBranches && (
+                    <div className="flex items-center justify-center gap-2 mt-5 text-gray-400 text-sm">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Loading branches...</span>
+                    </div>
+                  )}
+                </motion.div>
+              )}
 
-                {/* Auth method toggle */}
-                <div className="px-6 pt-5">
-                  <div className="flex rounded-lg bg-gray-50 p-0.5 border border-gray-100">
+              {/* ============================================================ */}
+              {/* STEP: Branch Picker                                          */}
+              {/* ============================================================ */}
+              {step === "branch" && (
+                <motion.div
+                  key="branch-picker"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                >
+                  <button
+                    onClick={handleBack}
+                    className="group flex items-center gap-1.5 text-gray-400 hover:text-gray-700 transition-colors mb-5"
+                  >
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                    <span className="text-sm font-medium">Back</span>
+                  </button>
+
+                  <div className="mb-5">
+                    <h2 className="text-xl font-bold text-gray-900 tracking-tight">Select Branch</h2>
+                    <p className="text-sm text-gray-400 mt-1">
+                      {selectedClient?.name} &mdash; choose your hospital branch
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {branches.map((branch, i) => (
+                      <motion.button
+                        key={branch.tenant_id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.04, duration: 0.25 }}
+                        onClick={() => handleBranchSelect(branch)}
+                        className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-150 border border-transparent hover:border-gray-100 hover:bg-gray-50/80 cursor-pointer"
+                      >
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                          style={{ backgroundColor: selectedRole?.lightBg || "#EFF6FF", color: selectedRole?.color || "#2563EB" }}
+                        >
+                          <Heart className="w-[18px] h-[18px]" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[14px] font-semibold text-gray-900">{branch.hospital_name}</p>
+                          <p className="text-[12px] text-gray-400">
+                            {branch.city}{branch.branch_code ? ` \u00B7 ${branch.branch_code}` : ""}
+                          </p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-200 shrink-0 group-hover:text-gray-400 group-hover:translate-x-0.5 transition-all duration-150" />
+                      </motion.button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ============================================================ */}
+              {/* STEP: Credentials                                            */}
+              {/* ============================================================ */}
+              {step === "credentials" && selectedRole && (
+                <motion.div
+                  key="form"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                >
+                  {/* Back + role badge */}
+                  <div className="flex items-center gap-3 mb-6">
+                    <button
+                      onClick={handleBack}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all shrink-0"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                    </button>
+                    {(() => {
+                      const Icon = selectedRole.icon
+                      return (
+                        <>
+                          <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                            style={{ backgroundColor: selectedRole.lightBg, color: selectedRole.color }}
+                          >
+                            <Icon className="w-[18px] h-[18px]" strokeWidth={2} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[15px] font-bold text-gray-900">{selectedRole.label}</p>
+                            <p className="text-[12px] text-gray-400 truncate">
+                              {selectedRole.loginMode === "super_admin"
+                                ? "Platform access"
+                                : selectedRole.loginMode === "client_admin"
+                                  ? selectedClient?.name || "Sign in"
+                                  : selectedBranch?.hospital_name || "Sign in"}
+                            </p>
+                          </div>
+                        </>
+                      )
+                    })()}
+                  </div>
+
+                  {/* Auth method toggle */}
+                  <div className="flex rounded-lg bg-gray-50 p-1 mb-5 border border-gray-100">
                     <button
                       type="button"
                       onClick={() => { setAuthMethod("pin"); setError("") }}
                       className={`flex-1 flex items-center justify-center gap-1.5 text-[13px] font-medium py-2 rounded-md transition-all duration-150 ${
                         authMethod === "pin"
-                          ? "bg-white text-gray-900 shadow-sm"
+                          ? "bg-white text-gray-900 shadow-sm border border-gray-200"
                           : "text-gray-400 hover:text-gray-600"
                       }`}
                     >
                       <KeyRound className="w-3.5 h-3.5" />
-                      PIN
+                      PIN Login
                     </button>
                     <button
                       type="button"
                       onClick={() => { setAuthMethod("password"); setError("") }}
                       className={`flex-1 flex items-center justify-center gap-1.5 text-[13px] font-medium py-2 rounded-md transition-all duration-150 ${
                         authMethod === "password"
-                          ? "bg-white text-gray-900 shadow-sm"
+                          ? "bg-white text-gray-900 shadow-sm border border-gray-200"
                           : "text-gray-400 hover:text-gray-600"
                       }`}
                     >
@@ -793,10 +862,8 @@ function LoginPageContent() {
                       Email
                     </button>
                   </div>
-                </div>
 
-                {/* PIN Form */}
-                <div className="px-6 pb-6 pt-4">
+                  {/* PIN Form */}
                   {authMethod === "pin" ? (
                     <form onSubmit={handleLogin} className="space-y-4">
                       {selectedRole.loginMode === "super_admin" && (
@@ -865,8 +932,9 @@ function LoginPageContent() {
                         <motion.p
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
-                          className="text-[13px] text-red-500"
+                          className="text-[13px] text-red-500 flex items-center gap-1.5"
                         >
+                          <span className="w-1 h-1 rounded-full bg-red-500 shrink-0" />
                           {error}
                         </motion.p>
                       )}
@@ -874,7 +942,7 @@ function LoginPageContent() {
                       <Button
                         type="submit"
                         disabled={loading || !pin || (selectedRole.loginMode === "super_admin" && !email)}
-                        className="w-full h-11 rounded-lg font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-30"
+                        className="w-full h-11 rounded-lg font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-30 hover:opacity-90"
                         style={{ backgroundColor: activeColor }}
                       >
                         {loading ? (
@@ -909,9 +977,9 @@ function LoginPageContent() {
                           </Label>
                           <Link
                             href="/forgot-password"
-                            className="text-[12px] text-gray-400 hover:text-blue-600 transition-colors"
+                            className="text-[12px] text-blue-600 hover:text-blue-700 transition-colors"
                           >
-                            Forgot?
+                            Forgot password?
                           </Link>
                         </div>
                         <div className="relative">
@@ -937,8 +1005,9 @@ function LoginPageContent() {
                         <motion.p
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
-                          className="text-[13px] text-red-500"
+                          className="text-[13px] text-red-500 flex items-center gap-1.5"
                         >
+                          <span className="w-1 h-1 rounded-full bg-red-500 shrink-0" />
                           {error}
                         </motion.p>
                       )}
@@ -946,7 +1015,7 @@ function LoginPageContent() {
                       <Button
                         type="submit"
                         disabled={loading || !loginEmail || !loginPassword}
-                        className="w-full h-11 rounded-lg font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-30"
+                        className="w-full h-11 rounded-lg font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-30 hover:opacity-90"
                         style={{ backgroundColor: activeColor }}
                       >
                         {loading ? (
@@ -957,35 +1026,27 @@ function LoginPageContent() {
                       </Button>
                     </form>
                   )}
-                </div>
-              </motion.div>
+
+                  {selectedRole.loginMode === "branch" && selectedBranch && (
+                    <p className="text-center text-[11px] text-gray-300 mt-5">
+                      {selectedBranch.hospital_name}{selectedBranch.city ? ` \u2022 ${selectedBranch.city}` : ""}
+                    </p>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Error for non-credential steps */}
+            {error && step !== "credentials" && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-4 text-[13px] text-red-500 flex items-center gap-1.5"
+              >
+                <span className="w-1 h-1 rounded-full bg-red-500 shrink-0" />
+                {error}
+              </motion.p>
             )}
-          </AnimatePresence>
-
-          {/* Error for non-credential steps */}
-          {error && step !== "credentials" && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="px-6 pb-4"
-            >
-              <p className="text-[13px] text-red-500">{error}</p>
-            </motion.div>
-          )}
-        </div>
-
-        {/* Footer links - outside the card */}
-        <div className="mt-8 flex flex-col items-center gap-3">
-          <Link
-            href="/patient-login"
-            className="inline-flex items-center gap-1.5 text-[13px] text-gray-400 hover:text-blue-600 transition-colors"
-          >
-            <Heart className="w-3.5 h-3.5" />
-            Patient Portal
-          </Link>
-          <div className="flex items-center gap-1.5 text-[11px] text-gray-300">
-            <Lock className="w-3 h-3" />
-            <span>Secure &middot; Encrypted</span>
           </div>
         </div>
       </div>
