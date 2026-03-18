@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
   console.log("[post-consult] Message built, length:", message.length)
   console.log("[post-consult] Message preview:", message.substring(0, 200))
   const waConfig = await getTenantWhatsAppConfig(tenant_id, supabase)
-  console.log("[post-consult] WA config:", { hasPhoneId: !!waConfig?.phoneNumberId, hasToken: !!waConfig?.token })
+  console.log("[post-consult] WA config:", { hasPhoneId: !!waConfig?.phoneNumberId, hasToken: !!waConfig?.accessToken })
   const result = await sendText(patient_phone, message, waConfig)
   console.log("[post-consult] WA send result:", result)
 
