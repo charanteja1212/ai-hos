@@ -600,16 +600,16 @@ function LoginPageContent() {
                     </div>
                   ) : (
                   <>
-                    <div className="mb-6">
+                    <div className="mb-4">
                       <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
                         Welcome back
                       </h1>
-                      <p className="text-sm text-gray-400 mt-1">
+                      <p className="text-sm text-gray-400 mt-0.5">
                         Choose your role to continue
                       </p>
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-0.5">
                       {roles
                         .filter((role) => !directClient || (role.loginMode !== "super_admin" && role.loginMode !== "client_admin"))
                         .map((role, i) => {
@@ -622,17 +622,17 @@ function LoginPageContent() {
                               transition={{ delay: i * 0.04, duration: 0.25 }}
                               onClick={() => handleRoleSelect(role)}
                               disabled={fetchingClients}
-                              className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-150 border border-transparent hover:border-gray-100 hover:bg-gray-50/80 active:scale-[0.99] disabled:opacity-40 disabled:cursor-wait cursor-pointer"
+                              className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-150 border border-transparent hover:border-gray-100 hover:bg-gray-50/80 active:scale-[0.99] disabled:opacity-40 disabled:cursor-wait cursor-pointer"
                             >
                               <div
-                                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:scale-[1.05]"
+                                className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:scale-[1.05]"
                                 style={{ backgroundColor: role.lightBg, color: role.color }}
                               >
-                                <Icon className="w-[18px] h-[18px]" strokeWidth={2} />
+                                <Icon className="w-4 h-4" strokeWidth={2} />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-[14px] font-semibold text-gray-900">{role.label}</p>
-                                <p className="text-[12px] text-gray-400 leading-tight">{role.description}</p>
+                                <p className="text-[13px] font-semibold text-gray-900">{role.label}</p>
+                                <p className="text-[11px] text-gray-400 leading-tight">{role.description}</p>
                               </div>
                               <ChevronRight className="w-4 h-4 text-gray-200 shrink-0 group-hover:text-gray-400 group-hover:translate-x-0.5 transition-all duration-150" />
                             </motion.button>
@@ -641,24 +641,24 @@ function LoginPageContent() {
                     </div>
 
                     {fetchingClients && (
-                      <div className="flex items-center justify-center gap-2 mt-5 text-gray-400 text-sm">
+                      <div className="flex items-center justify-center gap-2 mt-4 text-gray-400 text-sm">
                         <Loader2 className="w-4 h-4 animate-spin" />
                         <span>Loading...</span>
                       </div>
                     )}
 
-                    <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col items-center gap-2.5">
+                    <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-center gap-4">
                       <Link
                         href="/patient-login"
-                        className="inline-flex items-center gap-1.5 text-[13px] text-gray-400 hover:text-blue-600 transition-colors group"
+                        className="inline-flex items-center gap-1.5 text-[12px] text-gray-400 hover:text-blue-600 transition-colors"
                       >
-                        <Heart className="w-3.5 h-3.5" />
+                        <Heart className="w-3 h-3" />
                         <span>Patient Portal</span>
-                        <ChevronRight className="w-3 h-3 opacity-0 -ml-1 group-hover:opacity-100 group-hover:ml-0 transition-all" />
                       </Link>
-                      <div className="flex items-center gap-1.5 text-[11px] text-gray-300">
+                      <div className="w-px h-3 bg-gray-200" />
+                      <div className="flex items-center gap-1 text-[11px] text-gray-300">
                         <Lock className="w-3 h-3" />
-                        <span>Secure &middot; Encrypted</span>
+                        <span>Encrypted</span>
                       </div>
                     </div>
                   </>
@@ -943,7 +943,7 @@ function LoginPageContent() {
                         type="submit"
                         disabled={loading || !pin || (selectedRole.loginMode === "super_admin" && !email)}
                         className="w-full h-11 rounded-lg font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-50 hover:opacity-90"
-                        style={{ backgroundColor: activeColor }}
+                        style={{ backgroundColor: "#2563EB" }}
                       >
                         {loading ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -1016,7 +1016,7 @@ function LoginPageContent() {
                         type="submit"
                         disabled={loading || !loginEmail || !loginPassword}
                         className="w-full h-11 rounded-lg font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-50 hover:opacity-90"
-                        style={{ backgroundColor: activeColor }}
+                        style={{ backgroundColor: "#2563EB" }}
                       >
                         {loading ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
