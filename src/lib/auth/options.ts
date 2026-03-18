@@ -145,6 +145,7 @@ export const authConfig: NextAuthConfig = {
         // ========== BRANCH LOGIN (default) ==========
         const role = (credentials.role as string) || "ADMIN"
         const tenantId = credentials.tenantId as string
+        console.log("[auth] Branch login attempt:", { role, tenantId, hasPin: !!pin, identifier: String(credentials.identifier) })
         if (!tenantId) return null
 
         // Rate limit: 5 failed PIN attempts per tenant+role in 15 minutes
@@ -236,13 +237,16 @@ export const authConfig: NextAuthConfig = {
 
         // Staff roles: LAB_TECH, PHARMACIST
         if (role === "LAB_TECH" || role === "PHARMACIST") {
-          const staffId = credentials.identifier as string
+          const rawStaffId = credentials.identifier
+          const staffId = (typeof rawStaffId === "string" && rawStaffId.trim() && rawStaffId !== "undefined") ? rawStaffId.trim() : ""
+
+          console.log("[auth] Staff login:", { role, tenantId, pin, staffId: staffId || "(PIN-only)", rawIdentifier: String(rawStaffId) })
 
           let staff: { staff_id: string; name: string; role: string; pin: string } | null = null
 
           if (staffId) {
             // Lookup by Staff ID + PIN
-            const { data } = await supabase
+            const { data, error } = await supabase
               .from("staff")
               .select("staff_id, name, role, pin")
               .eq("staff_id", staffId)
@@ -250,10 +254,11 @@ export const authConfig: NextAuthConfig = {
               .eq("role", role)
               .eq("status", "active")
               .single()
+            console.log("[auth] Staff by ID result:", { data, error: error?.message })
             staff = data
           } else {
             // Lookup by PIN only (no Staff ID required)
-            const { data } = await supabase
+            const { data, error } = await supabase
               .from("staff")
               .select("staff_id, name, role, pin")
               .eq("pin", pin)
@@ -261,10 +266,14 @@ export const authConfig: NextAuthConfig = {
               .eq("role", role)
               .eq("status", "active")
               .single()
+            console.log("[auth] Staff by PIN result:", { data, error: error?.message })
             staff = data
           }
 
-          if (!staff || staff.pin !== pin) return null
+          if (!staff || staff.pin !== pin) {
+            console.log("[auth] Staff login failed:", { staffFound: !!staff, pinMatch: staff?.pin === pin })
+            return null
+          }
           await resetRateLimit(rateLimitKey)
 
           return {
