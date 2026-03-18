@@ -211,12 +211,14 @@ export const authConfig: NextAuthConfig = {
           const doctorId = credentials.identifier as string
           if (!doctorId) return null
 
-          const { data: doctor } = await supabase
+          const { data: doctor, error: docError } = await supabase
             .from("doctors")
             .select("doctor_id, name, specialty, pin")
             .eq("doctor_id", doctorId)
             .eq("tenant_id", tenantId)
             .single()
+
+          console.log("[auth] Doctor login:", { doctorId, tenantId, pinEntered: pin, doctorFound: !!doctor, pinInDB: doctor?.pin, match: doctor?.pin === pin, error: docError?.message })
 
           if (!doctor || doctor.pin !== pin) return null
           await resetRateLimit(rateLimitKey)
