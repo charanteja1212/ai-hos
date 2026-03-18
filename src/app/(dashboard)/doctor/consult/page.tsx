@@ -227,6 +227,7 @@ function ConsultPageContent() {
           prescription_id: prescriptionId,
           booking_id: bookingId,
           patient_phone: patientPhone,
+          patient_name: patient?.name || "",
           doctor_id: user?.doctorId,
           doctor_name: user?.name || "",
           type: "consultation",
