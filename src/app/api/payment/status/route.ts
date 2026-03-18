@@ -25,7 +25,9 @@ export async function GET(req: NextRequest) {
     );
 
     if (!res.ok) {
-      return NextResponse.json({ error: 'DB error' }, { status: 500 });
+      const errBody = await res.text().catch(() => '');
+      console.error('[payment/status] Supabase error:', res.status, errBody.substring(0, 300));
+      return NextResponse.json({ error: 'DB error', detail: errBody.substring(0, 200) }, { status: 500 });
     }
 
     const rows = await res.json();
