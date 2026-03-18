@@ -184,7 +184,7 @@ export async function checkAvailability(params: {
       .in("doctor_id", doctorIds)
       .eq("tenant_id", tenant_id)
       .in("date", dates)
-      .eq("status", "confirmed"),
+      .in("status", ["confirmed", "pending_payment"]),
     supabase
       .from("slot_locks")
       .select("doctor_id, slot_date, slot_time")
@@ -200,10 +200,10 @@ export async function checkAvailability(params: {
 
   // Build booked set for O(1) lookup
   const bookedSet = new Set(
-    bookedAppointments.map((a) => `${a.doctor_id}|${a.date}|${a.time}`)
+    bookedAppointments.map((a) => `${a.doctor_id}|${a.date}|${trimTime(a.time)}`)
   )
   const lockedSet = new Set(
-    activeLocks.map((l) => `${l.doctor_id}|${l.slot_date}|${l.slot_time}`)
+    activeLocks.map((l) => `${l.doctor_id}|${l.slot_date}|${trimTime(l.slot_time)}`)
   )
 
   const currentTime = today === getISTDate() ? getISTTime() : "00:00"
