@@ -171,55 +171,135 @@ export default function PatientsPage() {
 
         setResults(enriched)
         lastResults.current = enriched
-      } else {
-        // Search patients by phone or name
-        let patientQuery = supabase
-          .from("patients")
-          .select("*")
-          .eq("tenant_id", tenantId)
-          .limit(50)
+      } else if (isPhone) {
+        // Phone search: find ALL distinct patient names from appointments
+        // (families share one phone — patients table only stores one name)
+        const phoneVariants = [normalized]
+        if (normalized.length === 10) phoneVariants.push(`91${normalized}`)
+        if (normalized.startsWith("91") && normalized.length === 12) phoneVariants.push(normalized.slice(2))
 
-        if (isPhone) {
-          patientQuery = patientQuery.or(`phone.like.%${normalized}%`)
-        } else {
-          patientQuery = patientQuery.ilike("name", `%${q}%`)
-          // q is already sanitized above
+        const phoneFilter = phoneVariants.map((p) => `patient_phone.eq.${p}`).join(",")
+
+        const [patientRes, apptRes] = await Promise.all([
+          supabase
+            .from("patients")
+            .select("*")
+            .eq("tenant_id", tenantId)
+            .or(phoneVariants.map((p) => `phone.like.%${p}%`).join(","))
+            .limit(10),
+          supabase
+            .from("appointments")
+            .select("*")
+            .eq("tenant_id", tenantId)
+            .or(phoneFilter)
+            .order("date", { ascending: false })
+            .limit(500),
+        ])
+
+        const patients = (patientRes.data || []) as Patient[]
+        const allAppts = (apptRes.data || []) as Appointment[]
+
+        // Group appointments by patient_name to find all family members
+        const byName: Record<string, Appointment[]> = {}
+        for (const a of allAppts) {
+          const name = a.patient_name?.trim() || "Unknown"
+          if (!byName[name]) byName[name] = []
+          byName[name].push(a)
         }
 
-        const { data: patients } = await patientQuery
+        // Build one result row per unique name
+        const basePatient = patients[0]
+        const enriched: PatientWithAppointments[] = Object.entries(byName).map(([name, appts]) => ({
+          ...(basePatient || { tenant_id: tenantId }),
+          phone: appts[0]?.patient_phone || basePatient?.phone || normalized,
+          name,
+          // Keep age/gender from patients table only if name matches
+          age: patients.find((p) => p.name === name)?.age || basePatient?.age || null,
+          gender: patients.find((p) => p.name === name)?.gender || basePatient?.gender || null,
+          recentAppointments: appts.slice(0, 5),
+          totalAppointments: appts.length,
+        } as PatientWithAppointments))
 
-        if (!patients || patients.length === 0) {
+        // If patients table has a name not in appointments, add it too
+        for (const p of patients) {
+          if (p.name && !byName[p.name]) {
+            enriched.push({
+              ...p,
+              recentAppointments: [],
+              totalAppointments: 0,
+            } as PatientWithAppointments)
+          }
+        }
+
+        if (enriched.length === 0) {
           setResults([])
           lastResults.current = []
           setLoading(false)
           return
         }
 
-        // Batch-fetch appointments for all patients in one query (fixes N+1)
-        const phones = (patients as Patient[]).map((p) => p.phone)
-        const orFilter = phones.map((p) => `patient_phone.eq.${p}`).join(",")
-        const { data: allAppts } = await supabase
-          .from("appointments")
-          .select("*")
-          .eq("tenant_id", tenantId)
-          .or(orFilter)
-          .order("date", { ascending: false })
-          .limit(500)
+        setResults(enriched)
+        lastResults.current = enriched
+      } else {
+        // Name search
+        const [patientRes, apptRes] = await Promise.all([
+          supabase
+            .from("patients")
+            .select("*")
+            .eq("tenant_id", tenantId)
+            .ilike("name", `%${q}%`)
+            .limit(50),
+          supabase
+            .from("appointments")
+            .select("*")
+            .eq("tenant_id", tenantId)
+            .ilike("patient_name", `%${q}%`)
+            .order("date", { ascending: false })
+            .limit(500),
+        ])
 
-        const apptsByPhone: Record<string, Appointment[]> = {}
-        for (const a of (allAppts || []) as Appointment[]) {
-          if (!apptsByPhone[a.patient_phone]) apptsByPhone[a.patient_phone] = []
-          apptsByPhone[a.patient_phone].push(a)
+        const patients = (patientRes.data || []) as Patient[]
+        const allAppts = (apptRes.data || []) as Appointment[]
+
+        // Group appointments by phone+name to find all members
+        const byKey: Record<string, { phone: string; name: string; appts: Appointment[] }> = {}
+        for (const a of allAppts) {
+          const key = `${a.patient_phone}|${a.patient_name?.trim()}`
+          if (!byKey[key]) byKey[key] = { phone: a.patient_phone, name: a.patient_name?.trim() || "Unknown", appts: [] }
+          byKey[key].appts.push(a)
         }
 
-        const enriched: PatientWithAppointments[] = (patients as Patient[]).map((p) => {
-          const pAppts = apptsByPhone[p.phone] || []
-          return {
-            ...p,
-            recentAppointments: pAppts.slice(0, 5),
-            totalAppointments: pAppts.length,
+        // Merge with patients table data
+        const enriched: PatientWithAppointments[] = []
+        const seen = new Set<string>()
+
+        for (const { phone, name, appts } of Object.values(byKey)) {
+          const key = `${phone}|${name}`
+          if (seen.has(key)) continue
+          seen.add(key)
+          const patientRecord = patients.find((p) => p.phone === phone)
+          enriched.push({
+            ...(patientRecord || { tenant_id: tenantId, phone }),
+            name,
+            recentAppointments: appts.slice(0, 5),
+            totalAppointments: appts.length,
+          } as PatientWithAppointments)
+        }
+
+        // Add patients that have no matching appointments
+        for (const p of patients) {
+          const key = `${p.phone}|${p.name}`
+          if (!seen.has(key)) {
+            enriched.push({ ...p, recentAppointments: [], totalAppointments: 0 } as PatientWithAppointments)
           }
-        })
+        }
+
+        if (enriched.length === 0) {
+          setResults([])
+          lastResults.current = []
+          setLoading(false)
+          return
+        }
 
         setResults(enriched)
         lastResults.current = enriched
@@ -265,14 +345,14 @@ export default function PatientsPage() {
       .eq("date", today)
       .order("time")
 
-    const phones = [...new Set((appts || []).map((a: Appointment) => a.patient_phone))]
-
-    if (phones.length === 0) {
+    if (!appts || appts.length === 0) {
       setResults([])
       lastResults.current = []
       setLoading(false)
       return
     }
+
+    const phones = [...new Set(appts.map((a: Appointment) => a.patient_phone))]
 
     const { data: patients } = await supabase
       .from("patients")
@@ -280,13 +360,22 @@ export default function PatientsPage() {
       .eq("tenant_id", tenantId)
       .in("phone", phones)
 
-    const enriched: PatientWithAppointments[] = (patients || []).map((p: Patient) => {
-      const pAppts = (appts || []).filter((a: Appointment) => a.patient_phone === p.phone) as Appointment[]
+    // Group by phone+name to show each family member as a separate row
+    const byKey: Record<string, { phone: string; name: string; appts: Appointment[] }> = {}
+    for (const a of appts as Appointment[]) {
+      const key = `${a.patient_phone}|${a.patient_name?.trim()}`
+      if (!byKey[key]) byKey[key] = { phone: a.patient_phone, name: a.patient_name?.trim() || "Unknown", appts: [] }
+      byKey[key].appts.push(a)
+    }
+
+    const enriched: PatientWithAppointments[] = Object.values(byKey).map(({ phone, name, appts: memberAppts }) => {
+      const patientRecord = (patients || []).find((p: Patient) => p.phone === phone)
       return {
-        ...p,
-        recentAppointments: pAppts,
-        totalAppointments: pAppts.length,
-      }
+        ...(patientRecord || { tenant_id: tenantId, phone }),
+        name,
+        recentAppointments: memberAppts,
+        totalAppointments: memberAppts.length,
+      } as PatientWithAppointments
     })
 
     setResults(enriched)
@@ -492,7 +581,7 @@ export default function PatientsPage() {
                   const lastAppt = patient.recentAppointments[0]
                   return (
                     <TableRow
-                      key={patient.phone}
+                      key={`${patient.phone}|${patient.name}`}
                       className="hover:bg-muted/50 transition-colors cursor-pointer"
                       onClick={() => openPatientDetail(patient)}
                     >
