@@ -98,6 +98,7 @@ export function BookingForm() {
   const [patientName, setPatientName] = useState("")
   const [patientGender, setPatientGender] = useState("")
   const [patientAge, setPatientAge] = useState("")
+  const [familyMembers, setFamilyMembers] = useState<string[]>([])
   const lookupDone = useRef(false)
 
   const [doctors, setDoctors] = useState<Doctor[]>([])
@@ -137,20 +138,51 @@ export function BookingForm() {
     setLookingUp(true)
     try {
       const supabase = createBrowserClient()
-      const { data } = await supabase
-        .from("patients")
-        .select("*")
-        .eq("tenant_id", tenantId)
-        .or(`phone.eq.${digits.replace(/[^a-zA-Z0-9\s\-\.]/g, "")},phone.eq.+${digits.replace(/[^a-zA-Z0-9\s\-\.]/g, "")}`)
-        .limit(1)
-        .maybeSingle()
-      if (data) {
-        const p = data as Patient
+      const safeDigits = digits.replace(/[^a-zA-Z0-9]/g, "")
+      const withPrefix = safeDigits.length === 10 ? `91${safeDigits}` : safeDigits
+      const without = safeDigits.startsWith("91") && safeDigits.length === 12 ? safeDigits.slice(2) : safeDigits
+
+      // Fetch patient record + all unique names from past appointments in parallel
+      const [patientRes, apptRes] = await Promise.all([
+        supabase
+          .from("patients")
+          .select("*")
+          .eq("tenant_id", tenantId)
+          .or(`phone.eq.${safeDigits},phone.eq.${withPrefix},phone.eq.${without}`)
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("appointments")
+          .select("patient_name")
+          .eq("tenant_id", tenantId)
+          .or(`patient_phone.eq.${safeDigits},patient_phone.eq.${withPrefix},patient_phone.eq.${without}`)
+          .order("created_at", { ascending: false })
+          .limit(50),
+      ])
+
+      // Build unique family member names from appointments
+      const names = new Set<string>()
+      if (patientRes.data?.name) names.add(patientRes.data.name)
+      for (const a of apptRes.data || []) {
+        if (a.patient_name?.trim()) names.add(a.patient_name.trim())
+      }
+      setFamilyMembers([...names])
+
+      if (patientRes.data) {
+        const p = patientRes.data as Patient
         setPatient(p)
         setPatientFound(true)
         setPatientName(p.name || "")
         setPatientGender(p.gender || "")
         setPatientAge(p.age ? String(p.age) : "")
+      } else if (names.size > 0) {
+        // No patient record but has past appointments — treat as found
+        const firstName = [...names][0]
+        setPatient({ phone: safeDigits, name: firstName, tenant_id: tenantId } as Patient)
+        setPatientFound(true)
+        setPatientName(firstName)
+        setPatientGender("")
+        setPatientAge("")
       } else {
         setPatientFound(false)
         setPatient(null)
@@ -172,6 +204,7 @@ export function BookingForm() {
       setPatientName("")
       setPatientGender("")
       setPatientAge("")
+      setFamilyMembers([])
     }
     if (digits.length === 10 || digits.length === 12) {
       lookupPatient(val)
@@ -466,7 +499,7 @@ export function BookingForm() {
 
   const reset = () => {
     setStep("patient"); setPhone(""); setPatient(null); setPatientFound(null)
-    setPatientName(""); setPatientGender(""); setPatientAge(""); lookupDone.current = false
+    setPatientName(""); setPatientGender(""); setPatientAge(""); setFamilyMembers([]); lookupDone.current = false
     setSelectedDoctor(null); setAvailability([]); setAllSlots({})
     setSelectedDate(""); setTimeSlots([]); setSelectedTime(""); setBookingId(""); setWaSent(null); setDoctorSearch("")
   }
@@ -585,19 +618,56 @@ export function BookingForm() {
                 </div>
               </div>
 
-              {/* Existing patient banner */}
-              {patientFound === true && patient && (
+              {/* Family member selector — shows all known names for this phone */}
+              {patientFound === true && familyMembers.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50/50 border border-emerald-100"
+                  className="space-y-2"
                 >
-                  <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-sm font-bold shrink-0">
-                    {(patient.name || "P")[0]?.toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-emerald-800">{patient.name}</p>
-                    <p className="text-[10px] text-emerald-500">Record auto-filled</p>
+                  <p className="text-xs font-medium text-gray-500">
+                    {familyMembers.length === 1 ? "Patient found" : `${familyMembers.length} members found — select or add new`}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {familyMembers.map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => { setPatientName(name); setPatient({ ...(patient || {}), phone: phone.replace(/\D/g, ""), name, tenant_id: tenantId } as Patient) }}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all",
+                          patientName === name
+                            ? "border-blue-500 bg-blue-50 text-blue-700"
+                            : "border-gray-200 bg-gray-50/50 text-gray-700 hover:border-blue-300 hover:bg-blue-50/30"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0",
+                          patientName === name ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500"
+                        )}>
+                          {name[0]?.toUpperCase()}
+                        </div>
+                        {name}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newName = ""
+                        setPatientName(newName)
+                        setPatientGender("")
+                        setPatientAge("")
+                      }}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-all",
+                        patientName === "" || !familyMembers.includes(patientName)
+                          ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                          : "border-dashed border-gray-300 text-gray-400 hover:border-emerald-400 hover:text-emerald-600"
+                      )}
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      New member
+                    </button>
                   </div>
                 </motion.div>
               )}
