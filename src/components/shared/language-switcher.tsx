@@ -20,7 +20,7 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
     <Select value={language} onValueChange={(val) => setLanguage(val as typeof language)}>
       <SelectTrigger
         size="sm"
-        className={`${compact ? "w-auto gap-1.5 px-2" : "w-[140px]"} bg-white/15 border-0 text-white/60 hover:text-white hover:bg-white/20 transition-colors rounded-xl`}
+        className={`${compact ? "w-auto gap-1.5 px-2" : "w-[140px]"} bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors rounded-xl`}
         aria-label="Select language"
       >
         <Languages className="size-4 shrink-0" />

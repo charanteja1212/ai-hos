@@ -75,11 +75,11 @@ export function BranchSwitcher({ role, clientId, collapsed }: BranchSwitcherProp
 
   if (collapsed) {
     return (
-      <div className="px-2 py-2 border-b border-white/15">
+      <div className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
-            <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center cursor-pointer mx-auto">
-              <GitBranch className="w-4 h-4 text-white/70" />
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/20 flex items-center justify-center cursor-pointer mx-auto">
+              <GitBranch className="w-4 h-4 text-blue-500" />
             </div>
           </TooltipTrigger>
           <TooltipContent side="right">
@@ -99,14 +99,14 @@ export function BranchSwitcher({ role, clientId, collapsed }: BranchSwitcherProp
         initial={{ opacity: 0, height: 0 }}
         animate={{ opacity: 1, height: "auto" }}
         exit={{ opacity: 0, height: 0 }}
-        className="px-3 py-2 border-b border-white/15"
+        className="px-3 py-2 border-b border-gray-100 dark:border-gray-800"
       >
-        <p className="text-[10px] font-semibold text-white/35 uppercase tracking-wider mb-1.5 px-1">
+        <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5 px-1">
           Branch
         </p>
         <Select value={activeTenantId} onValueChange={handleChange}>
-          <SelectTrigger className="h-9 rounded-xl bg-white/15 border-0 text-sm gap-2 text-white focus:ring-1 focus:ring-white/30">
-            <GitBranch className="w-3.5 h-3.5 text-white/70 shrink-0" />
+          <SelectTrigger className="h-9 rounded-xl bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-sm gap-2 text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-blue-400/30">
+            <GitBranch className="w-3.5 h-3.5 text-blue-500 shrink-0" />
             <SelectValue placeholder="Select branch" />
           </SelectTrigger>
           <SelectContent>
