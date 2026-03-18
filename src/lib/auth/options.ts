@@ -237,16 +237,32 @@ export const authConfig: NextAuthConfig = {
         // Staff roles: LAB_TECH, PHARMACIST
         if (role === "LAB_TECH" || role === "PHARMACIST") {
           const staffId = credentials.identifier as string
-          if (!staffId) return null
 
-          const { data: staff } = await supabase
-            .from("staff")
-            .select("staff_id, name, role, pin")
-            .eq("staff_id", staffId)
-            .eq("tenant_id", tenantId)
-            .eq("role", role)
-            .eq("status", "active")
-            .single()
+          let staff: { staff_id: string; name: string; role: string; pin: string } | null = null
+
+          if (staffId) {
+            // Lookup by Staff ID + PIN
+            const { data } = await supabase
+              .from("staff")
+              .select("staff_id, name, role, pin")
+              .eq("staff_id", staffId)
+              .eq("tenant_id", tenantId)
+              .eq("role", role)
+              .eq("status", "active")
+              .single()
+            staff = data
+          } else {
+            // Lookup by PIN only (no Staff ID required)
+            const { data } = await supabase
+              .from("staff")
+              .select("staff_id, name, role, pin")
+              .eq("pin", pin)
+              .eq("tenant_id", tenantId)
+              .eq("role", role)
+              .eq("status", "active")
+              .single()
+            staff = data
+          }
 
           if (!staff || staff.pin !== pin) return null
           await resetRateLimit(rateLimitKey)
