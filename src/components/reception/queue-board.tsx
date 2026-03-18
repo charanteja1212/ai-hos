@@ -14,7 +14,6 @@ import { EmptyState } from "@/components/shared/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import {
@@ -155,11 +154,11 @@ export function QueueBoard() {
   const waitingEntries = entries.filter((e) => e.status === "waiting")
   const nextUp = waitingEntries[0]
 
-  const tabConfig: { key: TabKey; label: string; icon: React.ReactNode; color: string }[] = [
-    { key: "all", label: "All Patients", icon: <Users className="w-3.5 h-3.5" />, color: "blue" },
-    { key: "waiting", label: "Waiting", icon: <Clock className="w-3.5 h-3.5" />, color: "amber" },
-    { key: "in_consultation", label: "In Consult", icon: <Stethoscope className="w-3.5 h-3.5" />, color: "violet" },
-    { key: "completed", label: "Done", icon: <CheckCircle2 className="w-3.5 h-3.5" />, color: "emerald" },
+  const tabConfig: { key: TabKey; label: string; icon: React.ReactNode }[] = [
+    { key: "all", label: "All Patients", icon: <Users className="w-3.5 h-3.5" /> },
+    { key: "waiting", label: "Waiting", icon: <Clock className="w-3.5 h-3.5" /> },
+    { key: "in_consultation", label: "In Consult", icon: <Stethoscope className="w-3.5 h-3.5" /> },
+    { key: "completed", label: "Done", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
   ]
 
   const getTabCount = (key: TabKey) => {
@@ -201,8 +200,8 @@ export function QueueBoard() {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-2">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
             </span>
             Live reception dashboard
           </p>
@@ -210,7 +209,7 @@ export function QueueBoard() {
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            className="h-10 gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 transition-all"
+            className="h-10 gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 transition-all"
             onClick={() => router.push("/reception/book")}
           >
             <UserPlus className="w-4 h-4" />
@@ -219,7 +218,7 @@ export function QueueBoard() {
           <Button
             variant="outline"
             size="sm"
-            className="h-10 gap-2 rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 font-medium"
+            className="h-10 gap-2 rounded-xl border-blue-200 dark:border-blue-800/40 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/20 font-medium"
             onClick={() => router.push("/reception/appointments")}
           >
             <CalendarSearch className="w-4 h-4" />
@@ -229,7 +228,7 @@ export function QueueBoard() {
       </div>
 
       {/* ═══════════════════════════════════════════
-          STAT CARDS
+          STAT CARDS — White + Blue Theme
           ═══════════════════════════════════════════ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Patients */}
@@ -237,9 +236,9 @@ export function QueueBoard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0 }}
-          className="relative bg-white dark:bg-gray-900 rounded-2xl p-5 border border-blue-100 dark:border-blue-900/40 shadow-sm hover:shadow-md transition-shadow group overflow-hidden"
+          className="relative bg-white dark:bg-gray-900 rounded-2xl p-5 border border-blue-100 dark:border-blue-900/30 shadow-sm hover:shadow-md transition-shadow group overflow-hidden"
         >
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-blue-600 rounded-t-2xl" />
+          <div className="absolute top-0 left-0 w-full h-1 bg-blue-600 rounded-t-2xl" />
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
@@ -262,12 +261,12 @@ export function QueueBoard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="relative bg-white dark:bg-gray-900 rounded-2xl p-5 border border-amber-100 dark:border-amber-900/40 shadow-sm hover:shadow-md transition-shadow group overflow-hidden"
+          className="relative bg-white dark:bg-gray-900 rounded-2xl p-5 border border-blue-100 dark:border-blue-900/30 shadow-sm hover:shadow-md transition-shadow group overflow-hidden"
         >
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-orange-500 rounded-t-2xl" />
+          <div className="absolute top-0 left-0 w-full h-1 bg-sky-500 rounded-t-2xl" />
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+              <p className="text-xs font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider">
                 Waiting
               </p>
               <AnimatedCounter
@@ -278,7 +277,7 @@ export function QueueBoard() {
                 {stats.waiting > 0 ? "in queue now" : "no one waiting"}
               </p>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+            <div className="w-11 h-11 rounded-xl bg-sky-50 dark:bg-sky-950/30 flex items-center justify-center text-sky-500 group-hover:scale-110 transition-transform">
               <Clock className="w-5 h-5" />
             </div>
           </div>
@@ -289,12 +288,12 @@ export function QueueBoard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="relative bg-white dark:bg-gray-900 rounded-2xl p-5 border border-violet-100 dark:border-violet-900/40 shadow-sm hover:shadow-md transition-shadow group overflow-hidden"
+          className="relative bg-white dark:bg-gray-900 rounded-2xl p-5 border border-blue-100 dark:border-blue-900/30 shadow-sm hover:shadow-md transition-shadow group overflow-hidden"
         >
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-500 to-purple-600 rounded-t-2xl" />
+          <div className="absolute top-0 left-0 w-full h-1 bg-indigo-600 rounded-t-2xl" />
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wider">
+              <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
                 In Consultation
               </p>
               <AnimatedCounter
@@ -305,23 +304,23 @@ export function QueueBoard() {
                 {stats.inConsultation > 0 ? "seeing doctor" : "none active"}
               </p>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-violet-50 dark:bg-violet-950/30 flex items-center justify-center text-violet-500 group-hover:scale-110 transition-transform">
+            <div className="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
               <Stethoscope className="w-5 h-5" />
             </div>
           </div>
         </motion.div>
 
-        {/* Avg Wait / Completion */}
+        {/* Avg Wait */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="relative bg-white dark:bg-gray-900 rounded-2xl p-5 border border-emerald-100 dark:border-emerald-900/40 shadow-sm hover:shadow-md transition-shadow group overflow-hidden"
+          className="relative bg-white dark:bg-gray-900 rounded-2xl p-5 border border-blue-100 dark:border-blue-900/30 shadow-sm hover:shadow-md transition-shadow group overflow-hidden"
         >
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-t-2xl" />
+          <div className="absolute top-0 left-0 w-full h-1 bg-blue-800 rounded-t-2xl" />
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+              <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider">
                 Avg Wait
               </p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1.5">
@@ -330,14 +329,14 @@ export function QueueBoard() {
               <p className="text-[11px] text-gray-400 mt-1 flex items-center gap-1">
                 {stats.completed > 0 && (
                   <>
-                    <TrendingUp className="w-3 h-3 text-emerald-500" />
-                    {stats.completed} completed ({throughput}%)
+                    <TrendingUp className="w-3 h-3 text-blue-500" />
+                    {stats.completed} done ({throughput}%)
                   </>
                 )}
                 {stats.completed === 0 && "no data yet"}
               </p>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+            <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
               <Timer className="w-5 h-5" />
             </div>
           </div>
@@ -350,15 +349,18 @@ export function QueueBoard() {
       <PendingArrivals tenantId={tenantId} onCheckInComplete={() => mutate()} />
 
       {/* ═══════════════════════════════════════════
-          NEXT UP BANNER
+          NEXT UP BANNER — Blue gradient
           ═══════════════════════════════════════════ */}
       {nextUp && (
         <motion.div
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 p-5 text-white shadow-lg shadow-blue-500/20"
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 p-5 text-white shadow-lg shadow-blue-600/20"
         >
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIvPjwvc3ZnPg==')] opacity-60" />
+          {/* Decorative circles */}
+          <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/5" />
+          <div className="absolute -right-2 -bottom-8 w-20 h-20 rounded-full bg-white/5" />
+
           <div className="relative flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center font-bold text-lg shrink-0">
@@ -366,7 +368,7 @@ export function QueueBoard() {
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-300" />
+                  <Sparkles className="w-4 h-4 text-blue-200" />
                   <span className="text-xs font-bold uppercase tracking-wider text-white/70">
                     Next Up
                   </span>
@@ -385,13 +387,13 @@ export function QueueBoard() {
                 </span>
               )}
               {nextUp.priority === 1 && (
-                <span className="px-2.5 py-1 rounded-full bg-amber-500/30 text-amber-200 text-xs font-bold flex items-center gap-1">
+                <span className="px-2.5 py-1 rounded-full bg-white/20 text-blue-100 text-xs font-bold flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" /> Urgent
                 </span>
               )}
               <Button
                 size="sm"
-                className="h-10 gap-2 rounded-xl bg-white text-blue-700 hover:bg-white/90 font-bold shadow-md px-5"
+                className="h-10 gap-2 rounded-xl bg-white text-blue-700 hover:bg-blue-50 font-bold shadow-md px-5"
                 onClick={() => handleStatusChange(nextUp.queue_id, "in_consultation")}
               >
                 <Play className="w-4 h-4" />
@@ -409,24 +411,18 @@ export function QueueBoard() {
         {/* Search + Pill Tabs */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <div className="relative flex-1 w-full sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
             <Input
-              className="pl-9 h-10 rounded-xl bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-sm shadow-sm"
+              className="pl-9 h-10 rounded-xl bg-white dark:bg-gray-900 border-blue-100 dark:border-blue-900/30 text-sm shadow-sm focus:border-blue-400 focus:ring-blue-400/20"
               placeholder="Search patient, phone, doctor..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+          <div className="flex items-center gap-1 bg-blue-50 dark:bg-blue-950/20 p-1 rounded-xl border border-blue-100 dark:border-blue-900/30">
             {tabConfig.map((tab) => {
               const count = getTabCount(tab.key)
               const isActive = activeTab === tab.key
-              const colorMap: Record<string, string> = {
-                blue: "bg-blue-600 text-white shadow-md shadow-blue-500/25",
-                amber: "bg-amber-500 text-white shadow-md shadow-amber-500/25",
-                violet: "bg-violet-600 text-white shadow-md shadow-violet-500/25",
-                emerald: "bg-emerald-600 text-white shadow-md shadow-emerald-500/25",
-              }
               return (
                 <button
                   key={tab.key}
@@ -434,8 +430,8 @@ export function QueueBoard() {
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200",
                     isActive
-                      ? colorMap[tab.color]
-                      : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300",
+                      ? "bg-blue-600 text-white shadow-md shadow-blue-500/25"
+                      : "text-blue-600/60 dark:text-blue-400/60 hover:text-blue-700 hover:bg-blue-100/50 dark:hover:bg-blue-900/30",
                   )}
                 >
                   {tab.icon}
@@ -445,7 +441,7 @@ export function QueueBoard() {
                       "text-[10px] font-bold px-1.5 py-0.5 rounded-full tabular-nums",
                       isActive
                         ? "bg-white/25 text-white"
-                        : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400",
+                        : "bg-blue-100 dark:bg-blue-900/40 text-blue-500 dark:text-blue-400",
                     )}
                   >
                     {count}
@@ -496,7 +492,7 @@ export function QueueBoard() {
 }
 
 /* ══════════════════════════════════════════════════════
-   PATIENT CARD — Premium Card Design
+   PATIENT CARD — White + Blue
    ══════════════════════════════════════════════════════ */
 function PatientCard({
   entry,
@@ -515,26 +511,26 @@ function PatientCard({
   const isDone =
     entry.status === "completed" || entry.status === "no_show" || entry.status === "cancelled"
 
-  const borderColor = isActive
-    ? "border-l-violet-500"
-    : entry.priority === 2
-      ? "border-l-red-500"
-      : entry.priority === 1
-        ? "border-l-amber-500"
-        : entry.status === "waiting"
-          ? "border-l-amber-400"
-          : entry.status === "completed"
-            ? "border-l-emerald-500"
-            : "border-l-gray-300"
+  // All blue borders — except emergency (red for safety)
+  const borderColor = entry.priority === 2
+    ? "border-l-red-500"
+    : isActive
+      ? "border-l-indigo-500"
+      : entry.status === "waiting"
+        ? "border-l-blue-400"
+        : entry.status === "completed"
+          ? "border-l-blue-200"
+          : "border-l-blue-100"
 
-  const queueBg = isActive
-    ? "bg-violet-600 text-white"
-    : entry.priority === 2
-      ? "bg-red-500 text-white"
-      : entry.priority === 1
-        ? "bg-amber-500 text-white"
-        : isDone
-          ? "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+  // Queue number — all blue shades, red only for emergency
+  const queueBg = entry.priority === 2
+    ? "bg-red-500 text-white"
+    : isActive
+      ? "bg-indigo-600 text-white"
+      : isDone
+        ? "bg-blue-100 dark:bg-blue-900/20 text-blue-400 dark:text-blue-500"
+        : entry.priority === 1
+          ? "bg-blue-700 text-white"
           : "bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400"
 
   return (
@@ -545,9 +541,9 @@ function PatientCard({
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.2, delay: index * 0.03 }}
       className={cn(
-        "bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border-l-4",
+        "bg-white dark:bg-gray-900 rounded-2xl border border-blue-50 dark:border-blue-900/20 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border-l-4",
         borderColor,
-        isActive && "ring-1 ring-violet-200 dark:ring-violet-800/40",
+        isActive && "ring-1 ring-blue-200 dark:ring-blue-800/30 shadow-blue-100/50",
       )}
     >
       <div className="p-4 space-y-3">
@@ -555,13 +551,13 @@ function PatientCard({
         <div className="flex items-start gap-3">
           <div
             className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0",
+              "relative w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0",
               queueBg,
             )}
           >
             {entry.queue_number}
             {isActive && (
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-violet-400 animate-ping" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-400 animate-ping" />
             )}
           </div>
 
@@ -576,7 +572,7 @@ function PatientCard({
             </p>
             {entry.doctor_name && (
               <p className="text-xs text-gray-500 dark:text-gray-400 truncate flex items-center gap-1 mt-0.5">
-                <Stethoscope className="w-3 h-3 text-violet-400 shrink-0" />
+                <Stethoscope className="w-3 h-3 text-blue-400 shrink-0" />
                 {entry.doctor_name}
               </p>
             )}
@@ -586,7 +582,7 @@ function PatientCard({
           <div className="flex flex-col items-end gap-1 shrink-0">
             <StatusBadge status={entry.status} />
             {entry.walk_in && (
-              <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/30 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 px-2 py-0.5 rounded-full">
                 Walk-in
               </span>
             )}
@@ -618,7 +614,7 @@ function PatientCard({
           )}
           {isActive && entry.consultation_start && (
             <span className="flex items-center gap-1 ml-auto">
-              <Activity className="w-3 h-3 text-violet-500" />
+              <Activity className="w-3 h-3 text-blue-500" />
               <ElapsedTimer
                 startTime={entry.consultation_start}
                 warningMinutes={15}
@@ -651,8 +647,8 @@ function PatientCard({
                 entry.priority === 2
                   ? "bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400 hover:bg-red-100"
                   : entry.priority === 1
-                    ? "bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400 hover:bg-amber-100"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200",
+                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 hover:bg-blue-200"
+                    : "bg-blue-50 dark:bg-blue-950/20 text-blue-500 dark:text-blue-400 hover:bg-blue-100",
               )}
               title="Click to cycle: Normal → Urgent → Emergency"
             >
@@ -669,12 +665,12 @@ function PatientCard({
 
         {/* Action Buttons */}
         {!isDone && (
-          <div className="flex items-center gap-2 pt-1 border-t border-gray-50 dark:border-gray-800">
+          <div className="flex items-center gap-2 pt-1 border-t border-blue-50 dark:border-blue-900/20">
             {entry.status === "waiting" && (
               <>
                 <Button
                   size="sm"
-                  className="flex-1 h-9 gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-sm shadow-blue-500/20"
+                  className="flex-1 h-9 gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/20"
                   onClick={() => onStatusChange(entry.queue_id, "in_consultation")}
                 >
                   <Play className="w-3.5 h-3.5" />
@@ -682,7 +678,7 @@ function PatientCard({
                 </Button>
                 <button
                   onClick={() => onStatusChange(entry.queue_id, "no_show")}
-                  className="h-9 w-9 rounded-xl flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                  className="h-9 w-9 rounded-xl flex items-center justify-center text-blue-300 dark:text-blue-700 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
                   title="Mark as no-show"
                 >
                   <XCircle className="w-4 h-4" />
@@ -693,7 +689,7 @@ function PatientCard({
               <>
                 <Button
                   size="sm"
-                  className="flex-1 h-9 gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white text-xs font-bold shadow-sm shadow-emerald-500/20"
+                  className="flex-1 h-9 gap-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow-sm shadow-blue-600/20"
                   onClick={() => onStatusChange(entry.queue_id, "completed")}
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
@@ -701,7 +697,7 @@ function PatientCard({
                 </Button>
                 <button
                   onClick={() => onStatusChange(entry.queue_id, "cancelled")}
-                  className="h-9 w-9 rounded-xl flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                  className="h-9 w-9 rounded-xl flex items-center justify-center text-blue-300 dark:text-blue-700 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
                   title="Cancel"
                 >
                   <XCircle className="w-4 h-4" />
@@ -716,29 +712,29 @@ function PatientCard({
 }
 
 /* ══════════════════════════════════════════════════════
-   STATUS BADGE
+   STATUS BADGE — Blue shades
    ══════════════════════════════════════════════════════ */
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
     waiting: {
       label: "Waiting",
-      cls: "bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400 ring-1 ring-amber-200/60 dark:ring-amber-800/30",
+      cls: "bg-sky-50 text-sky-600 dark:bg-sky-950/30 dark:text-sky-400 ring-1 ring-sky-200/60 dark:ring-sky-800/30",
     },
     in_consultation: {
       label: "In Consult",
-      cls: "bg-violet-50 text-violet-600 dark:bg-violet-950/30 dark:text-violet-400 ring-1 ring-violet-200/60 dark:ring-violet-800/30",
+      cls: "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400 ring-1 ring-indigo-200/60 dark:ring-indigo-800/30",
     },
     completed: {
       label: "Done",
-      cls: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400 ring-1 ring-emerald-200/60 dark:ring-emerald-800/30",
+      cls: "bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400 ring-1 ring-blue-200/60 dark:ring-blue-800/30",
     },
     no_show: {
       label: "No Show",
-      cls: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 ring-1 ring-gray-200/60 dark:ring-gray-700/30",
+      cls: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 ring-1 ring-slate-200/60 dark:ring-slate-700/30",
     },
     cancelled: {
       label: "Cancelled",
-      cls: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 ring-1 ring-gray-200/60 dark:ring-gray-700/30",
+      cls: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 ring-1 ring-slate-200/60 dark:ring-slate-700/30",
     },
   }
   const c = map[status] || map.waiting
