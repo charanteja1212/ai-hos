@@ -711,6 +711,12 @@ export async function bookAppointment(args: any): Promise<any> {
       callback_method: 'get',
       notes: { type: 'appointment', reference_id: bookingId, patient_name: name, patient_phone: phone, doctor_name: doctorName, specialty, appointment_date: formattedDate, appointment_time: time, tenant_id: tenantId },
       expire_by: Math.floor(Date.now() / 1000) + 1200,
+      options: {
+        checkout: {
+          readonly: { contact: true, email: true },
+          prefill: { contact: '+' + phone, name },
+        },
+      },
     };
     const rzpRes = await fetch('https://api.razorpay.com/v1/payment_links', {
       method: 'POST',

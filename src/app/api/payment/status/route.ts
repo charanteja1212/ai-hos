@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   try {
     const res = await fetch(
       SB_URL() + '/appointments?booking_id=eq.' + encodeURIComponent(bookingId) +
-      '&select=booking_id,status,payment_status,patient_name,doctor_name,specialty,date,time,op_pass_id,payment_link',
+      '&select=booking_id,status,payment_status,patient_name,doctor_name,specialty,date,time,op_pass_id,payment_link,consultation_fee,tenant_id',
       {
         headers: { apikey: SB_KEY(), Authorization: 'Bearer ' + SB_KEY() },
         signal: AbortSignal.timeout(8000),
@@ -45,6 +45,8 @@ export async function GET(req: NextRequest) {
       appointment_time: appt.time,
       op_pass_id: appt.op_pass_id || null,
       payment_link: appt.payment_link || null,
+      consultation_fee: appt.consultation_fee || null,
+      tenant_id: appt.tenant_id || null,
     });
   } catch {
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });

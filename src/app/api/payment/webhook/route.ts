@@ -252,7 +252,7 @@ export async function POST(req: NextRequest) {
       // ── PHASE 8: Generate OP Pass data ──
       const ist = nowIST();
       const expiryDate = new Date(ist.ms + 15 * 86400000).toISOString().split('T')[0];
-      const opPassId = 'OP' + Date.now();
+      const opPassId = 'OP' + Date.now() + Math.random().toString(36).slice(2, 6);
       const verifyUrl = 'https://ainewworld.in/webhook/verify-appointment?id=' + encodeURIComponent(opPassId);
       const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(verifyUrl);
       const expiryDisplay = new Date(expiryDate + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
