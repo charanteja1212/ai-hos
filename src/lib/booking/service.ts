@@ -93,8 +93,20 @@ function getDayName(dateStr: string): string {
   return days[new Date(dateStr + "T00:00:00").getDay()]
 }
 
-/** Trim "HH:MM:SS" to "HH:MM" */
+/** Normalize any time string to "HH:MM" 24-hour format.
+ *  Handles: "HH:MM:SS", "HH:MM", "H:MM AM/PM", "HH:MM AM/PM" */
 function trimTime(t: string): string {
+  if (!t) return t
+  const ampm = t.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)$/i)
+  if (ampm) {
+    let h = parseInt(ampm[1], 10)
+    const m = ampm[2]
+    const period = ampm[3].toUpperCase()
+    if (period === "PM" && h !== 12) h += 12
+    if (period === "AM" && h === 12) h = 0
+    return `${String(h).padStart(2, "0")}:${m}`
+  }
+  // "HH:MM:SS" or "HH:MM" — take first 5 chars
   return t.substring(0, 5)
 }
 
@@ -301,16 +313,21 @@ export async function bookAppointment(params: BookingParams) {
   }
 
   // 2. Double-check no existing appointment at this slot
-  const { data: existing } = await supabase
+  //    DB stores time in mixed formats ("14:20" or "2:20 PM"), so fetch all
+  //    appointments for this doctor+date and compare after normalization.
+  const { data: sameDayAppts } = await supabase
     .from("appointments")
-    .select("booking_id")
+    .select("booking_id, time")
     .eq("doctor_id", params.doctor_id)
     .eq("date", params.date)
-    .eq("time", params.time)
     .in("status", ["confirmed", "pending_payment", "completed"])
-    .limit(1)
 
-  if (existing && existing.length > 0) {
+  const normalizedTime = trimTime(params.time)
+  const existing = (sameDayAppts || []).filter(
+    (a) => trimTime(a.time) === normalizedTime
+  )
+
+  if (existing.length > 0) {
     // Release lock
     await supabase
       .from("slot_locks")
