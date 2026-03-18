@@ -27,6 +27,8 @@ interface BookingParams {
   patient_phone: string
   patient_name: string
   patient_type?: string
+  patient_age?: number | null
+  patient_gender?: string | null
   doctor_id: string
   doctor_name: string
   specialty: string
@@ -352,23 +354,34 @@ export async function bookAppointment(params: BookingParams) {
     )
 
   // 4. Insert appointment
-  const { error: insertError } = await supabase
+  const appointmentRow: Record<string, unknown> = {
+    booking_id: bookingId,
+    tenant_id: params.tenant_id,
+    patient_phone: normalizedPhone,
+    patient_name: params.patient_name,
+    patient_type: params.patient_type || "SELF",
+    patient_age: params.patient_age ?? null,
+    doctor_id: params.doctor_id,
+    doctor_name: params.doctor_name,
+    specialty: params.specialty,
+    date: params.date,
+    time: params.time,
+    status: "confirmed",
+    source: params.source || "dashboard",
+    booked_by_whatsapp_number: params.booked_by_whatsapp_number,
+  }
+  if (params.patient_gender) {
+    appointmentRow.patient_gender = params.patient_gender
+  }
+  let { error: insertError } = await supabase
     .from("appointments")
-    .insert({
-      booking_id: bookingId,
-      tenant_id: params.tenant_id,
-      patient_phone: normalizedPhone,
-      patient_name: params.patient_name,
-      patient_type: params.patient_type || "SELF",
-      doctor_id: params.doctor_id,
-      doctor_name: params.doctor_name,
-      specialty: params.specialty,
-      date: params.date,
-      time: params.time,
-      status: "confirmed",
-      source: params.source || "dashboard",
-      booked_by_whatsapp_number: params.booked_by_whatsapp_number,
-    })
+    .insert(appointmentRow)
+  // Retry without patient_gender if column doesn't exist yet
+  if (insertError?.message?.includes("patient_gender")) {
+    delete appointmentRow.patient_gender
+    const retry = await supabase.from("appointments").insert(appointmentRow)
+    insertError = retry.error
+  }
 
   // 5. Release slot lock (appointment now has the UNIQUE index protection)
   await supabase

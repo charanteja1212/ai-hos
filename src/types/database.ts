@@ -44,6 +44,8 @@ export interface Appointment {
   patient_phone: string
   patient_name: string
   patient_type?: string
+  patient_age?: number | null
+  patient_gender?: string | null
   doctor_id: string
   doctor_name: string
   specialty?: string

@@ -398,6 +398,8 @@ export function BookingForm() {
           action: "book-appointment",
           patient_phone: patient.phone,
           patient_name: patient.name,
+          patient_age: patientAge ? parseInt(patientAge) : null,
+          patient_gender: patientGender || null,
           doctor_id: selectedDoctor.doctor_id,
           doctor_name: selectedDoctor.name,
           specialty: selectedDoctor.specialty,

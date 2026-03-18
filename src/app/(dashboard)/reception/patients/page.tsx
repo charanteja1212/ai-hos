@@ -208,17 +208,23 @@ export default function PatientsPage() {
         }
 
         // Build one result row per unique name
+        const activeStatuses = ["confirmed", "pending_payment", "completed"]
         const basePatient = patients[0]
-        const enriched: PatientWithAppointments[] = Object.entries(byName).map(([name, appts]) => ({
-          ...(basePatient || { tenant_id: tenantId }),
-          phone: appts[0]?.patient_phone || basePatient?.phone || normalized,
-          name,
-          // Keep age/gender from patients table only if name matches — no fallback to basePatient
-          age: patients.find((p) => p.name === name)?.age || null,
-          gender: patients.find((p) => p.name === name)?.gender || null,
-          recentAppointments: appts.slice(0, 5),
-          totalAppointments: appts.length,
-        } as PatientWithAppointments))
+        const enriched: PatientWithAppointments[] = Object.entries(byName).map(([name, appts]) => {
+          // Get age/gender: first from patients table (exact name match), then from most recent appointment
+          const matchedPatient = patients.find((p) => p.name === name)
+          const latestAppt = appts[0] // already sorted by date desc
+          const confirmedAppts = appts.filter((a) => activeStatuses.includes(a.status))
+          return {
+            ...(basePatient || { tenant_id: tenantId }),
+            phone: appts[0]?.patient_phone || basePatient?.phone || normalized,
+            name,
+            age: matchedPatient?.age || latestAppt?.patient_age || null,
+            gender: matchedPatient?.gender || latestAppt?.patient_gender || null,
+            recentAppointments: confirmedAppts.slice(0, 5),
+            totalAppointments: confirmedAppts.length,
+          } as PatientWithAppointments
+        })
 
         // If patients table has a name not in appointments, add it too
         for (const p of patients) {

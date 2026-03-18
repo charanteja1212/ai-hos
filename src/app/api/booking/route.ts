@@ -87,6 +87,8 @@ export async function POST(req: NextRequest) {
         patient_phone: params.patient_phone,
         patient_name: params.patient_name,
         patient_type: params.patient_type,
+        patient_age: params.patient_age ?? null,
+        patient_gender: params.patient_gender ?? null,
         doctor_id: params.doctor_id,
         doctor_name: params.doctor_name,
         specialty: params.specialty,
