@@ -78,7 +78,7 @@ function ISTClock() {
 
   if (!time) return null
   return (
-    <span className="text-xs font-mono text-muted-foreground bg-muted/50 rounded-lg px-2.5 py-1.5 hidden sm:inline-block">
+    <span className="text-xs font-mono text-muted-foreground hidden sm:inline-block">
       {time} IST
     </span>
   )
@@ -116,20 +116,17 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
   const pathname = usePathname()
   const router = useRouter()
 
-  // Keyboard shortcuts
   const { availableShortcuts } = useKeyboardShortcuts({
     role: user.role,
     onOpenHelp: () => setShowShortcuts((v) => !v),
   })
 
-  // Show active branch name for users who can switch branches
   const displayHospitalName = (user.role === "CLIENT_ADMIN" || user.role === "SUPER_ADMIN")
     ? (activeBranchName || user.hospitalName)
     : user.hospitalName
 
   useEffect(() => setMounted(true), [])
 
-  // Ctrl+K keyboard shortcut
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -149,17 +146,16 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
     .slice(0, 2)
 
   const roleBadgeColor: Record<string, string> = {
-    SUPER_ADMIN: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
-    CLIENT_ADMIN: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
-    BRANCH_ADMIN: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-    ADMIN: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-    DOCTOR: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
-    RECEPTION: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
-    LAB_TECH: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
-    PHARMACIST: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
+    SUPER_ADMIN: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800",
+    CLIENT_ADMIN: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-800",
+    BRANCH_ADMIN: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800",
+    ADMIN: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800",
+    DOCTOR: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800",
+    RECEPTION: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800",
+    LAB_TECH: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800",
+    PHARMACIST: "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-300 dark:border-teal-800",
   }
 
-  // Breadcrumbs
   const breadcrumbs = pathname
     .split("/")
     .filter(Boolean)
@@ -173,24 +169,23 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
   const filteredNavCommands = navCommands.filter((a) => a.roles.includes(user.role))
 
   return (
-    <header className="h-14 sm:h-16 border-b border-border/50 glass flex items-center justify-between px-4 sm:px-6 shrink-0">
+    <header className="h-14 sm:h-16 border-b border-border bg-white dark:bg-[var(--card)] flex items-center justify-between px-4 sm:px-6 shrink-0">
       <div className="flex items-center gap-3 min-w-0">
         {onToggleMobile && (
-          <Button variant="ghost" size="icon" className="lg:hidden rounded-xl" onClick={onToggleMobile}>
+          <Button variant="ghost" size="icon" className="lg:hidden" onClick={onToggleMobile}>
             <Menu className="w-5 h-5" />
           </Button>
         )}
 
-        {/* Breadcrumbs — desktop: full path, mobile: page title only */}
         <div className="flex items-center gap-1.5 min-w-0">
-          {/* Mobile: show current page title */}
+          {/* Mobile: page title */}
           <span className="text-sm font-semibold text-foreground sm:hidden truncate max-w-[160px]">
             {breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].label : displayHospitalName}
           </span>
-          {/* Desktop: hospital logo + name + breadcrumbs */}
+          {/* Desktop: hospital + breadcrumbs */}
           {user.logoUrl && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.logoUrl} alt="" className="w-6 h-6 rounded-md object-contain hidden lg:inline-block shrink-0" />
+            <img src={user.logoUrl} alt="" className="w-6 h-6 rounded object-contain hidden lg:inline-block shrink-0" />
           )}
           <span className="text-sm font-semibold text-foreground hidden lg:inline-block shrink-0 truncate max-w-[200px]">
             {displayHospitalName}
@@ -213,10 +208,9 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
               </span>
             ))}
           </nav>
-          {/* Role badge — visible on larger screens */}
           <Badge
-            variant="secondary"
-            className={cn("text-[10px] hidden md:inline-flex ml-1", roleBadgeColor[user.role] || "")}
+            variant="outline"
+            className={cn("text-[10px] hidden md:inline-flex ml-1 border", roleBadgeColor[user.role] || "")}
           >
             {user.role.replace(/_/g, " ")}
           </Badge>
@@ -224,11 +218,11 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Global search trigger */}
+        {/* Search */}
         <Button
           variant="ghost"
           onClick={() => setSearchOpen(true)}
-          className="rounded-xl gap-2 text-muted-foreground hover:text-foreground hidden sm:flex"
+          className="gap-2 text-muted-foreground hover:text-foreground hidden sm:flex"
         >
           <Search className="w-4 h-4" />
           <span className="text-xs">Search...</span>
@@ -239,7 +233,6 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
 
         <ISTClock />
 
-        {/* Notification center */}
         <NotificationCenter user={user} />
 
         {mounted && (
@@ -247,7 +240,6 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
             variant="ghost"
             size="icon"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="rounded-xl"
           >
             {theme === "dark" ? (
               <Sun className="w-4 h-4" />
@@ -259,9 +251,9 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="rounded-xl gap-2 px-2">
-              <Avatar className="w-8 h-8 ring-2 ring-primary/20">
-                <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">
+            <Button variant="ghost" className="gap-2 px-2">
+              <Avatar className="w-8 h-8">
+                <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -275,8 +267,8 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
               <p className="text-sm font-medium">{user.name}</p>
               <div className="flex items-center gap-2 mt-0.5">
                 <Badge
-                  variant="secondary"
-                  className={cn("text-[10px]", roleBadgeColor[user.role] || "")}
+                  variant="outline"
+                  className={cn("text-[10px] border", roleBadgeColor[user.role] || "")}
                 >
                   {user.role}
                 </Badge>

@@ -1,10 +1,8 @@
 "use client"
 
 import { memo } from "react"
-import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { AnimatedCounter } from "@/components/ui/animated-counter"
-import { Sparkline } from "@/components/ui/sparkline"
 import { TrendIndicator } from "@/components/ui/trend-indicator"
 
 interface StatCardProps {
@@ -19,83 +17,64 @@ interface StatCardProps {
   onClick?: () => void
 }
 
-export const StatCard = memo(function StatCard({ label, value, gradient, icon, subtitle, index = 0, sparklineData, trend, onClick }: StatCardProps) {
+/** Map gradient class names to clean accent styles */
+const accentMap: Record<string, { border: string; iconBg: string }> = {
+  "gradient-blue": { border: "border-l-blue-600", iconBg: "icon-blue" },
+  "gradient-green": { border: "border-l-emerald-600", iconBg: "icon-green" },
+  "gradient-orange": { border: "border-l-amber-500", iconBg: "icon-orange" },
+  "gradient-purple": { border: "border-l-violet-600", iconBg: "icon-purple" },
+  "gradient-red": { border: "border-l-red-600", iconBg: "icon-red" },
+  "gradient-teal": { border: "border-l-cyan-600", iconBg: "icon-teal" },
+  "gradient-blue-premium": { border: "border-l-blue-600", iconBg: "icon-blue" },
+  "gradient-green-premium": { border: "border-l-emerald-600", iconBg: "icon-green" },
+  "gradient-orange-premium": { border: "border-l-amber-500", iconBg: "icon-orange" },
+  "gradient-purple-premium": { border: "border-l-violet-600", iconBg: "icon-purple" },
+}
+
+export const StatCard = memo(function StatCard({ label, value, gradient, icon, subtitle, index = 0, trend, onClick }: StatCardProps) {
   const isNumeric = typeof value === "number"
+  const accent = accentMap[gradient] || accentMap["gradient-blue"]
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
+    <div
       className={cn(
-        "rounded-2xl p-5 text-white relative overflow-hidden noise-overlay cursor-default",
-        "transition-all duration-300 hover:shadow-xl hover:scale-[1.02]",
-        gradient,
+        "rounded-xl border border-border bg-card p-5 border-l-[3px] card-hover cursor-default animate-fade-in",
+        accent.border,
         onClick && "cursor-pointer"
       )}
+      style={{ animationDelay: `${index * 40}ms` }}
       onClick={onClick}
     >
-      {/* Top highlight line */}
-      <div className="absolute top-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
 
-      {/* Shimmer overlay */}
-      <div className="absolute inset-0 animate-shimmer rounded-2xl pointer-events-none opacity-60" />
-
-      {/* Floating icon */}
-      {icon && (
-        <motion.div
-          animate={{ y: [0, -3, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-4 right-4 opacity-30"
-        >
-          {icon}
-        </motion.div>
-      )}
-
-      <p className="text-xs font-semibold uppercase tracking-wider opacity-70 relative z-10">{label}</p>
-
-      <div className="flex items-end justify-between mt-1 relative z-10">
-        <div>
-          {isNumeric ? (
-            <AnimatedCounter
-              value={value}
-              className="text-3xl font-bold"
-            />
-          ) : (
-            <motion.p
-              key={String(value)}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
-              className="text-3xl font-bold"
-            >
-              {value}
-            </motion.p>
-          )}
+          <div className="mt-2">
+            {isNumeric ? (
+              <AnimatedCounter
+                value={value}
+                className="text-2xl font-bold text-foreground"
+              />
+            ) : (
+              <p className="text-2xl font-bold text-foreground">{value}</p>
+            )}
+          </div>
 
           {trend !== undefined && (
-            <TrendIndicator
-              value={trend}
-              className="text-white/80 mt-0.5 [&_svg]:text-white/80"
-            />
+            <TrendIndicator value={trend} className="mt-1" />
           )}
 
           {subtitle && (
-            <p className="text-xs opacity-60 mt-0.5">{subtitle}</p>
+            <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
           )}
         </div>
 
-        {/* Sparkline */}
-        {sparklineData && sparklineData.length >= 2 && (
-          <Sparkline
-            data={sparklineData}
-            color="rgba(255,255,255,0.4)"
-            width={64}
-            height={28}
-            className="mb-1"
-          />
+        {icon && (
+          <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0", accent.iconBg)}>
+            {icon}
+          </div>
         )}
       </div>
-    </motion.div>
+    </div>
   )
 })

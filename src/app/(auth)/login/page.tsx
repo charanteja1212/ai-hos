@@ -40,9 +40,8 @@ interface RoleCard {
   loginMode: LoginMode
   label: string
   icon: React.ElementType
-  gradient: string
-  accent: string
-  glow: string
+  color: string
+  bgColor: string
   description: string
 }
 
@@ -64,7 +63,7 @@ interface Branch {
 }
 
 // ---------------------------------------------------------------------------
-// Role definitions (7 cards)
+// Role definitions — clean colors, no gradients
 // ---------------------------------------------------------------------------
 
 const roles: RoleCard[] = [
@@ -73,9 +72,8 @@ const roles: RoleCard[] = [
     loginMode: "super_admin",
     label: "Platform Admin",
     icon: Crown,
-    gradient: "from-rose-500 to-orange-500",
-    accent: "#F43F5E",
-    glow: "rgba(244,63,94,0.15)",
+    color: "#DC2626",
+    bgColor: "#FEF2F2",
     description: "Global platform management",
   },
   {
@@ -83,9 +81,8 @@ const roles: RoleCard[] = [
     loginMode: "client_admin",
     label: "Client Admin",
     icon: Building2,
-    gradient: "from-slate-400 to-slate-600",
-    accent: "#94A3B8",
-    glow: "rgba(148,163,184,0.12)",
+    color: "#64748B",
+    bgColor: "#F8FAFC",
     description: "Hospital group oversight",
   },
   {
@@ -94,9 +91,8 @@ const roles: RoleCard[] = [
     loginMode: "branch",
     label: "Admin",
     icon: Shield,
-    gradient: "from-blue-500 to-indigo-600",
-    accent: "#007AFF",
-    glow: "rgba(0,122,255,0.15)",
+    color: "#2563EB",
+    bgColor: "#EFF6FF",
     description: "Hospital settings & config",
   },
   {
@@ -104,9 +100,8 @@ const roles: RoleCard[] = [
     loginMode: "branch",
     label: "Doctor",
     icon: Stethoscope,
-    gradient: "from-emerald-500 to-green-600",
-    accent: "#34C759",
-    glow: "rgba(52,199,89,0.15)",
+    color: "#059669",
+    bgColor: "#ECFDF5",
     description: "Consultations & prescriptions",
   },
   {
@@ -114,9 +109,8 @@ const roles: RoleCard[] = [
     loginMode: "branch",
     label: "Reception",
     icon: ClipboardList,
-    gradient: "from-violet-500 to-purple-600",
-    accent: "#AF52DE",
-    glow: "rgba(175,82,222,0.15)",
+    color: "#7C3AED",
+    bgColor: "#F5F3FF",
     description: "Queue & booking management",
   },
   {
@@ -124,9 +118,8 @@ const roles: RoleCard[] = [
     loginMode: "branch",
     label: "Lab",
     icon: TestTube,
-    gradient: "from-amber-500 to-orange-600",
-    accent: "#FF9500",
-    glow: "rgba(255,149,0,0.15)",
+    color: "#D97706",
+    bgColor: "#FFFBEB",
     description: "Sample tracking & reports",
   },
   {
@@ -134,9 +127,8 @@ const roles: RoleCard[] = [
     loginMode: "branch",
     label: "Pharmacy",
     icon: Pill,
-    gradient: "from-cyan-500 to-teal-600",
-    accent: "#5AC8FA",
-    glow: "rgba(90,200,250,0.15)",
+    color: "#0891B2",
+    bgColor: "#ECFEFF",
     description: "Orders & stock management",
   },
 ]
@@ -146,22 +138,22 @@ const roles: RoleCard[] = [
 // ---------------------------------------------------------------------------
 
 const pageVariants = {
-  enter: { opacity: 0, y: 16, scale: 0.98 },
-  center: { opacity: 1, y: 0, scale: 1 },
-  exit: { opacity: 0, y: -12, scale: 0.98 },
+  enter: { opacity: 0, y: 12 },
+  center: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -8 },
 }
 
 const cardStagger = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.06 },
+    transition: { staggerChildren: 0.04 },
   },
 }
 
 const cardItem = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring" as const, stiffness: 300, damping: 24 } },
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.2 } },
 }
 
 // ---------------------------------------------------------------------------
@@ -172,14 +164,11 @@ function LoginPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Direct client URL: /login?client=CL002
   const directClientId = searchParams.get("client")
 
-  // Navigation state
   const [step, setStep] = useState<Step>("role")
   const [selectedRole, setSelectedRole] = useState<RoleCard | null>(null)
 
-  // Picker data
   const [clients, setClients] = useState<Client[]>([])
   const [branches, setBranches] = useState<Branch[]>([])
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
@@ -187,23 +176,19 @@ function LoginPageContent() {
   const [fetchingClients, setFetchingClients] = useState(false)
   const [fetchingBranches, setFetchingBranches] = useState(false)
 
-  // Pre-fetched direct client data
   const directClientLoaded = useRef(false)
   const [directClient, setDirectClient] = useState<Client | null>(null)
   const [directBranches, setDirectBranches] = useState<Branch[]>([])
   const [directClientResolved, setDirectClientResolved] = useState(false)
 
-  // Derived: true when we have a ?client= param but haven't finished loading yet
   const directClientLoading = !!directClientId && !directClientResolved
 
-  // Credentials
   const [pin, setPin] = useState("")
   const [email, setEmail] = useState("")
   const [doctorId, setDoctorId] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
-  // Password auth
   const [authMethod, setAuthMethod] = useState<"pin" | "password">("pin")
   const [loginEmail, setLoginEmail] = useState("")
   const [loginPassword, setLoginPassword] = useState("")
@@ -212,7 +197,6 @@ function LoginPageContent() {
   useEffect(() => {
     if (!directClientId || directClientLoaded.current) return
     directClientLoaded.current = true
-
     ;(async () => {
       try {
         const [clientsRes, branchesRes] = await Promise.all([
@@ -231,7 +215,7 @@ function LoginPageContent() {
   }, [directClientId])
 
   // ---------------------------------------------------------------------------
-  // Data fetching helpers
+  // Data fetching
   // ---------------------------------------------------------------------------
 
   const fetchClients = useCallback(async (): Promise<Client[]> => {
@@ -269,7 +253,6 @@ function LoginPageContent() {
       return
     }
 
-    // Direct client URL — skip client selection entirely
     if (directClient) {
       setSelectedClient(directClient)
       setClients([directClient])
@@ -295,7 +278,6 @@ function LoginPageContent() {
       return
     }
 
-    // Normal flow — fetch all clients
     const fetchedClients = await fetchClients()
     setClients(fetchedClients)
 
@@ -369,7 +351,7 @@ function LoginPageContent() {
   }
 
   // ---------------------------------------------------------------------------
-  // Login submit
+  // Login
   // ---------------------------------------------------------------------------
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -456,13 +438,12 @@ function LoginPageContent() {
   }
 
   // ---------------------------------------------------------------------------
-  // Back navigation
+  // Back
   // ---------------------------------------------------------------------------
 
   const handleBack = () => {
     setError("")
 
-    // [TEMP] Back from doctor picker → go to branch or role
     if (step === "credentials") {
       setPin("")
       setEmail("")
@@ -525,24 +506,22 @@ function LoginPageContent() {
   }
 
   // ---------------------------------------------------------------------------
-  // Derive active accent
+  // Active color
   // ---------------------------------------------------------------------------
 
-  const activeGradient = selectedRole?.gradient || "from-blue-500 to-indigo-600"
-  const activeAccent = selectedRole?.accent || "#007AFF"
-  const activeGlow = selectedRole?.glow || "rgba(0,122,255,0.15)"
+  const activeColor = selectedRole?.color || "#2563EB"
 
   // ---------------------------------------------------------------------------
-  // Shared back button
+  // Back button
   // ---------------------------------------------------------------------------
 
   const BackButton = () => (
     <button
       onClick={handleBack}
-      className="group flex items-center gap-1.5 text-white/40 hover:text-white/80 transition-all duration-200 mb-6"
+      className="group flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors mb-6"
     >
       <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-      <span className="text-xs font-medium tracking-wide">Back</span>
+      <span className="text-sm font-medium">Back</span>
     </button>
   )
 
@@ -551,44 +530,11 @@ function LoginPageContent() {
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-[#060609] relative overflow-hidden select-none">
-      {/* === Animated background === */}
-      <div className="fixed inset-0">
-        {/* Base gradient */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,#0C1425,#060609)]" />
+    <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-[#F8FAFC] relative">
+      {/* Subtle top accent line */}
+      <div className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600" />
 
-        {/* Floating orbs */}
-        <motion.div
-          animate={{ x: [0, 30, -20, 0], y: [0, -40, 20, 0], scale: [1, 1.1, 0.9, 1] }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-[20%] -left-[10%] w-[50vmax] h-[50vmax] rounded-full opacity-[0.07]"
-          style={{ background: "radial-gradient(circle, #007AFF, transparent 65%)", filter: "blur(60px)" }}
-        />
-        <motion.div
-          animate={{ x: [0, -30, 20, 0], y: [0, 30, -40, 0], scale: [1, 0.9, 1.1, 1] }}
-          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 5 }}
-          className="absolute -bottom-[20%] -right-[10%] w-[45vmax] h-[45vmax] rounded-full opacity-[0.05]"
-          style={{ background: "radial-gradient(circle, #AF52DE, transparent 65%)", filter: "blur(60px)" }}
-        />
-        <motion.div
-          animate={{ x: [0, 20, -10, 0], y: [0, -20, 30, 0] }}
-          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 10 }}
-          className="absolute top-[40%] left-[60%] w-[30vmax] h-[30vmax] rounded-full opacity-[0.04]"
-          style={{ background: "radial-gradient(circle, #34C759, transparent 65%)", filter: "blur(60px)" }}
-        />
-
-        {/* Grid overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.015]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)",
-            backgroundSize: "80px 80px",
-          }}
-        />
-      </div>
-
-      {/* === Content === */}
+      {/* Content */}
       <div className="relative z-10 w-full max-w-[520px]">
         <AnimatePresence mode="wait">
           {/* ================================================================ */}
@@ -601,59 +547,45 @@ function LoginPageContent() {
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
             >
               {directClientLoading ? (
-                /* Full loading state — prevents any flash of wrong content */
                 <div className="flex flex-col items-center justify-center py-24 gap-4">
-                  <div className="w-[72px] h-[72px] rounded-[20px] bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-blue-500/25 relative overflow-hidden">
-                    <Activity className="w-9 h-9 text-white relative z-10" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                  <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Activity className="w-8 h-8 text-primary" />
                   </div>
-                  <Loader2 className="w-6 h-6 text-white/40 animate-spin mt-4" />
-                  <p className="text-sm text-white/30">Loading...</p>
+                  <Loader2 className="w-5 h-5 text-muted-foreground animate-spin mt-4" />
+                  <p className="text-sm text-muted-foreground">Loading...</p>
                 </div>
               ) : (
               <>
               {/* Logo */}
               <div className="text-center mb-10">
-                <motion.div
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                  className="inline-flex relative"
-                >
-                  <div className="w-[72px] h-[72px] rounded-[20px] bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-blue-500/25 relative overflow-hidden">
+                <div className="inline-flex">
+                  <div className="w-16 h-16 rounded-xl bg-white border border-border shadow-sm flex items-center justify-center overflow-hidden">
                     {directClient?.logo_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={directClient.logo_url} alt={directClient.name} className="w-full h-full object-contain p-2 relative z-10" />
+                      <img src={directClient.logo_url} alt={directClient.name} className="w-full h-full object-contain p-2" />
                     ) : (
-                      <Activity className="w-9 h-9 text-white relative z-10" />
+                      <Activity className="w-8 h-8 text-primary" />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                   </div>
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.6, 1, 0.6] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/40"
-                  >
-                    <div className="w-2 h-2 rounded-full bg-white" />
-                  </motion.div>
-                </motion.div>
+                </div>
 
-                <h1 className="mt-6 text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+                <h1 className="mt-5 text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
                   {directClient ? directClient.name : "AI-HOS"}
                 </h1>
-                <p className="mt-1.5 text-sm text-white/30 tracking-widest uppercase font-medium">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {directClient ? "Staff Login" : "Hospital Operating System"}
                 </p>
               </div>
 
-              {/* Role Grid - 4 cols on desktop, 2 on mobile */}
+              {/* Role Grid */}
               <motion.div
                 variants={cardStagger}
                 initial="hidden"
                 animate="show"
-                className="grid grid-cols-2 sm:grid-cols-4 gap-2.5"
+                className="grid grid-cols-2 sm:grid-cols-4 gap-3"
               >
                 {roles
                 .filter((role) => !directClient || (role.loginMode !== "super_admin" && role.loginMode !== "client_admin"))
@@ -665,47 +597,27 @@ function LoginPageContent() {
                       variants={cardItem}
                       onClick={() => handleRoleSelect(role)}
                       disabled={fetchingClients}
-                      whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                      whileTap={{ scale: 0.97 }}
-                      className="group relative flex flex-col items-center gap-2.5 p-4 sm:p-5 rounded-2xl cursor-pointer bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] hover:border-white/[0.14] transition-colors duration-300 disabled:opacity-40 disabled:cursor-wait"
-                      style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)" }}
+                      className="group flex flex-col items-center gap-3 p-4 sm:p-5 rounded-xl bg-white border border-border hover:border-[color:var(--accent-color)] hover:shadow-md transition-all duration-150 disabled:opacity-40 disabled:cursor-wait cursor-pointer"
+                      style={{ "--accent-color": `${role.color}40` } as React.CSSProperties}
                     >
-                      {/* Hover glow */}
                       <div
-                        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                        style={{ background: `radial-gradient(circle at 50% 40%, ${role.glow}, transparent 70%)` }}
-                      />
-
-                      {/* Icon */}
-                      <div
-                        className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${role.gradient} flex items-center justify-center`}
-                        style={{ boxShadow: `0 4px 16px ${role.glow}` }}
+                        className="w-11 h-11 rounded-lg flex items-center justify-center transition-transform duration-150 group-hover:scale-105"
+                        style={{ backgroundColor: role.bgColor, color: role.color }}
                       >
-                        <Icon className="w-6 h-6 text-white" />
-                        <div className="absolute inset-0 rounded-xl overflow-hidden">
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                        </div>
+                        <Icon className="w-5 h-5" />
                       </div>
 
-                      {/* Label */}
-                      <div className="relative text-center">
-                        <p className="font-semibold text-white/85 text-[13px] leading-tight">{role.label}</p>
-                        <p className="text-[10px] text-white/25 mt-0.5 leading-tight hidden sm:block">{role.description}</p>
+                      <div className="text-center">
+                        <p className="font-semibold text-foreground text-[13px] leading-tight">{role.label}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight hidden sm:block">{role.description}</p>
                       </div>
-
-                      {/* Bottom accent */}
-                      <div
-                        className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] rounded-full transition-all duration-300 group-hover:w-10 w-0"
-                        style={{ background: `linear-gradient(90deg, transparent, ${role.accent}, transparent)` }}
-                      />
                     </motion.button>
                   )
                 })}
               </motion.div>
 
-              {/* Loading */}
               {fetchingClients && (
-                <div className="flex items-center justify-center gap-2 mt-6 text-white/30 text-sm">
+                <div className="flex items-center justify-center gap-2 mt-6 text-muted-foreground text-sm">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Loading...</span>
                 </div>
@@ -715,13 +627,13 @@ function LoginPageContent() {
               <div className="text-center mt-10 space-y-3">
                 <Link
                   href="/patient-login"
-                  className="inline-flex items-center gap-1.5 text-sm text-white/30 hover:text-white/60 transition-colors duration-200 group"
+                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors group"
                 >
                   <Heart className="w-3.5 h-3.5" />
                   <span>Patient Portal</span>
-                  <ChevronRight className="w-3 h-3 opacity-0 -ml-1 group-hover:opacity-100 group-hover:ml-0 transition-all duration-200" />
+                  <ChevronRight className="w-3 h-3 opacity-0 -ml-1 group-hover:opacity-100 group-hover:ml-0 transition-all duration-150" />
                 </Link>
-                <p className="text-[10px] text-white/15 tracking-[0.2em] font-medium uppercase">
+                <p className="text-[10px] text-muted-foreground/50 tracking-widest font-medium uppercase">
                   Powered by AI-HOS
                 </p>
               </div>
@@ -740,13 +652,13 @@ function LoginPageContent() {
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
             >
               <BackButton />
 
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-white tracking-tight">Select Hospital Group</h2>
-                <p className="text-sm text-white/35 mt-1">
+                <h2 className="text-xl font-bold text-foreground">Select Hospital Group</h2>
+                <p className="text-sm text-muted-foreground mt-1">
                   {selectedRole?.loginMode === "client_admin"
                     ? "Choose the organization to manage"
                     : "Choose your hospital group"}
@@ -760,38 +672,31 @@ function LoginPageContent() {
                     variants={cardItem}
                     onClick={() => handleClientSelect(client)}
                     disabled={fetchingBranches}
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="group relative flex items-center gap-4 p-5 rounded-2xl text-left bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] hover:border-white/[0.14] transition-colors duration-300 disabled:opacity-40 disabled:cursor-wait"
-                    style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)" }}
+                    className="group flex items-center gap-4 p-4 rounded-xl text-left bg-white border border-border hover:border-primary/30 hover:shadow-md transition-all duration-150 disabled:opacity-40 disabled:cursor-wait cursor-pointer"
                   >
                     <div
-                      className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                      style={{ background: `radial-gradient(circle at 30% 50%, ${activeGlow}, transparent 70%)` }}
-                    />
-                    <div
-                      className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${activeGradient} flex items-center justify-center shrink-0`}
-                      style={{ boxShadow: `0 4px 12px ${activeGlow}` }}
+                      className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: selectedRole?.bgColor || "#EFF6FF", color: selectedRole?.color || "#2563EB" }}
                     >
                       {client.logo_url ? (
-                        <img src={client.logo_url} alt={client.name} className="w-7 h-7 rounded-md object-contain" />
+                        <img src={client.logo_url} alt={client.name} className="w-6 h-6 rounded object-contain" />
                       ) : (
-                        <Building2 className="w-6 h-6 text-white" />
+                        <Building2 className="w-5 h-5" />
                       )}
                     </div>
-                    <div className="relative min-w-0 flex-1">
-                      <p className="font-semibold text-white/85 text-sm truncate">{client.name}</p>
-                      <p className="text-[11px] text-white/25 mt-0.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-foreground text-sm truncate">{client.name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {client.branch_count === 1 ? "1 branch" : `${client.branch_count || 0} branches`}
                       </p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-white/15 group-hover:text-white/40 transition-colors shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors shrink-0" />
                   </motion.button>
                 ))}
               </motion.div>
 
               {fetchingBranches && (
-                <div className="flex items-center justify-center gap-2 mt-6 text-white/30 text-sm">
+                <div className="flex items-center justify-center gap-2 mt-6 text-muted-foreground text-sm">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Loading branches...</span>
                 </div>
@@ -809,13 +714,13 @@ function LoginPageContent() {
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
             >
               <BackButton />
 
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-white tracking-tight">Select Branch</h2>
-                <p className="text-sm text-white/35 mt-1">
+                <h2 className="text-xl font-bold text-foreground">Select Branch</h2>
+                <p className="text-sm text-muted-foreground mt-1">
                   {selectedClient?.name} &mdash; choose your hospital branch
                 </p>
               </div>
@@ -826,28 +731,21 @@ function LoginPageContent() {
                     key={branch.tenant_id}
                     variants={cardItem}
                     onClick={() => handleBranchSelect(branch)}
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="group relative flex items-center gap-4 p-5 rounded-2xl text-left bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] hover:border-white/[0.14] transition-colors duration-300"
-                    style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)" }}
+                    className="group flex items-center gap-4 p-4 rounded-xl text-left bg-white border border-border hover:border-primary/30 hover:shadow-md transition-all duration-150 cursor-pointer"
                   >
                     <div
-                      className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                      style={{ background: `radial-gradient(circle at 30% 50%, ${activeGlow}, transparent 70%)` }}
-                    />
-                    <div
-                      className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${activeGradient} flex items-center justify-center shrink-0`}
-                      style={{ boxShadow: `0 4px 12px ${activeGlow}` }}
+                      className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: selectedRole?.bgColor || "#EFF6FF", color: selectedRole?.color || "#2563EB" }}
                     >
-                      <Heart className="w-6 h-6 text-white" />
+                      <Heart className="w-5 h-5" />
                     </div>
-                    <div className="relative min-w-0 flex-1">
-                      <p className="font-semibold text-white/85 text-sm truncate">{branch.hospital_name}</p>
-                      <p className="text-[11px] text-white/25 mt-0.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-foreground text-sm truncate">{branch.hospital_name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {branch.city}{branch.branch_code ? ` \u00B7 ${branch.branch_code}` : ""}
                       </p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-white/15 group-hover:text-white/40 transition-colors shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors shrink-0" />
                   </motion.button>
                 ))}
               </motion.div>
@@ -855,7 +753,7 @@ function LoginPageContent() {
           )}
 
           {/* ================================================================ */}
-          {/* STEP: Credentials Form                                           */}
+          {/* STEP: Credentials                                                */}
           {/* ================================================================ */}
           {step === "credentials" && selectedRole && (
             <motion.div
@@ -864,53 +762,41 @@ function LoginPageContent() {
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
               className="max-w-[400px] mx-auto"
             >
               {(() => {
                 const Icon = selectedRole.icon
                 return (
-                  <div
-                    className="relative rounded-3xl overflow-hidden border border-white/[0.06]"
-                    style={{ boxShadow: `0 24px 80px ${activeGlow}, 0 0 0 1px rgba(255,255,255,0.03), 0 8px 32px rgba(0,0,0,0.4)` }}
-                  >
-                    {/* Top gradient header */}
-                    <div className={`relative h-40 bg-gradient-to-br ${activeGradient} flex flex-col items-center justify-center overflow-hidden`}>
-                      {/* Subtle pattern */}
-                      <div
-                        className="absolute inset-0 opacity-10"
-                        style={{
-                          backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
-                          backgroundSize: "24px 24px",
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/30" />
-
+                  <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
+                    {/* Header */}
+                    <div className="px-6 py-6 border-b border-border flex items-center gap-4">
                       <button
                         onClick={handleBack}
-                        className="absolute top-4 left-4 flex items-center gap-1.5 text-white/60 hover:text-white transition-colors z-10 group"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-                        <span className="text-xs font-medium">Back</span>
+                        <ArrowLeft className="w-5 h-5" />
                       </button>
-
-                      <div className="relative w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/25 shadow-lg">
-                        <Icon className="w-8 h-8 text-white" />
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: selectedRole.bgColor, color: selectedRole.color }}
+                      >
+                        <Icon className="w-5 h-5" />
                       </div>
-                      <p className="relative mt-3 text-white font-bold text-lg tracking-wide">
-                        {selectedRole.label}
-                      </p>
-                      <p className="relative text-white/50 text-xs mt-0.5">
-                        {selectedRole.loginMode === "super_admin"
-                          ? "Platform access"
-                          : selectedRole.loginMode === "client_admin"
-                            ? selectedClient?.name || "Sign in to continue"
-                            : selectedBranch?.hospital_name || "Sign in to continue"}
-                      </p>
+                      <div>
+                        <p className="font-bold text-foreground">{selectedRole.label}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {selectedRole.loginMode === "super_admin"
+                            ? "Platform access"
+                            : selectedRole.loginMode === "client_admin"
+                              ? selectedClient?.name || "Sign in to continue"
+                              : selectedBranch?.hospital_name || "Sign in to continue"}
+                        </p>
+                      </div>
                     </div>
 
-                    {/* Form body */}
-                    <div className="bg-[#0C0C12] p-6 pt-5">
+                    {/* Form */}
+                    <div className="p-6">
                       <Tabs
                         value={authMethod}
                         onValueChange={(v) => {
@@ -919,29 +805,29 @@ function LoginPageContent() {
                         }}
                         className="gap-4"
                       >
-                        <TabsList className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl h-10">
+                        <TabsList className="w-full bg-muted rounded-lg h-10">
                           <TabsTrigger
                             value="pin"
-                            className="flex-1 text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-white text-white/35 rounded-lg transition-all"
+                            className="flex-1 text-xs rounded-md"
                           >
                             <KeyRound className="w-3.5 h-3.5 mr-1.5" />
                             PIN Login
                           </TabsTrigger>
                           <TabsTrigger
                             value="password"
-                            className="flex-1 text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-white text-white/35 rounded-lg transition-all"
+                            className="flex-1 text-xs rounded-md"
                           >
                             <Mail className="w-3.5 h-3.5 mr-1.5" />
                             Email & Password
                           </TabsTrigger>
                         </TabsList>
 
-                        {/* ---- PIN Tab ---- */}
+                        {/* PIN Tab */}
                         <TabsContent value="pin">
                           <form onSubmit={handleLogin} className="space-y-4">
                             {selectedRole.loginMode === "super_admin" && (
                               <div className="space-y-1.5">
-                                <Label htmlFor="email" className="text-white/40 text-[11px] font-medium tracking-wider uppercase">
+                                <Label htmlFor="email" className="text-xs font-medium text-muted-foreground">
                                   Email
                                 </Label>
                                 <Input
@@ -951,15 +837,14 @@ function LoginPageContent() {
                                   value={email}
                                   onChange={(e) => setEmail(e.target.value)}
                                   autoFocus
-                                  className="h-11 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/15 rounded-xl focus:ring-2 focus:border-transparent text-sm"
-                                  style={{ ["--tw-ring-color" as string]: `${activeAccent}30` }}
+                                  className="h-10"
                                 />
                               </div>
                             )}
 
                             {selectedRole.loginMode === "branch" && selectedRole.id === "DOCTOR" && (
                               <div className="space-y-1.5">
-                                <Label htmlFor="doctorId" className="text-white/40 text-[11px] font-medium tracking-wider uppercase">
+                                <Label htmlFor="doctorId" className="text-xs font-medium text-muted-foreground">
                                   Doctor ID
                                 </Label>
                                 <Input
@@ -968,14 +853,13 @@ function LoginPageContent() {
                                   value={doctorId}
                                   onChange={(e) => setDoctorId(e.target.value)}
                                   autoFocus
-                                  className="h-11 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/15 rounded-xl focus:ring-2 focus:border-transparent text-sm"
-                                  style={{ ["--tw-ring-color" as string]: `${activeAccent}30` }}
+                                  className="h-10"
                                 />
                               </div>
                             )}
 
                             <div className="space-y-1.5">
-                              <Label htmlFor="pin" className="text-white/40 text-[11px] font-medium tracking-wider uppercase">
+                              <Label htmlFor="pin" className="text-xs font-medium text-muted-foreground">
                                 PIN
                               </Label>
                               <Input
@@ -990,27 +874,22 @@ function LoginPageContent() {
                                   !(selectedRole.loginMode === "branch" && selectedRole.id === "DOCTOR")
                                 }
                                 maxLength={10}
-                                className="h-11 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/15 rounded-xl focus:ring-2 focus:border-transparent text-sm"
-                                style={{ ["--tw-ring-color" as string]: `${activeAccent}30` }}
+                                className="h-10"
                               />
                             </div>
 
                             {error && authMethod === "pin" && (
-                              <motion.div
-                                initial={{ opacity: 0, y: -4 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="flex items-center gap-2 text-sm text-red-400 bg-red-500/8 rounded-xl px-3 py-2.5 border border-red-500/10"
-                              >
-                                <div className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+                              <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/5 rounded-lg px-3 py-2.5 border border-destructive/10">
+                                <div className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />
                                 {error}
-                              </motion.div>
+                              </div>
                             )}
 
                             <Button
                               type="submit"
                               disabled={loading || !pin || (selectedRole.loginMode === "super_admin" && !email)}
-                              className={`w-full h-11 rounded-xl font-semibold text-white border-0 bg-gradient-to-r ${activeGradient} hover:opacity-90 transition-all duration-200 disabled:opacity-30 shadow-lg`}
-                              style={{ boxShadow: `0 4px 16px ${activeGlow}` }}
+                              className="w-full h-10 font-semibold"
+                              style={{ backgroundColor: activeColor }}
                             >
                               {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                               {loading ? "Signing in..." : "Sign In"}
@@ -1018,11 +897,11 @@ function LoginPageContent() {
                           </form>
                         </TabsContent>
 
-                        {/* ---- Password Tab ---- */}
+                        {/* Password Tab */}
                         <TabsContent value="password">
                           <form onSubmit={handlePasswordLogin} className="space-y-4">
                             <div className="space-y-1.5">
-                              <Label htmlFor="loginEmail" className="text-white/40 text-[11px] font-medium tracking-wider uppercase">
+                              <Label htmlFor="loginEmail" className="text-xs font-medium text-muted-foreground">
                                 Email
                               </Label>
                               <Input
@@ -1032,13 +911,12 @@ function LoginPageContent() {
                                 value={loginEmail}
                                 onChange={(e) => setLoginEmail(e.target.value)}
                                 autoFocus={authMethod === "password"}
-                                className="h-11 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/15 rounded-xl focus:ring-2 focus:border-transparent text-sm"
-                                style={{ ["--tw-ring-color" as string]: `${activeAccent}30` }}
+                                className="h-10"
                               />
                             </div>
 
                             <div className="space-y-1.5">
-                              <Label htmlFor="loginPassword" className="text-white/40 text-[11px] font-medium tracking-wider uppercase">
+                              <Label htmlFor="loginPassword" className="text-xs font-medium text-muted-foreground">
                                 Password
                               </Label>
                               <Input
@@ -1047,27 +925,22 @@ function LoginPageContent() {
                                 placeholder="Enter your password"
                                 value={loginPassword}
                                 onChange={(e) => setLoginPassword(e.target.value)}
-                                className="h-11 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/15 rounded-xl focus:ring-2 focus:border-transparent text-sm"
-                                style={{ ["--tw-ring-color" as string]: `${activeAccent}30` }}
+                                className="h-10"
                               />
                             </div>
 
                             {error && authMethod === "password" && (
-                              <motion.div
-                                initial={{ opacity: 0, y: -4 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="flex items-center gap-2 text-sm text-red-400 bg-red-500/8 rounded-xl px-3 py-2.5 border border-red-500/10"
-                              >
-                                <div className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+                              <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/5 rounded-lg px-3 py-2.5 border border-destructive/10">
+                                <div className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />
                                 {error}
-                              </motion.div>
+                              </div>
                             )}
 
                             <Button
                               type="submit"
                               disabled={loading || !loginEmail || !loginPassword}
-                              className={`w-full h-11 rounded-xl font-semibold text-white border-0 bg-gradient-to-r ${activeGradient} hover:opacity-90 transition-all duration-200 disabled:opacity-30 shadow-lg`}
-                              style={{ boxShadow: `0 4px 16px ${activeGlow}` }}
+                              className="w-full h-10 font-semibold"
+                              style={{ backgroundColor: activeColor }}
                             >
                               {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                               {loading ? "Signing in..." : "Sign In"}
@@ -1076,7 +949,7 @@ function LoginPageContent() {
                             <div className="text-center pt-1">
                               <Link
                                 href="/forgot-password"
-                                className="text-xs text-white/25 hover:text-white/50 transition-colors"
+                                className="text-xs text-muted-foreground hover:text-primary transition-colors"
                               >
                                 Forgot your password?
                               </Link>
@@ -1086,7 +959,7 @@ function LoginPageContent() {
                       </Tabs>
 
                       {selectedRole.loginMode === "branch" && selectedBranch && (
-                        <p className="text-center text-[10px] text-white/15 mt-5 tracking-wide">
+                        <p className="text-center text-[10px] text-muted-foreground/60 mt-5 tracking-wide">
                           {selectedBranch.hospital_name}{selectedBranch.city ? ` \u2022 ${selectedBranch.city}` : ""}
                         </p>
                       )}
@@ -1098,16 +971,12 @@ function LoginPageContent() {
           )}
         </AnimatePresence>
 
-        {/* Error display for non-credential steps */}
+        {/* Error for non-credential steps */}
         {error && step !== "credentials" && (
-          <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-4 flex items-center gap-2 text-sm text-red-400 bg-red-500/8 rounded-xl px-3 py-2.5 border border-red-500/10"
-          >
-            <div className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+          <div className="mt-4 flex items-center gap-2 text-sm text-destructive bg-destructive/5 rounded-lg px-3 py-2.5 border border-destructive/10">
+            <div className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />
             {error}
-          </motion.div>
+          </div>
         )}
       </div>
     </div>
@@ -1116,16 +985,12 @@ function LoginPageContent() {
 
 function LoginSuspenseFallback() {
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-[#060609] relative overflow-hidden">
-      <div className="fixed inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,#0C1425,#060609)]" />
-      </div>
-      <div className="relative z-10 flex flex-col items-center gap-4">
-        <div className="w-[72px] h-[72px] rounded-[20px] bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-blue-500/25 relative overflow-hidden">
-          <Activity className="w-9 h-9 text-white relative z-10" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+    <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-[#F8FAFC]">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center">
+          <Activity className="w-8 h-8 text-primary" />
         </div>
-        <Loader2 className="w-6 h-6 text-white/40 animate-spin mt-2" />
+        <Loader2 className="w-5 h-5 text-muted-foreground animate-spin mt-2" />
       </div>
     </div>
   )

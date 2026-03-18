@@ -40,8 +40,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     }
   }, [status, router])
 
-  // Capture-phase wheel handler on window — fires BEFORE any other handler.
-  // Manually scrolls main to bypass anything blocking native scroll.
+  // Capture-phase wheel handler on window
   useEffect(() => {
     const handler = (e: WheelEvent) => {
       const main = document.getElementById("dashboard-main")
@@ -50,8 +49,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       const max = main.scrollHeight - main.clientHeight
       if (max <= 0) return
       let dy = e.deltaY
-      if (e.deltaMode === 1) dy *= 40  // LINE mode
-      if (e.deltaMode === 2) dy *= main.clientHeight  // PAGE mode
+      if (e.deltaMode === 1) dy *= 40
+      if (e.deltaMode === 2) dy *= main.clientHeight
       main.scrollTop = Math.max(0, Math.min(max, main.scrollTop + dy))
       e.preventDefault()
     }
@@ -63,10 +62,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   if (status === "loading") {
     return (
-      <div className="flex h-screen">
-        <div className="hidden lg:block w-64 border-r border-border bg-sidebar p-4 space-y-4">
+      <div className="flex h-screen bg-background">
+        <div className="hidden lg:block w-64 border-r border-border bg-[var(--sidebar)] p-4 space-y-4">
           <div className="flex items-center gap-3">
-            <Skeleton className="w-9 h-9 rounded-xl" />
+            <Skeleton className="w-8 h-8 rounded-lg" />
             <div className="space-y-1">
               <Skeleton className="w-16 h-4" />
               <Skeleton className="w-24 h-3" />
@@ -74,23 +73,23 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="space-y-2 mt-6">
             {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 rounded-xl" />
+              <Skeleton key={i} className="h-9 rounded-lg" />
             ))}
           </div>
         </div>
         <div className="flex-1 flex flex-col">
           <div className="h-14 sm:h-16 border-b border-border px-4 sm:px-6 flex items-center justify-between">
             <Skeleton className="w-48 h-6" />
-            <Skeleton className="w-32 h-8 rounded-xl" />
+            <Skeleton className="w-32 h-8 rounded-lg" />
           </div>
           <div className="flex-1 p-4 sm:p-6 space-y-4">
             <Skeleton className="w-64 h-8" />
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-28 sm:h-32 rounded-2xl" />
+                <Skeleton key={i} className="h-24 rounded-xl" />
               ))}
             </div>
-            <Skeleton className="h-64 rounded-2xl" />
+            <Skeleton className="h-64 rounded-xl" />
           </div>
         </div>
       </div>
@@ -107,12 +106,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/20 lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar — mobile: fixed overlay, desktop: fixed */}
+      {/* Sidebar */}
       <div
         className={`
           fixed inset-y-0 left-0 z-50
@@ -123,7 +122,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <Sidebar role={user.role} hospitalName={user.hospitalName} userName={user.name} clientId={user.clientId || ""} logoUrl={user.logoUrl} />
       </div>
 
-      {/* Content — offset by sidebar width */}
+      {/* Content */}
       <div
         className="lg:pl-64 bg-background isolate"
         style={{ height: "100dvh", display: "flex", flexDirection: "column" }}

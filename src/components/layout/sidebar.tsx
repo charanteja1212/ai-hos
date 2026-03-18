@@ -3,7 +3,6 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -40,7 +39,6 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
   const { hasFeature } = useFeatures()
   const rawNavConfig = getNavForRole(role)
 
-  // Filter nav items based on feature flags
   const navConfig = {
     sections: rawNavConfig.sections
       .map((section) => ({
@@ -59,7 +57,6 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
     }))
   }
 
-  // Exact match for root paths, startsWith for sub-paths
   const isActivePath = (href: string) => {
     if (pathname === href) return true
     const rootPaths = ["/reception", "/doctor", "/admin", "/pharmacy", "/lab", "/platform", "/patient"]
@@ -68,13 +65,14 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
   }
 
   return (
-    <motion.aside
-      animate={{ width: collapsed ? 72 : 256 }}
-      transition={{ duration: 0.2, ease: "easeInOut" }}
-      className="h-screen sidebar-notion flex flex-col shrink-0"
+    <aside
+      className={cn(
+        "h-screen flex flex-col shrink-0 bg-[var(--sidebar)] border-r border-border transition-[width] duration-200 ease-in-out",
+        collapsed ? "w-[72px]" : "w-64"
+      )}
     >
-      {/* ── Header ── */}
-      <div className="flex items-center gap-3 px-4 h-14 border-b border-border/40 shrink-0">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 h-14 border-b border-border shrink-0">
         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 shrink-0 overflow-hidden">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -83,27 +81,20 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
             <Heart className="w-4 h-4 text-primary" />
           )}
         </div>
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="overflow-hidden whitespace-nowrap min-w-0"
-            >
-              <p className="font-semibold text-[13px] text-foreground">AI-HOS</p>
-              <p className="text-[11px] text-muted-foreground truncate max-w-[160px]">
-                {hospitalName}
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {!collapsed && (
+          <div className="overflow-hidden whitespace-nowrap min-w-0">
+            <p className="font-semibold text-sm text-foreground">AI-HOS</p>
+            <p className="text-[11px] text-muted-foreground truncate max-w-[160px]">
+              {hospitalName}
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* ── Branch Switcher ── */}
+      {/* Branch Switcher */}
       <BranchSwitcher role={role} clientId={clientId} collapsed={collapsed} />
 
-      {/* ── Scrollable Navigation ── */}
+      {/* Navigation */}
       <div className="flex-1 overflow-y-auto sidebar-scroll py-2 px-2">
         {navConfig.sections.map((section, sIdx) => (
           <SidebarSectionBlock
@@ -119,9 +110,9 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
         ))}
       </div>
 
-      {/* ── User Section ── */}
+      {/* User */}
       {userName && (
-        <div className="border-t border-border/40 p-3 shrink-0">
+        <div className="border-t border-border p-3 shrink-0">
           <div
             className={cn(
               "flex items-center gap-2.5 rounded-lg p-2",
@@ -136,33 +127,26 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
                 .slice(0, 2)
                 .toUpperCase()}
             </div>
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="overflow-hidden min-w-0"
-                >
-                  <p className="text-[13px] font-medium text-foreground truncate max-w-[140px]">
-                    {userName}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {role.replace(/_/g, " ")}
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {!collapsed && (
+              <div className="overflow-hidden min-w-0">
+                <p className="text-[13px] font-medium text-foreground truncate max-w-[140px]">
+                  {userName}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {role.replace(/_/g, " ")}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* ── Language Switcher ── */}
-      <div className="border-t border-border/40 px-2 pt-2 shrink-0">
+      {/* Language Switcher */}
+      <div className="border-t border-border px-2 pt-2 shrink-0">
         <LanguageSwitcher compact={collapsed} />
       </div>
 
-      {/* ── Collapse Toggle ── */}
+      {/* Collapse Toggle */}
       <div className="px-2 pb-2 shrink-0">
         <Button
           variant="ghost"
@@ -177,14 +161,11 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
           )}
         </Button>
       </div>
-    </motion.aside>
+    </aside>
   )
 }
 
-/* ─────────────────────────────────────────────────────────────────────────── */
-/* Section Block                                                              */
-/* ─────────────────────────────────────────────────────────────────────────── */
-
+/* Section Block */
 function SidebarSectionBlock({
   section,
   collapsed,
@@ -203,7 +184,6 @@ function SidebarSectionBlock({
 }) {
   return (
     <div className={cn(!isFirst && "mt-4")}>
-      {/* Section header */}
       {!collapsed ? (
         <button
           onClick={onToggleSection}
@@ -212,46 +192,34 @@ function SidebarSectionBlock({
           <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 select-none">
             {section.label}
           </span>
-          <motion.div
-            animate={{ rotate: sectionCollapsed ? -90 : 0 }}
-            transition={{ duration: 0.15 }}
-          >
-            <ChevronDown className="w-3 h-3 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </motion.div>
+          <ChevronDown
+            className={cn(
+              "w-3 h-3 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-all duration-150",
+              sectionCollapsed && "-rotate-90"
+            )}
+          />
         </button>
       ) : (
-        !isFirst && <div className="mx-auto w-6 h-px bg-border/60 my-2" />
+        !isFirst && <div className="mx-auto w-6 h-px bg-border my-2" />
       )}
 
-      {/* Section items */}
-      <AnimatePresence initial={false}>
-        {!sectionCollapsed && (
-          <motion.nav
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-            className="overflow-hidden space-y-0.5"
-          >
-            {section.items.map((item) => (
-              <SidebarNavLink
-                key={item.href}
-                item={item}
-                collapsed={collapsed}
-                active={isActive(item.href)}
-              />
-            ))}
-          </motion.nav>
-        )}
-      </AnimatePresence>
+      {!sectionCollapsed && (
+        <nav className="space-y-0.5">
+          {section.items.map((item) => (
+            <SidebarNavLink
+              key={item.href}
+              item={item}
+              collapsed={collapsed}
+              active={isActive(item.href)}
+            />
+          ))}
+        </nav>
+      )}
     </div>
   )
 }
 
-/* ─────────────────────────────────────────────────────────────────────────── */
-/* Nav Link                                                                   */
-/* ─────────────────────────────────────────────────────────────────────────── */
-
+/* Nav Link */
 function SidebarNavLink({
   item,
   collapsed,
@@ -265,20 +233,15 @@ function SidebarNavLink({
     <Link
       href={item.href}
       className={cn(
-        "relative flex items-center gap-2.5 py-1.5 rounded-lg text-[13px] font-medium transition-colors duration-150",
+        "relative flex items-center gap-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors duration-100",
         collapsed ? "justify-center px-2" : "px-3",
         active
-          ? "text-foreground bg-accent/50"
-          : "text-muted-foreground hover:text-foreground hover:bg-accent/40"
+          ? "text-primary bg-primary/8 font-semibold"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted"
       )}
     >
-      {/* Active indicator bar */}
       {active && (
-        <motion.div
-          layoutId="sidebar-active-bar"
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full bg-primary"
-          transition={{ type: "spring", stiffness: 500, damping: 35 }}
-        />
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full bg-primary" />
       )}
       <item.icon
         className={cn(
