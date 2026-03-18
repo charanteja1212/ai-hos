@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   try {
     const res = await fetch(
       SB_URL() + '/appointments?booking_id=eq.' + encodeURIComponent(bookingId) +
-      '&select=booking_id,status,payment_status,patient_name,doctor_name,specialty,date,time,op_pass_id,payment_link,consultation_fee,tenant_id',
+      '&select=booking_id,status,payment_status,patient_name,doctor_name,specialty,date,time,op_pass_id,payment_link,payment_id,tenant_id',
       {
         headers: { apikey: SB_KEY(), Authorization: 'Bearer ' + SB_KEY() },
         signal: AbortSignal.timeout(8000),
@@ -36,6 +36,23 @@ export async function GET(req: NextRequest) {
     }
 
     const appt = rows[0];
+
+    // Fetch consultation fee from Razorpay payment link if available
+    let consultation_fee: number | null = null;
+    if (appt.payment_id) {
+      try {
+        const RZP_AUTH = 'Basic ' + (process.env.RAZORPAY_AUTH || '');
+        const plRes = await fetch('https://api.razorpay.com/v1/payment_links/' + appt.payment_id, {
+          headers: { Authorization: RZP_AUTH },
+          signal: AbortSignal.timeout(5000),
+        });
+        if (plRes.ok) {
+          const pl = await plRes.json();
+          if (pl.amount) consultation_fee = pl.amount / 100; // paise to rupees
+        }
+      } catch { /* ignore — fee is optional */ }
+    }
+
     return NextResponse.json({
       booking_id: appt.booking_id,
       status: appt.status,
@@ -47,7 +64,7 @@ export async function GET(req: NextRequest) {
       appointment_time: appt.time,
       op_pass_id: appt.op_pass_id || null,
       payment_link: appt.payment_link || null,
-      consultation_fee: appt.consultation_fee || null,
+      consultation_fee,
       tenant_id: appt.tenant_id || null,
     });
   } catch {
