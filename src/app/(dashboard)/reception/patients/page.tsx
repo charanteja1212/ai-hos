@@ -213,9 +213,9 @@ export default function PatientsPage() {
           ...(basePatient || { tenant_id: tenantId }),
           phone: appts[0]?.patient_phone || basePatient?.phone || normalized,
           name,
-          // Keep age/gender from patients table only if name matches
-          age: patients.find((p) => p.name === name)?.age || basePatient?.age || null,
-          gender: patients.find((p) => p.name === name)?.gender || basePatient?.gender || null,
+          // Keep age/gender from patients table only if name matches — no fallback to basePatient
+          age: patients.find((p) => p.name === name)?.age || null,
+          gender: patients.find((p) => p.name === name)?.gender || null,
           recentAppointments: appts.slice(0, 5),
           totalAppointments: appts.length,
         } as PatientWithAppointments))
