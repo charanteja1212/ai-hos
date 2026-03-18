@@ -363,7 +363,7 @@ export function BookingForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "book-appointment",
-          phone: patient.phone,
+          patient_phone: patient.phone,
           patient_name: patient.name,
           doctor_id: selectedDoctor.doctor_id,
           doctor_name: selectedDoctor.name,
