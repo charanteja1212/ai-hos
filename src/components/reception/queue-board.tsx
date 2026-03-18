@@ -340,7 +340,7 @@ function KanbanColumn({ title, count, accentDot, accentBg, emptyIcon: EmptyIcon,
 
       {/* Cards area */}
       <ScrollArea className="flex-1 max-h-[520px]">
-        <div className="px-2.5 pb-2.5 space-y-2.5">
+        <div className="px-2.5 pt-2.5 pb-2.5 space-y-2.5">
           {count === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
