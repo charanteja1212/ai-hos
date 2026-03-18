@@ -25,25 +25,42 @@ function sbHeaders() {
 
 async function sbGet(path: string) {
   const r = await fetch(SB_URL() + path, { headers: sbHeaders(), signal: AbortSignal.timeout(10000) });
-  return r.ok ? r.json() : [];
+  if (!r.ok) {
+    const txt = await r.text().catch(() => '');
+    console.error('[webhook][sbGet] FAIL', r.status, path, txt.slice(0, 200));
+    return [];
+  }
+  return r.json();
 }
 
 async function sbPatch(path: string, body: object) {
-  await fetch(SB_URL() + path, {
+  const r = await fetch(SB_URL() + path, {
     method: 'PATCH', headers: { ...sbHeaders(), Prefer: 'return=minimal' },
     body: JSON.stringify(body), signal: AbortSignal.timeout(10000),
   });
+  if (!r.ok) {
+    const txt = await r.text().catch(() => '');
+    console.error('[webhook][sbPatch] FAIL', r.status, path, txt.slice(0, 200));
+  }
 }
 
 async function sbPost(path: string, body: object) {
-  await fetch(SB_URL() + path, {
+  const r = await fetch(SB_URL() + path, {
     method: 'POST', headers: { ...sbHeaders(), Prefer: 'return=minimal' },
     body: JSON.stringify(body), signal: AbortSignal.timeout(10000),
   });
+  if (!r.ok) {
+    const txt = await r.text().catch(() => '');
+    console.error('[webhook][sbPost] FAIL', r.status, path, txt.slice(0, 200));
+  }
 }
 
 async function sbDelete(path: string) {
-  await fetch(SB_URL() + path, { method: 'DELETE', headers: sbHeaders(), signal: AbortSignal.timeout(10000) });
+  const r = await fetch(SB_URL() + path, { method: 'DELETE', headers: sbHeaders(), signal: AbortSignal.timeout(10000) });
+  if (!r.ok) {
+    const txt = await r.text().catch(() => '');
+    console.error('[webhook][sbDelete] FAIL', r.status, path, txt.slice(0, 200));
+  }
 }
 
 /* ── whatsapp helper ── */
@@ -118,60 +135,74 @@ async function renderCard(html: string): Promise<string | null> {
 /* ── main handler ── */
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
-  console.log('[webhook] Received');
+  console.log('[webhook] POST received');
 
-  // 1. Verify signature
+  // ── PHASE 1: Signature verification ──
   const secret = WEBHOOK_SECRET();
   if (secret) {
     const sig = req.headers.get('x-razorpay-signature') || '';
     const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
     if (sig !== expected) {
-      console.error('[webhook] Signature mismatch');
+      console.error('[webhook][PHASE 1] FAIL — Signature mismatch');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
+    console.log('[webhook][PHASE 1] OK — Signature verified');
+  } else {
+    console.log('[webhook][PHASE 1] SKIP — No webhook secret configured');
   }
 
-  // 2. Parse event
+  // ── PHASE 2: Parse event ──
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let event: any;
-  try { event = JSON.parse(rawBody); } catch {
+  try { event = JSON.parse(rawBody); } catch (e) {
+    console.error('[webhook][PHASE 2] FAIL — Invalid JSON:', e);
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
   const eventType = event.event || '';
   if (eventType !== 'payment_link.paid') {
+    console.log('[webhook][PHASE 2] SKIP — Event type:', eventType, '(not payment_link.paid)');
     return NextResponse.json({ status: 'ignored' });
   }
 
   const paymentLinkId = event.payload?.payment_link?.entity?.id || '';
   const paymentId = event.payload?.payment?.entity?.id || '';
-  console.log('[webhook] payment_link.paid — link:', paymentLinkId, 'payment:', paymentId);
+  console.log('[webhook][PHASE 2] OK — payment_link.paid | link:', paymentLinkId, '| payment:', paymentId);
 
   if (!paymentLinkId || !paymentId) {
+    console.error('[webhook][PHASE 2] FAIL — Missing IDs | linkId:', paymentLinkId, '| paymentId:', paymentId);
     return NextResponse.json({ error: 'Missing IDs' }, { status: 400 });
   }
 
-  // 3. In-memory dedup (prevents reprocessing within same container)
+  // ── PHASE 3: Dedup check (memory) ──
   if (processedPayments.has(paymentId)) {
-    console.log('[webhook] Already processed (memory):', paymentId);
+    console.log('[webhook][PHASE 3] SKIP — Already processed (memory):', paymentId);
     return NextResponse.json({ status: 'already_processed' });
   }
+  console.log('[webhook][PHASE 3] OK — Not in memory dedup set');
 
-  // 4. DB idempotency check — appointments table
+  // ── PHASE 4: Dedup check (DB) ──
   try {
     const existing = await sbGet('/appointments?razorpay_payment_id=eq.' + encodeURIComponent(paymentId) + '&status=eq.confirmed&select=booking_id');
     if (Array.isArray(existing) && existing.length > 0) {
       processedPayments.add(paymentId);
-      console.log('[webhook] Already processed (DB):', existing[0].booking_id);
+      console.log('[webhook][PHASE 4] SKIP — Already processed (DB):', existing[0].booking_id);
       return NextResponse.json({ status: 'already_processed' });
     }
-  } catch { /* continue */ }
+    console.log('[webhook][PHASE 4] OK — Not in DB (fresh payment)');
+  } catch (e) {
+    console.error('[webhook][PHASE 4] WARN — DB dedup check failed:', e);
+  }
 
-  // 4. Get payment link details from webhook payload (no API call needed)
+  // ── PHASE 5: Extract data from webhook payload ──
   try {
-    // Razorpay webhook payload includes the full payment_link entity
     const link = event.payload?.payment_link?.entity || {};
     const notes = link.notes || {};
+
+    console.log('[webhook][PHASE 5] Raw link entity keys:', Object.keys(link));
+    console.log('[webhook][PHASE 5] Raw notes:', JSON.stringify(notes));
+    console.log('[webhook][PHASE 5] Link amount:', link.amount, '| Link status:', link.status);
+
     const type = notes.type || 'appointment';
     const bookingId = notes.reference_id || '';
     const tenantId = notes.tenant_id || 'T001';
@@ -183,37 +214,51 @@ export async function POST(req: NextRequest) {
     const apptTime = notes.appointment_time || '';
     const amount = link.amount ? link.amount / 100 : 0;
 
-    console.log('[webhook] Processing:', type, bookingId, patientName);
+    console.log('[webhook][PHASE 5] OK — Extracted:', {
+      type, bookingId, tenantId, patientName, patientPhone, doctorName, specialty, apptDate, apptTime, amount,
+    });
 
-    // 6. Check op_passes table too (catches cases where appointments was cleared but op_passes wasn't)
+    if (!bookingId) {
+      console.error('[webhook][PHASE 5] FAIL — No booking ID in notes! Cannot proceed.');
+      return NextResponse.json({ error: 'No booking ID in payment notes' }, { status: 400 });
+    }
+
+    // ── PHASE 6: Check existing OP pass ──
     if (type === 'appointment' && bookingId) {
       try {
         const existingPass = await sbGet('/op_passes?booking_id=eq.' + encodeURIComponent(bookingId) + '&status=eq.ACTIVE&select=op_pass_id');
         if (Array.isArray(existingPass) && existingPass.length > 0) {
           processedPayments.add(paymentId);
-          console.log('[webhook] OP pass already exists for booking:', bookingId);
+          console.log('[webhook][PHASE 6] SKIP — OP pass already exists:', existingPass[0].op_pass_id, 'for booking:', bookingId);
           return NextResponse.json({ status: 'already_processed' });
         }
-      } catch { /* continue */ }
+        console.log('[webhook][PHASE 6] OK — No existing OP pass for booking:', bookingId);
+      } catch (e) {
+        console.error('[webhook][PHASE 6] WARN — OP pass check failed:', e);
+      }
     }
 
-    /* ── APPOINTMENT ── */
+    /* ── APPOINTMENT FLOW ── */
     if (type === 'appointment' && bookingId) {
-      // Verify appointment actually exists in DB (blocks ghost processing from old webhook retries after DB clear)
+      // ── PHASE 7: Verify appointment exists ──
       const apptCheck = await sbGet('/appointments?booking_id=eq.' + encodeURIComponent(bookingId) + '&select=booking_id');
       if (!Array.isArray(apptCheck) || apptCheck.length === 0) {
         processedPayments.add(paymentId);
-        console.log('[webhook] Appointment not found in DB (old retry?):', bookingId);
+        console.error('[webhook][PHASE 7] FAIL — Appointment not found in DB:', bookingId);
         return NextResponse.json({ status: 'appointment_not_found' });
       }
+      console.log('[webhook][PHASE 7] OK — Appointment exists:', bookingId);
+
+      // ── PHASE 8: Generate OP Pass data ──
       const ist = nowIST();
       const expiryDate = new Date(ist.ms + 15 * 86400000).toISOString().split('T')[0];
       const opPassId = 'OP' + Date.now();
       const verifyUrl = 'https://ainewworld.in/webhook/verify-appointment?id=' + encodeURIComponent(opPassId);
       const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(verifyUrl);
       const expiryDisplay = new Date(expiryDate + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+      console.log('[webhook][PHASE 8] OK — Generated OP Pass:', { opPassId, issueDate: ist.date, expiryDate, expiryDisplay });
 
-      // Get appointment row for patient_type, dependent_id, booked_by
+      // ── PHASE 9: Get appointment details ──
       let bookedBy = patientPhone;
       let pType = 'SELF';
       let depId: string | null = null;
@@ -224,33 +269,49 @@ export async function POST(req: NextRequest) {
           depId = rows[0].dependent_id || null;
           bookedBy = (rows[0].booked_by_whatsapp_number || patientPhone).replace(/\D/g, '');
         }
-      } catch { /* defaults */ }
+        console.log('[webhook][PHASE 9] OK — Appointment details:', { pType, depId, bookedBy });
+      } catch (e) {
+        console.error('[webhook][PHASE 9] WARN — Failed to get appointment details:', e);
+      }
       if (!bookedBy) bookedBy = patientPhone;
 
-      // Insert OP Pass
+      // ── PHASE 10: Insert OP Pass into DB ──
       try {
-        await sbPost('/op_passes', {
+        const opPassData = {
           op_pass_id: opPassId, booking_id: bookingId,
           patient_phone: patientPhone, patient_name: patientName,
           patient_type: pType, dependent_id: depId,
           issue_date: ist.date, expiry_date: expiryDate,
           status: 'ACTIVE', qr_code: verifyUrl,
           booked_by_whatsapp_number: bookedBy, tenant_id: tenantId,
-        });
-      } catch { /* continue */ }
+        };
+        console.log('[webhook][PHASE 10] Inserting OP pass:', JSON.stringify(opPassData));
+        await sbPost('/op_passes', opPassData);
+        console.log('[webhook][PHASE 10] OK — OP pass inserted:', opPassId);
+      } catch (e) {
+        console.error('[webhook][PHASE 10] FAIL — OP pass insert error:', e);
+      }
 
-      // Update appointment → confirmed + paid
+      // ── PHASE 11: Update appointment status ──
       try {
         await sbPatch('/appointments?booking_id=eq.' + encodeURIComponent(bookingId), {
           status: 'confirmed', payment_status: 'paid',
           payment_id: paymentId, razorpay_payment_id: paymentId, op_pass_id: opPassId,
         });
-      } catch { /* continue */ }
+        console.log('[webhook][PHASE 11] OK — Appointment updated to confirmed/paid');
+      } catch (e) {
+        console.error('[webhook][PHASE 11] FAIL — Appointment update error:', e);
+      }
 
-      // Release slot lock
-      try { await sbDelete('/slot_locks?booking_id=eq.' + encodeURIComponent(bookingId)); } catch { /* ok */ }
+      // ── PHASE 12: Release slot lock ──
+      try {
+        await sbDelete('/slot_locks?booking_id=eq.' + encodeURIComponent(bookingId));
+        console.log('[webhook][PHASE 12] OK — Slot lock released');
+      } catch (e) {
+        console.error('[webhook][PHASE 12] WARN — Slot lock release failed:', e);
+      }
 
-      // Get tenant WA credentials
+      // ── PHASE 13: Get tenant WA credentials ──
       let hospitalName = 'Care Hospital';
       let waUrl = '';
       let waToken = '';
@@ -261,11 +322,13 @@ export async function POST(req: NextRequest) {
           waUrl = t[0].wa_api_url || '';
           waToken = t[0].wa_token || '';
         }
-      } catch { /* ok */ }
+        console.log('[webhook][PHASE 13] OK — Tenant:', { hospitalName, hasWaUrl: !!waUrl, hasWaToken: !!waToken });
+      } catch (e) {
+        console.error('[webhook][PHASE 13] WARN — Tenant fetch failed:', e);
+      }
 
+      // ── PHASE 14: Generate card image ──
       const drName = (doctorName || '').replace(/^Dr\.?\s*/i, '').trim();
-
-      // Generate card image
       const cardHtml = buildCardHtml({
         hospitalName, patientName, drName, specialty,
         date: apptDate, time: apptTime, amount,
@@ -273,29 +336,36 @@ export async function POST(req: NextRequest) {
       });
       const cardUrl = await renderCard(cardHtml);
       const imageUrl = cardUrl || qrUrl;
+      console.log('[webhook][PHASE 14] OK — Card image:', cardUrl ? 'html2img success' : 'fallback to QR url');
 
       const caption = cardUrl
         ? '*' + hospitalName + '*\nAppointment Confirmed\n\n*Amount Paid:* \u20B9' + amount + '\n*Booking ID:* ' + bookingId + '\n*Valid Until:* ' + expiryDisplay + '\n\n_Present this digital pass at reception._'
         : '*' + hospitalName + '*\nAppointment Confirmed\n\n*Patient:* ' + patientName + '\n*Doctor:* Dr. ' + drName + '\n*Department:* ' + specialty + '\n*Date:* ' + apptDate + '\n*Time:* ' + apptTime + '\n\n*Booking ID:* ' + bookingId + '\n*OP Pass:* ' + opPassId + '\n*Valid Until:* ' + expiryDisplay + '\n*Paid:* \u20B9' + amount + '\n\n_Present this QR code at reception._';
 
-      // Send card to patient
+      // ── PHASE 15: Send WhatsApp notifications ──
       if (patientPhone) {
+        console.log('[webhook][PHASE 15] Sending WA card to patient:', patientPhone);
         await sendWA(waUrl, waToken, patientPhone, { type: 'image', image: { link: imageUrl, caption } });
         await new Promise(r => setTimeout(r, 3000));
         await sendWA(waUrl, waToken, patientPhone, {
           type: 'text', text: { body: 'Thank you for choosing *' + hospitalName + '* \u2705\n\nType *menu* anytime to book another appointment, reschedule, or manage your bookings.' },
         });
+        console.log('[webhook][PHASE 15] OK — WA messages sent to patient');
+      } else {
+        console.error('[webhook][PHASE 15] SKIP — No patient phone number');
       }
 
       // Send to booker if different person
       const bookerClean = bookedBy.replace(/\D/g, '');
       if (bookerClean && bookerClean !== patientPhone) {
+        console.log('[webhook][PHASE 15b] Sending WA card to booker:', bookerClean);
         await sendWA(waUrl, waToken, bookerClean, {
           type: 'image', image: { link: imageUrl, caption: '*' + hospitalName + '*\nBooking Confirmed for ' + patientName + '\n\n*Doctor:* Dr. ' + drName + '\n*Date:* ' + apptDate + '\n*Time:* ' + apptTime + '\n*Booking ID:* ' + bookingId + '\n\n_Present this pass at reception._' },
         });
+        console.log('[webhook][PHASE 15b] OK — WA card sent to booker');
       }
 
-      console.log('[webhook] SUCCESS:', bookingId);
+      console.log('[webhook] ===== SUCCESS ===== booking:', bookingId, '| opPass:', opPassId);
     }
 
     /* ── PRESCRIPTION ── */
@@ -305,14 +375,17 @@ export async function POST(req: NextRequest) {
           payment_status: 'paid', payment_id: paymentId, payment_link: paymentLinkId,
         });
         console.log('[webhook] Prescription paid:', bookingId);
-      } catch { /* continue */ }
+      } catch (e) {
+        console.error('[webhook] FAIL — Prescription update error:', e);
+      }
     }
 
     // Mark as processed in memory
     processedPayments.add(paymentId);
     return NextResponse.json({ status: 'ok' });
   } catch (err: unknown) {
-    console.error('[webhook] Error:', err instanceof Error ? err.message : err);
+    console.error('[webhook] FATAL ERROR:', err instanceof Error ? err.message : err);
+    console.error('[webhook] Stack:', err instanceof Error ? err.stack : 'no stack');
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
   }
 }
