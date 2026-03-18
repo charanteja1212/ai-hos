@@ -25,6 +25,7 @@ import {
   Mail,
   Activity,
   ChevronRight,
+  Lock,
 } from "lucide-react"
 
 // ---------------------------------------------------------------------------
@@ -41,7 +42,8 @@ interface RoleCard {
   label: string
   icon: React.ElementType
   color: string
-  bgColor: string
+  lightBg: string
+  gradient: string
   description: string
 }
 
@@ -63,7 +65,7 @@ interface Branch {
 }
 
 // ---------------------------------------------------------------------------
-// Role definitions — clean colors, no gradients
+// Role definitions
 // ---------------------------------------------------------------------------
 
 const roles: RoleCard[] = [
@@ -72,8 +74,9 @@ const roles: RoleCard[] = [
     loginMode: "super_admin",
     label: "Platform Admin",
     icon: Crown,
-    color: "#DC2626",
-    bgColor: "#FEF2F2",
+    color: "#E11D48",
+    lightBg: "#FFF1F2",
+    gradient: "from-rose-500 to-pink-600",
     description: "Global platform management",
   },
   {
@@ -81,8 +84,9 @@ const roles: RoleCard[] = [
     loginMode: "client_admin",
     label: "Client Admin",
     icon: Building2,
-    color: "#64748B",
-    bgColor: "#F8FAFC",
+    color: "#475569",
+    lightBg: "#F1F5F9",
+    gradient: "from-slate-500 to-slate-700",
     description: "Hospital group oversight",
   },
   {
@@ -92,7 +96,8 @@ const roles: RoleCard[] = [
     label: "Admin",
     icon: Shield,
     color: "#2563EB",
-    bgColor: "#EFF6FF",
+    lightBg: "#EFF6FF",
+    gradient: "from-blue-500 to-blue-700",
     description: "Hospital settings & config",
   },
   {
@@ -101,7 +106,8 @@ const roles: RoleCard[] = [
     label: "Doctor",
     icon: Stethoscope,
     color: "#059669",
-    bgColor: "#ECFDF5",
+    lightBg: "#ECFDF5",
+    gradient: "from-emerald-500 to-emerald-700",
     description: "Consultations & prescriptions",
   },
   {
@@ -110,7 +116,8 @@ const roles: RoleCard[] = [
     label: "Reception",
     icon: ClipboardList,
     color: "#7C3AED",
-    bgColor: "#F5F3FF",
+    lightBg: "#F5F3FF",
+    gradient: "from-violet-500 to-violet-700",
     description: "Queue & booking management",
   },
   {
@@ -119,7 +126,8 @@ const roles: RoleCard[] = [
     label: "Lab",
     icon: TestTube,
     color: "#D97706",
-    bgColor: "#FFFBEB",
+    lightBg: "#FFFBEB",
+    gradient: "from-amber-500 to-amber-700",
     description: "Sample tracking & reports",
   },
   {
@@ -128,7 +136,8 @@ const roles: RoleCard[] = [
     label: "Pharmacy",
     icon: Pill,
     color: "#0891B2",
-    bgColor: "#ECFEFF",
+    lightBg: "#ECFEFF",
+    gradient: "from-cyan-500 to-cyan-700",
     description: "Orders & stock management",
   },
 ]
@@ -138,22 +147,19 @@ const roles: RoleCard[] = [
 // ---------------------------------------------------------------------------
 
 const pageVariants = {
-  enter: { opacity: 0, y: 12 },
-  center: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -8 },
+  enter: { opacity: 0, x: 20 },
+  center: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -20 },
 }
 
-const cardStagger = {
+const stagger = {
   hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.04 },
-  },
+  show: { opacity: 1, transition: { staggerChildren: 0.05 } },
 }
 
-const cardItem = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.2 } },
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" as const } },
 }
 
 // ---------------------------------------------------------------------------
@@ -193,7 +199,6 @@ function LoginPageContent() {
   const [loginEmail, setLoginEmail] = useState("")
   const [loginPassword, setLoginPassword] = useState("")
 
-  // Pre-fetch client + branches when ?client= param is present
   useEffect(() => {
     if (!directClientId || directClientLoaded.current) return
     directClientLoaded.current = true
@@ -213,10 +218,6 @@ function LoginPageContent() {
       }
     })()
   }, [directClientId])
-
-  // ---------------------------------------------------------------------------
-  // Data fetching
-  // ---------------------------------------------------------------------------
 
   const fetchClients = useCallback(async (): Promise<Client[]> => {
     setFetchingClients(true)
@@ -241,7 +242,7 @@ function LoginPageContent() {
   }, [])
 
   // ---------------------------------------------------------------------------
-  // Flow logic
+  // Flow logic (unchanged)
   // ---------------------------------------------------------------------------
 
   const handleRoleSelect = async (role: RoleCard) => {
@@ -306,7 +307,6 @@ function LoginPageContent() {
         setError("No active branches found.")
         return
       }
-
       if (fetchedBranches.length === 1) {
         setSelectedBranch(fetchedBranches[0])
         setStep("credentials")
@@ -337,7 +337,6 @@ function LoginPageContent() {
 
     if (fetchedBranches.length === 1) {
       setSelectedBranch(fetchedBranches[0])
-      setSelectedBranch(fetchedBranches[0])
       setStep("credentials")
     } else {
       setStep("branch")
@@ -349,10 +348,6 @@ function LoginPageContent() {
     setError("")
     setStep("credentials")
   }
-
-  // ---------------------------------------------------------------------------
-  // Login
-  // ---------------------------------------------------------------------------
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -437,10 +432,6 @@ function LoginPageContent() {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Back
-  // ---------------------------------------------------------------------------
-
   const handleBack = () => {
     setError("")
 
@@ -505,479 +496,575 @@ function LoginPageContent() {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Active color
-  // ---------------------------------------------------------------------------
-
   const activeColor = selectedRole?.color || "#2563EB"
-
-  // ---------------------------------------------------------------------------
-  // Back button
-  // ---------------------------------------------------------------------------
-
-  const BackButton = () => (
-    <button
-      onClick={handleBack}
-      className="group flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors mb-6"
-    >
-      <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-      <span className="text-sm font-medium">Back</span>
-    </button>
-  )
 
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-[#F8FAFC] relative">
-      {/* Subtle top accent line */}
-      <div className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600" />
+    <div className="min-h-[100dvh] flex flex-col lg:flex-row select-none">
+      {/* === Left Brand Panel (desktop only) === */}
+      <div className="hidden lg:flex lg:w-[45%] xl:w-[40%] relative bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex-col justify-between p-12 overflow-hidden">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-[0.07]" style={{
+          backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+          backgroundSize: "32px 32px",
+        }} />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-white/5 rounded-full translate-y-1/3 -translate-x-1/4" />
 
-      {/* Content */}
-      <div className="relative z-10 w-full max-w-[520px]">
-        <AnimatePresence mode="wait">
-          {/* ================================================================ */}
-          {/* STEP: Role Selection                                             */}
-          {/* ================================================================ */}
-          {step === "role" && (
-            <motion.div
-              key="roles"
-              variants={pageVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              {directClientLoading ? (
-                <div className="flex flex-col items-center justify-center py-24 gap-4">
-                  <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Activity className="w-8 h-8 text-primary" />
-                  </div>
-                  <Loader2 className="w-5 h-5 text-muted-foreground animate-spin mt-4" />
-                  <p className="text-sm text-muted-foreground">Loading...</p>
-                </div>
+        {/* Top: Logo */}
+        <div className="relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
+              {directClient?.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={directClient.logo_url} alt="" className="w-7 h-7 object-contain" />
               ) : (
-              <>
-              {/* Logo */}
-              <div className="text-center mb-10">
-                <div className="inline-flex">
-                  <div className="w-16 h-16 rounded-xl bg-white border border-border shadow-sm flex items-center justify-center overflow-hidden">
-                    {directClient?.logo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={directClient.logo_url} alt={directClient.name} className="w-full h-full object-contain p-2" />
-                    ) : (
-                      <Activity className="w-8 h-8 text-primary" />
-                    )}
+                <Activity className="w-5 h-5 text-white" />
+              )}
+            </div>
+            <div>
+              <h2 className="text-white font-bold text-lg tracking-tight">
+                {directClient ? directClient.name : "AI-HOS"}
+              </h2>
+              <p className="text-blue-200 text-xs">Hospital Operating System</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Center: Tagline */}
+        <div className="relative z-10 -mt-8">
+          <h1 className="text-white text-4xl xl:text-5xl font-bold leading-[1.1] tracking-tight">
+            Smarter<br />Healthcare<br />Management
+          </h1>
+          <p className="text-blue-200 text-base mt-4 max-w-sm leading-relaxed">
+            Streamline your hospital operations with AI-powered tools for every department.
+          </p>
+
+          {/* Stats */}
+          <div className="flex items-center gap-8 mt-10">
+            <div>
+              <p className="text-white text-2xl font-bold">50+</p>
+              <p className="text-blue-300 text-xs mt-0.5">Hospitals</p>
+            </div>
+            <div className="w-px h-10 bg-white/15" />
+            <div>
+              <p className="text-white text-2xl font-bold">200+</p>
+              <p className="text-blue-300 text-xs mt-0.5">Doctors</p>
+            </div>
+            <div className="w-px h-10 bg-white/15" />
+            <div>
+              <p className="text-white text-2xl font-bold">1M+</p>
+              <p className="text-blue-300 text-xs mt-0.5">Patients</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom: Trust */}
+        <div className="relative z-10 flex items-center gap-2 text-blue-300 text-xs">
+          <Lock className="w-3.5 h-3.5" />
+          <span>HIPAA Compliant &middot; End-to-end Encrypted</span>
+        </div>
+      </div>
+
+      {/* === Right Content Panel === */}
+      <div className="flex-1 flex items-center justify-center bg-[#F8FAFC] p-6 sm:p-10 relative">
+        {/* Mobile brand header */}
+        <div className="lg:hidden absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600" />
+
+        <div className="w-full max-w-[480px]">
+          {/* Mobile logo */}
+          <div className="lg:hidden text-center mb-8">
+            <div className="inline-flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
+                {directClient?.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={directClient.logo_url} alt="" className="w-6 h-6 object-contain" />
+                ) : (
+                  <Activity className="w-5 h-5 text-white" />
+                )}
+              </div>
+              <span className="text-lg font-bold text-gray-900">
+                {directClient ? directClient.name : "AI-HOS"}
+              </span>
+            </div>
+          </div>
+
+          <AnimatePresence mode="wait">
+            {/* ================================================================ */}
+            {/* STEP: Role Selection                                             */}
+            {/* ================================================================ */}
+            {step === "role" && (
+              <motion.div
+                key="roles"
+                variants={pageVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              >
+                {directClientLoading ? (
+                  <div className="flex flex-col items-center justify-center py-24 gap-3">
+                    <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                    <p className="text-sm text-gray-500">Loading...</p>
+                  </div>
+                ) : (
+                <>
+                <div className="mb-8">
+                  <h1 className="text-2xl sm:text-[28px] font-bold text-gray-900 tracking-tight">
+                    Welcome back
+                  </h1>
+                  <p className="text-[15px] text-gray-500 mt-1.5">
+                    Select your role to sign in
+                  </p>
+                </div>
+
+                <motion.div
+                  variants={stagger}
+                  initial="hidden"
+                  animate="show"
+                  className="grid grid-cols-2 gap-3"
+                >
+                  {roles
+                  .filter((role) => !directClient || (role.loginMode !== "super_admin" && role.loginMode !== "client_admin"))
+                  .map((role) => {
+                    const Icon = role.icon
+                    return (
+                      <motion.button
+                        key={role.id}
+                        variants={fadeUp}
+                        onClick={() => handleRoleSelect(role)}
+                        disabled={fetchingClients}
+                        className="group relative flex flex-col items-start gap-3 p-4 rounded-xl bg-white border border-gray-200 hover:border-gray-300 transition-all duration-200 disabled:opacity-40 disabled:cursor-wait cursor-pointer text-left"
+                        style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+                        whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)" }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <div
+                          className="w-11 h-11 rounded-xl flex items-center justify-center"
+                          style={{ backgroundColor: role.lightBg, color: role.color }}
+                        >
+                          <Icon className="w-5 h-5" strokeWidth={2} />
+                        </div>
+
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">{role.label}</p>
+                          <p className="text-[11px] text-gray-400 mt-0.5 leading-snug">{role.description}</p>
+                        </div>
+                      </motion.button>
+                    )
+                  })}
+                </motion.div>
+
+                {fetchingClients && (
+                  <div className="flex items-center justify-center gap-2 mt-6 text-gray-400 text-sm">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Loading...</span>
+                  </div>
+                )}
+
+                <div className="mt-10 flex flex-col items-center gap-3">
+                  <Link
+                    href="/patient-login"
+                    className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-blue-600 transition-colors group"
+                  >
+                    <Heart className="w-3.5 h-3.5" />
+                    <span>Patient Portal</span>
+                    <ChevronRight className="w-3 h-3 opacity-0 -ml-1 group-hover:opacity-100 group-hover:ml-0 transition-all" />
+                  </Link>
+                  <div className="flex items-center gap-1.5 text-[11px] text-gray-300">
+                    <Lock className="w-3 h-3" />
+                    <span>Secure &middot; Encrypted</span>
                   </div>
                 </div>
+                </>
+                )}
+              </motion.div>
+            )}
 
-                <h1 className="mt-5 text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                  {directClient ? directClient.name : "AI-HOS"}
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {directClient ? "Staff Login" : "Hospital Operating System"}
-                </p>
-              </div>
-
-              {/* Role Grid */}
+            {/* ================================================================ */}
+            {/* STEP: Client Picker                                              */}
+            {/* ================================================================ */}
+            {step === "client" && (
               <motion.div
-                variants={cardStagger}
-                initial="hidden"
-                animate="show"
-                className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+                key="client-picker"
+                variants={pageVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
               >
-                {roles
-                .filter((role) => !directClient || (role.loginMode !== "super_admin" && role.loginMode !== "client_admin"))
-                .map((role) => {
-                  const Icon = role.icon
-                  return (
-                    <motion.button
-                      key={role.id}
-                      variants={cardItem}
-                      onClick={() => handleRoleSelect(role)}
-                      disabled={fetchingClients}
-                      className="group flex flex-col items-center gap-3 p-4 sm:p-5 rounded-xl bg-white border border-border hover:border-[color:var(--accent-color)] hover:shadow-md transition-all duration-150 disabled:opacity-40 disabled:cursor-wait cursor-pointer"
-                      style={{ "--accent-color": `${role.color}40` } as React.CSSProperties}
-                    >
-                      <div
-                        className="w-11 h-11 rounded-lg flex items-center justify-center transition-transform duration-150 group-hover:scale-105"
-                        style={{ backgroundColor: role.bgColor, color: role.color }}
-                      >
-                        <Icon className="w-5 h-5" />
-                      </div>
-
-                      <div className="text-center">
-                        <p className="font-semibold text-foreground text-[13px] leading-tight">{role.label}</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight hidden sm:block">{role.description}</p>
-                      </div>
-                    </motion.button>
-                  )
-                })}
-              </motion.div>
-
-              {fetchingClients && (
-                <div className="flex items-center justify-center gap-2 mt-6 text-muted-foreground text-sm">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Loading...</span>
-                </div>
-              )}
-
-              {/* Footer */}
-              <div className="text-center mt-10 space-y-3">
-                <Link
-                  href="/patient-login"
-                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors group"
+                <button
+                  onClick={handleBack}
+                  className="group flex items-center gap-1.5 text-gray-400 hover:text-gray-700 transition-colors mb-6"
                 >
-                  <Heart className="w-3.5 h-3.5" />
-                  <span>Patient Portal</span>
-                  <ChevronRight className="w-3 h-3 opacity-0 -ml-1 group-hover:opacity-100 group-hover:ml-0 transition-all duration-150" />
-                </Link>
-                <p className="text-[10px] text-muted-foreground/50 tracking-widest font-medium uppercase">
-                  Powered by AI-HOS
-                </p>
-              </div>
-              </>
-              )}
-            </motion.div>
-          )}
+                  <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                  <span className="text-sm font-medium">Back</span>
+                </button>
 
-          {/* ================================================================ */}
-          {/* STEP: Client Picker                                              */}
-          {/* ================================================================ */}
-          {step === "client" && (
-            <motion.div
-              key="client-picker"
-              variants={pageVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <BackButton />
-
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-foreground">Select Hospital Group</h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {selectedRole?.loginMode === "client_admin"
-                    ? "Choose the organization to manage"
-                    : "Choose your hospital group"}
-                </p>
-              </div>
-
-              <motion.div variants={cardStagger} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {clients.map((client) => (
-                  <motion.button
-                    key={client.client_id}
-                    variants={cardItem}
-                    onClick={() => handleClientSelect(client)}
-                    disabled={fetchingBranches}
-                    className="group flex items-center gap-4 p-4 rounded-xl text-left bg-white border border-border hover:border-primary/30 hover:shadow-md transition-all duration-150 disabled:opacity-40 disabled:cursor-wait cursor-pointer"
-                  >
-                    <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: selectedRole?.bgColor || "#EFF6FF", color: selectedRole?.color || "#2563EB" }}
-                    >
-                      {client.logo_url ? (
-                        <img src={client.logo_url} alt={client.name} className="w-6 h-6 rounded object-contain" />
-                      ) : (
-                        <Building2 className="w-5 h-5" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-foreground text-sm truncate">{client.name}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {client.branch_count === 1 ? "1 branch" : `${client.branch_count || 0} branches`}
-                      </p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors shrink-0" />
-                  </motion.button>
-                ))}
-              </motion.div>
-
-              {fetchingBranches && (
-                <div className="flex items-center justify-center gap-2 mt-6 text-muted-foreground text-sm">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Loading branches...</span>
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 tracking-tight">Select Hospital Group</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {selectedRole?.loginMode === "client_admin"
+                      ? "Choose the organization to manage"
+                      : "Choose your hospital group"}
+                  </p>
                 </div>
-              )}
-            </motion.div>
-          )}
 
-          {/* ================================================================ */}
-          {/* STEP: Branch Picker                                              */}
-          {/* ================================================================ */}
-          {step === "branch" && (
-            <motion.div
-              key="branch-picker"
-              variants={pageVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <BackButton />
-
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-foreground">Select Branch</h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {selectedClient?.name} &mdash; choose your hospital branch
-                </p>
-              </div>
-
-              <motion.div variants={cardStagger} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {branches.map((branch) => (
-                  <motion.button
-                    key={branch.tenant_id}
-                    variants={cardItem}
-                    onClick={() => handleBranchSelect(branch)}
-                    className="group flex items-center gap-4 p-4 rounded-xl text-left bg-white border border-border hover:border-primary/30 hover:shadow-md transition-all duration-150 cursor-pointer"
-                  >
-                    <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: selectedRole?.bgColor || "#EFF6FF", color: selectedRole?.color || "#2563EB" }}
+                <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-2.5">
+                  {clients.map((client) => (
+                    <motion.button
+                      key={client.client_id}
+                      variants={fadeUp}
+                      onClick={() => handleClientSelect(client)}
+                      disabled={fetchingBranches}
+                      className="group w-full flex items-center gap-4 p-4 rounded-xl text-left bg-white border border-gray-200 hover:border-gray-300 transition-all duration-200 disabled:opacity-40 disabled:cursor-wait cursor-pointer"
+                      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+                      whileHover={{ boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }}
                     >
-                      <Heart className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-foreground text-sm truncate">{branch.hospital_name}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {branch.city}{branch.branch_code ? ` \u00B7 ${branch.branch_code}` : ""}
-                      </p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors shrink-0" />
-                  </motion.button>
-                ))}
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* ================================================================ */}
-          {/* STEP: Credentials                                                */}
-          {/* ================================================================ */}
-          {step === "credentials" && selectedRole && (
-            <motion.div
-              key="form"
-              variants={pageVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="max-w-[400px] mx-auto"
-            >
-              {(() => {
-                const Icon = selectedRole.icon
-                return (
-                  <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-                    {/* Header */}
-                    <div className="px-6 py-6 border-b border-border flex items-center gap-4">
-                      <button
-                        onClick={handleBack}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <ArrowLeft className="w-5 h-5" />
-                      </button>
                       <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: selectedRole.bgColor, color: selectedRole.color }}
+                        className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: selectedRole?.lightBg || "#EFF6FF", color: selectedRole?.color || "#2563EB" }}
                       >
-                        <Icon className="w-5 h-5" />
+                        {client.logo_url ? (
+                          <img src={client.logo_url} alt={client.name} className="w-6 h-6 rounded object-contain" />
+                        ) : (
+                          <Building2 className="w-5 h-5" />
+                        )}
                       </div>
-                      <div>
-                        <p className="font-bold text-foreground">{selectedRole.label}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {selectedRole.loginMode === "super_admin"
-                            ? "Platform access"
-                            : selectedRole.loginMode === "client_admin"
-                              ? selectedClient?.name || "Sign in to continue"
-                              : selectedBranch?.hospital_name || "Sign in to continue"}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-gray-900 text-sm">{client.name}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {client.branch_count === 1 ? "1 branch" : `${client.branch_count || 0} branches`}
                         </p>
                       </div>
-                    </div>
+                      <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+                    </motion.button>
+                  ))}
+                </motion.div>
 
-                    {/* Form */}
-                    <div className="p-6">
-                      <Tabs
-                        value={authMethod}
-                        onValueChange={(v) => {
-                          setAuthMethod(v as "pin" | "password")
-                          setError("")
-                        }}
-                        className="gap-4"
+                {fetchingBranches && (
+                  <div className="flex items-center justify-center gap-2 mt-6 text-gray-400 text-sm">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Loading branches...</span>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* ================================================================ */}
+            {/* STEP: Branch Picker                                              */}
+            {/* ================================================================ */}
+            {step === "branch" && (
+              <motion.div
+                key="branch-picker"
+                variants={pageVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              >
+                <button
+                  onClick={handleBack}
+                  className="group flex items-center gap-1.5 text-gray-400 hover:text-gray-700 transition-colors mb-6"
+                >
+                  <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                  <span className="text-sm font-medium">Back</span>
+                </button>
+
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 tracking-tight">Select Branch</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {selectedClient?.name} &mdash; choose your hospital branch
+                  </p>
+                </div>
+
+                <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-2.5">
+                  {branches.map((branch) => (
+                    <motion.button
+                      key={branch.tenant_id}
+                      variants={fadeUp}
+                      onClick={() => handleBranchSelect(branch)}
+                      className="group w-full flex items-center gap-4 p-4 rounded-xl text-left bg-white border border-gray-200 hover:border-gray-300 transition-all duration-200 cursor-pointer"
+                      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+                      whileHover={{ boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }}
+                    >
+                      <div
+                        className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: selectedRole?.lightBg || "#EFF6FF", color: selectedRole?.color || "#2563EB" }}
                       >
-                        <TabsList className="w-full bg-muted rounded-lg h-10">
-                          <TabsTrigger
-                            value="pin"
-                            className="flex-1 text-xs rounded-md"
-                          >
-                            <KeyRound className="w-3.5 h-3.5 mr-1.5" />
-                            PIN Login
-                          </TabsTrigger>
-                          <TabsTrigger
-                            value="password"
-                            className="flex-1 text-xs rounded-md"
-                          >
-                            <Mail className="w-3.5 h-3.5 mr-1.5" />
-                            Email & Password
-                          </TabsTrigger>
-                        </TabsList>
+                        <Heart className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-gray-900 text-sm">{branch.hospital_name}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {branch.city}{branch.branch_code ? ` \u00B7 ${branch.branch_code}` : ""}
+                        </p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+                    </motion.button>
+                  ))}
+                </motion.div>
+              </motion.div>
+            )}
 
-                        {/* PIN Tab */}
-                        <TabsContent value="pin">
-                          <form onSubmit={handleLogin} className="space-y-4">
-                            {selectedRole.loginMode === "super_admin" && (
-                              <div className="space-y-1.5">
-                                <Label htmlFor="email" className="text-xs font-medium text-muted-foreground">
+            {/* ================================================================ */}
+            {/* STEP: Credentials                                                */}
+            {/* ================================================================ */}
+            {step === "credentials" && selectedRole && (
+              <motion.div
+                key="form"
+                variants={pageVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                className="max-w-[420px] mx-auto"
+              >
+                {(() => {
+                  const Icon = selectedRole.icon
+                  return (
+                    <div
+                      className="bg-white rounded-2xl border border-gray-200 overflow-hidden"
+                      style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)" }}
+                    >
+                      {/* Color accent top bar */}
+                      <div className="h-1.5" style={{ background: `linear-gradient(90deg, ${activeColor}, ${activeColor}CC)` }} />
+
+                      {/* Header */}
+                      <div className="px-7 pt-6 pb-5">
+                        <div className="flex items-center gap-4">
+                          <button
+                            onClick={handleBack}
+                            className="text-gray-400 hover:text-gray-700 transition-colors -ml-1"
+                          >
+                            <ArrowLeft className="w-5 h-5" />
+                          </button>
+                          <div
+                            className="w-12 h-12 rounded-xl flex items-center justify-center"
+                            style={{ backgroundColor: selectedRole.lightBg, color: selectedRole.color }}
+                          >
+                            <Icon className="w-6 h-6" strokeWidth={2} />
+                          </div>
+                          <div>
+                            <h2 className="font-bold text-gray-900 text-lg">{selectedRole.label}</h2>
+                            <p className="text-sm text-gray-400">
+                              {selectedRole.loginMode === "super_admin"
+                                ? "Platform access"
+                                : selectedRole.loginMode === "client_admin"
+                                  ? selectedClient?.name || "Sign in"
+                                  : selectedBranch?.hospital_name || "Sign in"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="h-px bg-gray-100" />
+
+                      {/* Form */}
+                      <div className="px-7 py-6">
+                        <Tabs
+                          value={authMethod}
+                          onValueChange={(v) => {
+                            setAuthMethod(v as "pin" | "password")
+                            setError("")
+                          }}
+                          className="gap-5"
+                        >
+                          <TabsList className="w-full bg-gray-100 rounded-lg h-11 p-1">
+                            <TabsTrigger
+                              value="pin"
+                              className="flex-1 text-xs font-medium rounded-md h-full data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                            >
+                              <KeyRound className="w-3.5 h-3.5 mr-1.5" />
+                              PIN Login
+                            </TabsTrigger>
+                            <TabsTrigger
+                              value="password"
+                              className="flex-1 text-xs font-medium rounded-md h-full data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                            >
+                              <Mail className="w-3.5 h-3.5 mr-1.5" />
+                              Email & Password
+                            </TabsTrigger>
+                          </TabsList>
+
+                          {/* PIN Tab */}
+                          <TabsContent value="pin">
+                            <form onSubmit={handleLogin} className="space-y-4">
+                              {selectedRole.loginMode === "super_admin" && (
+                                <div className="space-y-2">
+                                  <Label htmlFor="email" className="text-[13px] font-medium text-gray-700">
+                                    Email
+                                  </Label>
+                                  <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder="admin@example.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    autoFocus
+                                    className="h-11 rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500/20"
+                                  />
+                                </div>
+                              )}
+
+                              {selectedRole.loginMode === "branch" && selectedRole.id === "DOCTOR" && (
+                                <div className="space-y-2">
+                                  <Label htmlFor="doctorId" className="text-[13px] font-medium text-gray-700">
+                                    Doctor ID
+                                  </Label>
+                                  <Input
+                                    id="doctorId"
+                                    placeholder="e.g. DOC004"
+                                    value={doctorId}
+                                    onChange={(e) => setDoctorId(e.target.value)}
+                                    autoFocus
+                                    className="h-11 rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500/20"
+                                  />
+                                </div>
+                              )}
+
+                              <div className="space-y-2">
+                                <Label htmlFor="pin" className="text-[13px] font-medium text-gray-700">
+                                  PIN
+                                </Label>
+                                <Input
+                                  id="pin"
+                                  type="password"
+                                  placeholder="Enter your PIN"
+                                  value={pin}
+                                  onChange={(e) => setPin(e.target.value)}
+                                  autoFocus={
+                                    authMethod === "pin" &&
+                                    selectedRole.loginMode !== "super_admin" &&
+                                    !(selectedRole.loginMode === "branch" && selectedRole.id === "DOCTOR")
+                                  }
+                                  maxLength={10}
+                                  className="h-11 rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500/20"
+                                />
+                              </div>
+
+                              {error && authMethod === "pin" && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: -4 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  className="flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2.5 border border-red-100"
+                                >
+                                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                                  {error}
+                                </motion.div>
+                              )}
+
+                              <Button
+                                type="submit"
+                                disabled={loading || !pin || (selectedRole.loginMode === "super_admin" && !email)}
+                                className="w-full h-11 rounded-lg font-semibold text-white text-sm border-0 transition-all duration-200 disabled:opacity-40"
+                                style={{
+                                  backgroundColor: activeColor,
+                                  boxShadow: `0 2px 8px ${activeColor}40`,
+                                }}
+                              >
+                                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                                {loading ? "Signing in..." : "Sign In"}
+                              </Button>
+                            </form>
+                          </TabsContent>
+
+                          {/* Password Tab */}
+                          <TabsContent value="password">
+                            <form onSubmit={handlePasswordLogin} className="space-y-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="loginEmail" className="text-[13px] font-medium text-gray-700">
                                   Email
                                 </Label>
                                 <Input
-                                  id="email"
+                                  id="loginEmail"
                                   type="email"
-                                  placeholder="admin@example.com"
-                                  value={email}
-                                  onChange={(e) => setEmail(e.target.value)}
-                                  autoFocus
-                                  className="h-10"
+                                  placeholder="you@example.com"
+                                  value={loginEmail}
+                                  onChange={(e) => setLoginEmail(e.target.value)}
+                                  autoFocus={authMethod === "password"}
+                                  className="h-11 rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500/20"
                                 />
                               </div>
-                            )}
 
-                            {selectedRole.loginMode === "branch" && selectedRole.id === "DOCTOR" && (
-                              <div className="space-y-1.5">
-                                <Label htmlFor="doctorId" className="text-xs font-medium text-muted-foreground">
-                                  Doctor ID
+                              <div className="space-y-2">
+                                <Label htmlFor="loginPassword" className="text-[13px] font-medium text-gray-700">
+                                  Password
                                 </Label>
                                 <Input
-                                  id="doctorId"
-                                  placeholder="e.g. DOC004"
-                                  value={doctorId}
-                                  onChange={(e) => setDoctorId(e.target.value)}
-                                  autoFocus
-                                  className="h-10"
+                                  id="loginPassword"
+                                  type="password"
+                                  placeholder="Enter your password"
+                                  value={loginPassword}
+                                  onChange={(e) => setLoginPassword(e.target.value)}
+                                  className="h-11 rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500/20"
                                 />
                               </div>
-                            )}
 
-                            <div className="space-y-1.5">
-                              <Label htmlFor="pin" className="text-xs font-medium text-muted-foreground">
-                                PIN
-                              </Label>
-                              <Input
-                                id="pin"
-                                type="password"
-                                placeholder="Enter your PIN"
-                                value={pin}
-                                onChange={(e) => setPin(e.target.value)}
-                                autoFocus={
-                                  authMethod === "pin" &&
-                                  selectedRole.loginMode !== "super_admin" &&
-                                  !(selectedRole.loginMode === "branch" && selectedRole.id === "DOCTOR")
-                                }
-                                maxLength={10}
-                                className="h-10"
-                              />
-                            </div>
+                              {error && authMethod === "password" && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: -4 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  className="flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2.5 border border-red-100"
+                                >
+                                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                                  {error}
+                                </motion.div>
+                              )}
 
-                            {error && authMethod === "pin" && (
-                              <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/5 rounded-lg px-3 py-2.5 border border-destructive/10">
-                                <div className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />
-                                {error}
-                              </div>
-                            )}
-
-                            <Button
-                              type="submit"
-                              disabled={loading || !pin || (selectedRole.loginMode === "super_admin" && !email)}
-                              className="w-full h-10 font-semibold"
-                              style={{ backgroundColor: activeColor }}
-                            >
-                              {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                              {loading ? "Signing in..." : "Sign In"}
-                            </Button>
-                          </form>
-                        </TabsContent>
-
-                        {/* Password Tab */}
-                        <TabsContent value="password">
-                          <form onSubmit={handlePasswordLogin} className="space-y-4">
-                            <div className="space-y-1.5">
-                              <Label htmlFor="loginEmail" className="text-xs font-medium text-muted-foreground">
-                                Email
-                              </Label>
-                              <Input
-                                id="loginEmail"
-                                type="email"
-                                placeholder="you@example.com"
-                                value={loginEmail}
-                                onChange={(e) => setLoginEmail(e.target.value)}
-                                autoFocus={authMethod === "password"}
-                                className="h-10"
-                              />
-                            </div>
-
-                            <div className="space-y-1.5">
-                              <Label htmlFor="loginPassword" className="text-xs font-medium text-muted-foreground">
-                                Password
-                              </Label>
-                              <Input
-                                id="loginPassword"
-                                type="password"
-                                placeholder="Enter your password"
-                                value={loginPassword}
-                                onChange={(e) => setLoginPassword(e.target.value)}
-                                className="h-10"
-                              />
-                            </div>
-
-                            {error && authMethod === "password" && (
-                              <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/5 rounded-lg px-3 py-2.5 border border-destructive/10">
-                                <div className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />
-                                {error}
-                              </div>
-                            )}
-
-                            <Button
-                              type="submit"
-                              disabled={loading || !loginEmail || !loginPassword}
-                              className="w-full h-10 font-semibold"
-                              style={{ backgroundColor: activeColor }}
-                            >
-                              {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                              {loading ? "Signing in..." : "Sign In"}
-                            </Button>
-
-                            <div className="text-center pt-1">
-                              <Link
-                                href="/forgot-password"
-                                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                              <Button
+                                type="submit"
+                                disabled={loading || !loginEmail || !loginPassword}
+                                className="w-full h-11 rounded-lg font-semibold text-white text-sm border-0 transition-all duration-200 disabled:opacity-40"
+                                style={{
+                                  backgroundColor: activeColor,
+                                  boxShadow: `0 2px 8px ${activeColor}40`,
+                                }}
                               >
-                                Forgot your password?
-                              </Link>
-                            </div>
-                          </form>
-                        </TabsContent>
-                      </Tabs>
+                                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                                {loading ? "Signing in..." : "Sign In"}
+                              </Button>
 
-                      {selectedRole.loginMode === "branch" && selectedBranch && (
-                        <p className="text-center text-[10px] text-muted-foreground/60 mt-5 tracking-wide">
-                          {selectedBranch.hospital_name}{selectedBranch.city ? ` \u2022 ${selectedBranch.city}` : ""}
-                        </p>
-                      )}
+                              <div className="text-center pt-1">
+                                <Link
+                                  href="/forgot-password"
+                                  className="text-xs text-gray-400 hover:text-blue-600 transition-colors"
+                                >
+                                  Forgot your password?
+                                </Link>
+                              </div>
+                            </form>
+                          </TabsContent>
+                        </Tabs>
+
+                        {selectedRole.loginMode === "branch" && selectedBranch && (
+                          <p className="text-center text-[11px] text-gray-300 mt-5">
+                            {selectedBranch.hospital_name}{selectedBranch.city ? ` \u2022 ${selectedBranch.city}` : ""}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )
-              })()}
+                  )
+                })()}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Error for non-credential steps */}
+          {error && step !== "credentials" && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2.5 border border-red-100"
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+              {error}
             </motion.div>
           )}
-        </AnimatePresence>
-
-        {/* Error for non-credential steps */}
-        {error && step !== "credentials" && (
-          <div className="mt-4 flex items-center gap-2 text-sm text-destructive bg-destructive/5 rounded-lg px-3 py-2.5 border border-destructive/10">
-            <div className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />
-            {error}
-          </div>
-        )}
+        </div>
       </div>
     </div>
   )
@@ -985,12 +1072,10 @@ function LoginPageContent() {
 
 function LoginSuspenseFallback() {
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-[#F8FAFC]">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center">
-          <Activity className="w-8 h-8 text-primary" />
-        </div>
-        <Loader2 className="w-5 h-5 text-muted-foreground animate-spin mt-2" />
+    <div className="min-h-[100dvh] flex items-center justify-center bg-[#F8FAFC]">
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <p className="text-sm text-gray-500">Loading...</p>
       </div>
     </div>
   )
