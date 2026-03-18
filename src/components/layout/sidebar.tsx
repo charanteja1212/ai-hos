@@ -67,24 +67,24 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
     <aside
       className={cn(
         "h-screen flex flex-col shrink-0 transition-[width] duration-200 ease-in-out",
-        "bg-gradient-to-b from-[#1e293b] to-[#0f172a]",
+        "bg-blue-600",
         collapsed ? "w-[72px]" : "w-64"
       )}
     >
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10 shrink-0">
-        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm shrink-0 overflow-hidden">
+      <div className="flex items-center gap-3 px-4 h-16 border-b border-white/15 shrink-0">
+        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-white shadow-sm shrink-0 overflow-hidden">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt="" className="w-full h-full object-contain p-0.5" />
           ) : (
-            <Heart className="w-4 h-4 text-white" />
+            <Heart className="w-4 h-4 text-blue-600" />
           )}
         </div>
         {!collapsed && (
           <div className="overflow-hidden whitespace-nowrap min-w-0">
             <p className="font-bold text-sm text-white tracking-tight">AI-HOS</p>
-            <p className="text-[11px] text-blue-200/60 truncate max-w-[160px]">
+            <p className="text-[11px] text-white/50 truncate max-w-[160px]">
               {hospitalName}
             </p>
           </div>
@@ -112,14 +112,14 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
 
       {/* User */}
       {userName && (
-        <div className="border-t border-white/10 p-3 shrink-0">
+        <div className="border-t border-white/15 p-3 shrink-0">
           <div
             className={cn(
               "flex items-center gap-2.5 rounded-xl p-2.5",
               collapsed && "justify-center"
             )}
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-[11px] font-bold text-white shrink-0 shadow-lg shadow-blue-500/20">
+            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[11px] font-bold text-blue-600 shrink-0 shadow-sm">
               {userName
                 .split(" ")
                 .map((n) => n[0])
@@ -132,7 +132,7 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
                 <p className="text-[13px] font-semibold text-white truncate max-w-[140px]">
                   {userName}
                 </p>
-                <p className="text-[11px] text-blue-300/50 capitalize">
+                <p className="text-[11px] text-white/40 capitalize">
                   {role.replace(/_/g, " ").toLowerCase()}
                 </p>
               </div>
@@ -142,7 +142,7 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
       )}
 
       {/* Language Switcher */}
-      <div className="border-t border-white/10 px-3 pt-2 shrink-0">
+      <div className="border-t border-white/15 px-3 pt-2 shrink-0">
         <LanguageSwitcher compact={collapsed} />
       </div>
 
@@ -150,7 +150,7 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
       <div className="px-3 pb-3 shrink-0">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center h-8 rounded-xl text-blue-300/60 hover:text-white hover:bg-white/10 transition-colors"
+          className="w-full flex items-center justify-center h-8 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-colors"
         >
           {collapsed ? (
             <ChevronRight className="w-4 h-4" />
@@ -187,18 +187,18 @@ function SidebarSectionBlock({
           onClick={onToggleSection}
           className="w-full flex items-center justify-between px-3 py-1.5 group cursor-pointer"
         >
-          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-blue-300/40 select-none">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/35 select-none">
             {section.label}
           </span>
           <ChevronDown
             className={cn(
-              "w-3 h-3 text-blue-300/30 opacity-0 group-hover:opacity-100 transition-all duration-150",
+              "w-3 h-3 text-white/25 opacity-0 group-hover:opacity-100 transition-all duration-150",
               sectionCollapsed && "-rotate-90"
             )}
           />
         </button>
       ) : (
-        !isFirst && <div className="mx-auto w-6 h-px bg-white/10 my-2" />
+        !isFirst && <div className="mx-auto w-6 h-px bg-white/15 my-2" />
       )}
 
       {!sectionCollapsed && (
@@ -234,17 +234,14 @@ function SidebarNavLink({
         "relative flex items-center gap-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150",
         collapsed ? "justify-center px-2" : "px-3",
         active
-          ? "text-white bg-white/15 font-semibold"
-          : "text-blue-100/60 hover:text-white hover:bg-white/8"
+          ? "bg-white text-blue-700 font-semibold shadow-sm"
+          : "text-white/70 hover:text-white hover:bg-white/10"
       )}
     >
-      {active && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-blue-400" />
-      )}
       <item.icon
         className={cn(
           "w-[18px] h-[18px] shrink-0",
-          active ? "text-blue-400" : "text-blue-300/40"
+          active ? "text-blue-600" : "text-white/50"
         )}
       />
       {!collapsed && <span>{item.label}</span>}
