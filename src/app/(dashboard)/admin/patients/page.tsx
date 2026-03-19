@@ -301,7 +301,7 @@ export default function PatientsPage() {
                 Gender: p.gender || "",
                 Blood_Group: p.blood_group || "",
                 Allergies: p.allergies || "",
-                Chronic_Conditions: p.chronic_conditions || "",
+                Chronic_Conditions: p.chronic_diseases || "",
               })),
               `patients-${new Date().toISOString().split("T")[0]}`
             )}
