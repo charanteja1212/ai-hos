@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useBranch } from "@/components/providers/branch-context"
 import { motion } from "framer-motion"
+import { toast } from "sonner"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { SectionHeader } from "@/components/shared/section-header"
 import { Card, CardContent } from "@/components/ui/card"
@@ -79,9 +80,13 @@ export default function ActivityLogPage() {
     if (filterEntity !== "all") query = query.eq("entity_type", filterEntity)
     if (search) query = query.or(`actor_email.ilike.%${search}%,entity_id.ilike.%${search}%`)
 
-    query.then(({ data, count }) => {
+    Promise.resolve(query).then(({ data, count }) => {
       setEntries(data || [])
       setTotal(count || 0)
+      setLoading(false)
+    }).catch((err) => {
+      console.error("[activity] Failed to load audit logs:", err)
+      toast.error("Failed to load activity log")
       setLoading(false)
     })
   }, [activeTenantId, page, filterAction, filterEntity, search])

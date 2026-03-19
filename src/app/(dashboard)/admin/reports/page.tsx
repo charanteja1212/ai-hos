@@ -122,7 +122,7 @@ export default function ReportsPage() {
     const supabase = createBrowserClient()
     const { data, error } = await supabase
       .from("patients")
-      .select("patient_id, name, phone, gender, age, created_at")
+      .select("phone, name, gender, age, created_at")
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false })
     if (error) { toast.error("Failed to fetch patients"); return }

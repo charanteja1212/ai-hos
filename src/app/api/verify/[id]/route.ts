@@ -91,6 +91,12 @@ export async function GET(
   })
 }
 
+/** Escape HTML entities to prevent XSS */
+function esc(val: unknown): string {
+  const s = String(val ?? "—")
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;")
+}
+
 function baseStyles() {
   return `
     <style>
@@ -127,18 +133,18 @@ function buildOpPassHTML(opPass: Record<string, unknown>, appointment: Record<st
         <div class="badge badge-${isValid ? "valid" : "invalid"}">${badgeText}</div>
       </div>
       <div class="body">
-        <div class="row"><span class="label">OP Pass ID</span><span class="value">${opPass.op_pass_id}</span></div>
-        <div class="row"><span class="label">Patient</span><span class="value">${opPass.patient_name || "—"}</span></div>
-        <div class="row"><span class="label">Type</span><span class="value">${opPass.patient_type || "SELF"}</span></div>
-        <div class="row"><span class="label">Issue Date</span><span class="value">${opPass.issue_date || "—"}</span></div>
-        <div class="row"><span class="label">Expiry Date</span><span class="value">${opPass.expiry_date || "—"}</span></div>
-        <div class="row"><span class="label">Status</span><span class="value">${opPass.status}</span></div>
+        <div class="row"><span class="label">OP Pass ID</span><span class="value">${esc(opPass.op_pass_id)}</span></div>
+        <div class="row"><span class="label">Patient</span><span class="value">${esc(opPass.patient_name)}</span></div>
+        <div class="row"><span class="label">Type</span><span class="value">${esc(opPass.patient_type || "SELF")}</span></div>
+        <div class="row"><span class="label">Issue Date</span><span class="value">${esc(opPass.issue_date)}</span></div>
+        <div class="row"><span class="label">Expiry Date</span><span class="value">${esc(opPass.expiry_date)}</span></div>
+        <div class="row"><span class="label">Status</span><span class="value">${esc(opPass.status)}</span></div>
         ${appointment ? `
         <div style="margin-top:16px;padding-top:16px;border-top:2px solid #f0f4f8;">
-          <div class="row"><span class="label">Doctor</span><span class="value">${appointment.doctor_name || "—"}</span></div>
-          <div class="row"><span class="label">Date</span><span class="value">${appointment.date || "—"}</span></div>
-          <div class="row"><span class="label">Time</span><span class="value">${appointment.time || "—"}</span></div>
-          <div class="row"><span class="label">Booking ID</span><span class="value">${appointment.booking_id || "—"}</span></div>
+          <div class="row"><span class="label">Doctor</span><span class="value">${esc(appointment.doctor_name)}</span></div>
+          <div class="row"><span class="label">Date</span><span class="value">${esc(appointment.date)}</span></div>
+          <div class="row"><span class="label">Time</span><span class="value">${esc(appointment.time)}</span></div>
+          <div class="row"><span class="label">Booking ID</span><span class="value">${esc(appointment.booking_id)}</span></div>
         </div>` : ""}
       </div>
       <div class="footer">AI-HOS Hospital Management System</div>
@@ -157,13 +163,13 @@ function buildAppointmentHTML(appt: Record<string, unknown>) {
         <div class="badge badge-valid">${badgeText}</div>
       </div>
       <div class="body">
-        <div class="row"><span class="label">Patient</span><span class="value">${appt.patient_name || "—"}</span></div>
-        <div class="row"><span class="label">Doctor</span><span class="value">${appt.doctor_name || "—"}</span></div>
-        <div class="row"><span class="label">Specialty</span><span class="value">${appt.specialty || "—"}</span></div>
-        <div class="row"><span class="label">Date</span><span class="value">${appt.date || "—"}</span></div>
-        <div class="row"><span class="label">Time</span><span class="value">${appt.time || "—"}</span></div>
-        <div class="row"><span class="label">Status</span><span class="value">${appt.status || "—"}</span></div>
-        <div class="row"><span class="label">Booking ID</span><span class="value">${appt.booking_id || "—"}</span></div>
+        <div class="row"><span class="label">Patient</span><span class="value">${esc(appt.patient_name)}</span></div>
+        <div class="row"><span class="label">Doctor</span><span class="value">${esc(appt.doctor_name)}</span></div>
+        <div class="row"><span class="label">Specialty</span><span class="value">${esc(appt.specialty)}</span></div>
+        <div class="row"><span class="label">Date</span><span class="value">${esc(appt.date)}</span></div>
+        <div class="row"><span class="label">Time</span><span class="value">${esc(appt.time)}</span></div>
+        <div class="row"><span class="label">Status</span><span class="value">${esc(appt.status)}</span></div>
+        <div class="row"><span class="label">Booking ID</span><span class="value">${esc(appt.booking_id)}</span></div>
       </div>
       <div class="footer">AI-HOS Hospital Management System</div>
     </div>
@@ -183,12 +189,12 @@ function buildPrescriptionHTML(rx: Record<string, unknown>) {
         <div class="badge badge-valid">${badgeText}</div>
       </div>
       <div class="body">
-        <div class="row"><span class="label">Patient</span><span class="value">${rx.patient_name || "—"}</span></div>
-        <div class="row"><span class="label">Doctor</span><span class="value">${rx.doctor_name || "—"}</span></div>
-        <div class="row"><span class="label">Diagnosis</span><span class="value">${rx.diagnosis || "—"}</span></div>
-        <div class="row"><span class="label">Prescription ID</span><span class="value">${rx.prescription_id || "—"}</span></div>
-        ${items.length > 0 ? `<div class="row"><span class="label">Medicines</span><span class="value">${items.map((i: Record<string, string>) => i.medicine_name).join(", ")}</span></div>` : ""}
-        ${tests.length > 0 ? `<div class="row"><span class="label">Lab Tests</span><span class="value">${tests.map((t: Record<string, string>) => t.test_name).join(", ")}</span></div>` : ""}
+        <div class="row"><span class="label">Patient</span><span class="value">${esc(rx.patient_name)}</span></div>
+        <div class="row"><span class="label">Doctor</span><span class="value">${esc(rx.doctor_name)}</span></div>
+        <div class="row"><span class="label">Diagnosis</span><span class="value">${esc(rx.diagnosis)}</span></div>
+        <div class="row"><span class="label">Prescription ID</span><span class="value">${esc(rx.prescription_id)}</span></div>
+        ${items.length > 0 ? `<div class="row"><span class="label">Medicines</span><span class="value">${items.map((i: Record<string, string>) => esc(i.medicine_name)).join(", ")}</span></div>` : ""}
+        ${tests.length > 0 ? `<div class="row"><span class="label">Lab Tests</span><span class="value">${tests.map((t: Record<string, string>) => esc(t.test_name)).join(", ")}</span></div>` : ""}
       </div>
       <div class="footer">AI-HOS Hospital Management System</div>
     </div>
@@ -203,7 +209,7 @@ function buildNotFoundHTML(id: string) {
         <div class="badge badge-invalid">INVALID</div>
       </div>
       <div class="body" style="text-align:center;padding:32px;">
-        <p style="color:#64748b;font-size:14px;">No booking found for ID: <strong>${id}</strong></p>
+        <p style="color:#64748b;font-size:14px;">No booking found for ID: <strong>${esc(id)}</strong></p>
         <p style="color:#94a3b8;font-size:12px;margin-top:8px;">Please check the ID and try again.</p>
       </div>
       <div class="footer">AI-HOS Hospital Management System</div>

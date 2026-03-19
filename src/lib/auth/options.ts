@@ -219,7 +219,7 @@ export const authConfig: NextAuthConfig = {
             .eq("tenant_id", tenantId)
             .single()
 
-          console.log("[auth] Doctor login:", { doctorId, tenantId, pinEntered: pin, doctorFound: !!doctor, pinInDB: doctor?.pin, match: doctor?.pin === pin, error: docError?.message })
+          console.log("[auth] Doctor login:", { doctorId, tenantId, pinEntered: "[REDACTED]", doctorFound: !!doctor, pinInDB: "[REDACTED]", match: doctor?.pin === pin, error: docError?.message })
 
           if (!doctor || doctor.pin !== pin) return null
           await resetRateLimit(rateLimitKey)
@@ -243,7 +243,7 @@ export const authConfig: NextAuthConfig = {
           const rawStaffId = credentials.identifier
           const staffId = (typeof rawStaffId === "string" && rawStaffId.trim() && rawStaffId !== "undefined") ? rawStaffId.trim() : ""
 
-          console.log("[auth] Staff login:", { role, tenantId, pin, staffId: staffId || "(PIN-only)", rawIdentifier: String(rawStaffId) })
+          console.log("[auth] Staff login:", { role, tenantId, pin: "[REDACTED]", staffId: staffId || "(PIN-only)", rawIdentifier: String(rawStaffId) })
 
           let staff: { staff_id: string; name: string; role: string; pin: string } | null = null
 
@@ -257,7 +257,7 @@ export const authConfig: NextAuthConfig = {
               .eq("role", role)
               .eq("status", "active")
               .single()
-            console.log("[auth] Staff by ID result:", { data, error: error?.message })
+            console.log("[auth] Staff by ID result:", { found: !!data, name: data?.name, error: error?.message })
             staff = data
           } else {
             // Lookup by PIN only (no Staff ID required)
@@ -269,7 +269,7 @@ export const authConfig: NextAuthConfig = {
               .eq("role", role)
               .eq("status", "active")
               .single()
-            console.log("[auth] Staff by PIN result:", { data, error: error?.message })
+            console.log("[auth] Staff by PIN result:", { found: !!data, name: data?.name, error: error?.message })
             staff = data
           }
 

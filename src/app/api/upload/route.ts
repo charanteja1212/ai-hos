@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
 import { createServerClient } from "@/lib/supabase/server"
 
+const ALLOWED_BUCKETS = ["logos", "doctors", "documents"]
+
 export async function POST(req: NextRequest) {
+  // Auth check
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   try {
     const formData = await req.formData()
     const file = formData.get("file") as File | null
@@ -10,6 +19,16 @@ export async function POST(req: NextRequest) {
 
     if (!file || !path) {
       return NextResponse.json({ error: "file and path are required" }, { status: 400 })
+    }
+
+    // Whitelist allowed buckets
+    if (!ALLOWED_BUCKETS.includes(bucket)) {
+      return NextResponse.json({ error: "Invalid storage bucket" }, { status: 400 })
+    }
+
+    // Sanitize path - no directory traversal
+    if (path.includes("..") || path.startsWith("/")) {
+      return NextResponse.json({ error: "Invalid file path" }, { status: 400 })
     }
 
     if (file.size > 2 * 1024 * 1024) {

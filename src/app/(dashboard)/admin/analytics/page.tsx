@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { useBranch } from "@/components/providers/branch-context"
 import { motion } from "framer-motion"
+import { toast } from "sonner"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { getTodayIST } from "@/lib/utils/date"
 import { formatCurrency } from "@/lib/utils/format"
@@ -86,27 +87,33 @@ export default function AnalyticsPage() {
     setLoading(true)
     const supabase = createBrowserClient()
 
-    const [apptRes, patRes, invRes, queueRes, labRes, pharmRes] = await Promise.all([
-      supabase.from("appointments").select("*").eq("tenant_id", tenantId)
-        .gte("date", from).lte("date", to).order("date"),
-      supabase.from("patients").select("name, phone, age, gender, created_at").eq("tenant_id", tenantId),
-      supabase.from("invoices").select("*").eq("tenant_id", tenantId)
-        .gte("created_at", from + "T00:00:00").lte("created_at", to + "T23:59:59"),
-      supabase.from("queue_entries").select("*").eq("tenant_id", tenantId)
-        .gte("date", from).lte("date", to),
-      supabase.from("lab_orders").select("order_id, status, tests, created_at, results_uploaded_at, total_amount")
-        .eq("tenant_id", tenantId).gte("created_at", from + "T00:00:00").lte("created_at", to + "T23:59:59"),
-      supabase.from("pharmacy_orders").select("order_id, status, items, total_amount, created_at, dispensed_at")
-        .eq("tenant_id", tenantId).gte("created_at", from + "T00:00:00").lte("created_at", to + "T23:59:59"),
-    ])
+    try {
+      const [apptRes, patRes, invRes, queueRes, labRes, pharmRes] = await Promise.all([
+        supabase.from("appointments").select("*").eq("tenant_id", tenantId)
+          .gte("date", from).lte("date", to).order("date"),
+        supabase.from("patients").select("name, phone, age, gender, created_at").eq("tenant_id", tenantId),
+        supabase.from("invoices").select("*").eq("tenant_id", tenantId)
+          .gte("created_at", from + "T00:00:00").lte("created_at", to + "T23:59:59"),
+        supabase.from("queue_entries").select("*").eq("tenant_id", tenantId)
+          .gte("date", from).lte("date", to),
+        supabase.from("lab_orders").select("order_id, status, tests, created_at, results_uploaded_at, total_amount")
+          .eq("tenant_id", tenantId).gte("created_at", from + "T00:00:00").lte("created_at", to + "T23:59:59"),
+        supabase.from("pharmacy_orders").select("order_id, status, items, total_amount, created_at, dispensed_at")
+          .eq("tenant_id", tenantId).gte("created_at", from + "T00:00:00").lte("created_at", to + "T23:59:59"),
+      ])
 
-    setAppointments((apptRes.data || []) as Record<string, unknown>[])
-    setPatients((patRes.data || []) as Record<string, unknown>[])
-    setInvoices((invRes.data || []) as Record<string, unknown>[])
-    setQueueEntries((queueRes.data || []) as Record<string, unknown>[])
-    setLabOrders((labRes.data || []) as Record<string, unknown>[])
-    setPharmOrders((pharmRes.data || []) as Record<string, unknown>[])
-    setLoading(false)
+      setAppointments((apptRes.data || []) as Record<string, unknown>[])
+      setPatients((patRes.data || []) as Record<string, unknown>[])
+      setInvoices((invRes.data || []) as Record<string, unknown>[])
+      setQueueEntries((queueRes.data || []) as Record<string, unknown>[])
+      setLabOrders((labRes.data || []) as Record<string, unknown>[])
+      setPharmOrders((pharmRes.data || []) as Record<string, unknown>[])
+    } catch (err) {
+      console.error("[analytics] Failed to fetch data:", err)
+      toast.error("Failed to load analytics data")
+    } finally {
+      setLoading(false)
+    }
   }, [tenantId, from, to])
 
   useEffect(() => { if (tenantId) fetchData() }, [fetchData, tenantId])

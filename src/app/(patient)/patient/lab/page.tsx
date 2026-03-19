@@ -28,6 +28,7 @@ import { usePatientLabOrders } from "@/hooks/use-patient-lab-orders"
 import { useTenant } from "@/hooks/use-tenant"
 import { PrintLayout } from "@/components/print/print-layout"
 import { LabReportPrint } from "@/components/print/lab-report-print"
+import { usePersonFilter, PersonSelectorBar } from "@/components/patient/person-filter"
 import type { SessionUser } from "@/types/auth"
 import type { LabOrder } from "@/types/database"
 
@@ -43,7 +44,9 @@ export default function PatientLabPage() {
   const user = session?.user as SessionUser | undefined
   const phone = user?.patientPhone
 
-  const { orders, hospitalNames, isLoading } = usePatientLabOrders(phone)
+  const { orders: rawOrders, hospitalNames, isLoading } = usePatientLabOrders(phone)
+  const { filterByPerson } = usePersonFilter()
+  const orders = filterByPerson(rawOrders as Record<string, unknown>[]) as typeof rawOrders
   const [selected, setSelected] = useState<LabOrder | null>(null)
 
   const printRef = useRef<HTMLDivElement>(null)
@@ -75,6 +78,7 @@ export default function PatientLabPage() {
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
+      <PersonSelectorBar />
       <div>
         <h1 className="text-lg font-bold">Lab Results</h1>
         <p className="text-sm text-muted-foreground">{orders.length} lab orders</p>

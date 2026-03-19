@@ -53,11 +53,12 @@ export async function GET(req: NextRequest) {
       } catch { /* ignore — fee is optional */ }
     }
 
+    // Redact sensitive PII — only expose what the payment page needs
     return NextResponse.json({
       booking_id: appt.booking_id,
       status: appt.status,
       payment_status: appt.payment_status,
-      patient_name: appt.patient_name,
+      patient_name: appt.patient_name ? appt.patient_name.split(" ")[0] + " ***" : null,
       doctor_name: appt.doctor_name,
       specialty: appt.specialty,
       appointment_date: appt.date,

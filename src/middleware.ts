@@ -40,7 +40,18 @@ export default auth((req) => {
     pathname.startsWith("/rx/") ||
     pathname.startsWith("/wa/") ||
     pathname.startsWith("/onboard/") ||
-    pathname.startsWith("/api/") ||
+    pathname.startsWith("/api/auth/") ||
+    pathname.startsWith("/api/health") ||
+    pathname.startsWith("/api/payment/webhook") ||
+    pathname.startsWith("/api/payment/callback") ||
+    pathname.startsWith("/api/payment/create-order") ||
+    pathname.startsWith("/api/payment/status") ||
+    pathname.startsWith("/api/payment/verify-checkout") ||
+    pathname.startsWith("/api/verify/") ||
+    pathname.startsWith("/api/whatsapp/webhook") ||
+    pathname.startsWith("/api/whatsapp/token") ||
+    pathname.startsWith("/api/patient-auth/") ||
+    pathname.startsWith("/api/payment/send-emails") ||
     pathname.startsWith("/_next/") ||
     pathname === "/favicon.ico"
   ) {

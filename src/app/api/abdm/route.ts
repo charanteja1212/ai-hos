@@ -85,6 +85,7 @@ export async function POST(req: NextRequest) {
               abha_status: "verified",
             })
             .eq("phone", patientPhone)
+            .eq("tenant_id", tenantId)
         }
 
         return NextResponse.json({ profile, linked: !!patientPhone })
@@ -105,6 +106,7 @@ export async function POST(req: NextRequest) {
             abha_status: "linked",
           })
           .eq("phone", patientPhone)
+          .eq("tenant_id", tenantId)
 
         if (error) return NextResponse.json({ error: error.message }, { status: 500 })
         return NextResponse.json({ success: true })
@@ -118,6 +120,7 @@ export async function POST(req: NextRequest) {
           .from("patients")
           .update({ abha_number: null, abha_address: null, abha_status: "not_linked" })
           .eq("phone", unlinkPhone)
+          .eq("tenant_id", tenantId)
 
         return NextResponse.json({ success: true })
       }

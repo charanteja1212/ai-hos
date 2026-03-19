@@ -14,6 +14,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  // Role check: only staff roles can reply
+  const allowedRoles = ["RECEPTION", "BRANCH_ADMIN", "ADMIN", "CLIENT_ADMIN", "SUPER_ADMIN"]
+  const userRole = (session.user as { role?: string }).role
+  if (!userRole || !allowedRoles.includes(userRole)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
   const body = await req.json()
   const { chat_id, message, action } = body
 
@@ -23,11 +30,13 @@ export async function POST(req: NextRequest) {
 
   const supabase = createServerClient()
 
-  // Fetch the live chat
+  // Fetch the live chat (scoped to the user's tenant)
+  const tenantId = (session.user as { tenantId?: string }).tenantId
   const { data: chat, error: chatErr } = await supabase
     .from("live_chats")
     .select("*")
     .eq("id", chat_id)
+    .eq("tenant_id", tenantId)
     .single()
 
   if (chatErr || !chat) {

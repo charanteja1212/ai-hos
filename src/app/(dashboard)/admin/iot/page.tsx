@@ -109,6 +109,11 @@ function IoTGatewayContent() {
         subtitle="Connect and monitor medical devices"
       />
 
+      {/* Coming Soon Banner */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-amber-800 text-sm font-medium">
+        IoT Gateway integration is coming soon. Configuration saved locally for preview purposes only.
+      </div>
+
       {/* Stats Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
@@ -194,9 +199,9 @@ function IoTGatewayContent() {
               </div>
             </div>
 
-            <Button onClick={handleSave} className="w-full gradient-blue text-white hover:opacity-90">
+            <Button onClick={handleSave} disabled className="w-full" variant="secondary">
               <Save className="w-4 h-4 mr-2" />
-              Save Gateway Settings
+              Save Gateway Settings (Coming Soon)
             </Button>
           </CardContent>
         </Card>

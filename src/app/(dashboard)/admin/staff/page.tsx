@@ -184,8 +184,8 @@ export default function StaffManagementPage() {
         .eq("role", formRole)
         .eq("pin", formPin.trim())
         .eq("status", "active")
-      if (editing) dupQuery.neq("staff_id", editing.staff_id)
-      const { data: dupStaff } = await dupQuery.limit(1).maybeSingle()
+      const finalDupQuery = editing ? dupQuery.neq("staff_id", editing.staff_id) : dupQuery
+      const { data: dupStaff } = await finalDupQuery.limit(1).maybeSingle()
       if (dupStaff) {
         toast.error(`PIN already in use by ${dupStaff.name}. Each staff member must have a unique PIN.`)
         setSaving(false)

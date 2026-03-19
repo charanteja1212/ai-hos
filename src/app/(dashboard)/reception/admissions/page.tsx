@@ -336,6 +336,15 @@ function PatientCard({
   )
 }
 
+const statColorClasses: Record<string, string> = {
+  blue: "text-blue-500",
+  green: "text-green-500",
+  orange: "text-orange-500",
+  purple: "text-purple-500",
+  red: "text-red-500",
+  amber: "text-amber-500",
+}
+
 // ─── Main Page ───
 
 export default function AdmissionsPage() {
@@ -455,7 +464,7 @@ export default function AdmissionsPage() {
                   <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-current/5 to-transparent rounded-bl-[80px]" />
                   <div className="relative">
                     <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                      <div className={cn(`text-${stat.color}-500`)}>{stat.icon}</div>
+                      <div className={statColorClasses[stat.color] || "text-gray-500"}>{stat.icon}</div>
                       <span className="text-[10px] font-semibold uppercase tracking-widest">{stat.label}</span>
                     </div>
                     <motion.p

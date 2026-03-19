@@ -5,6 +5,8 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useBranch } from "@/components/providers/branch-context"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { logAuditClient } from "@/lib/audit-client"
+import { toast } from "sonner"
 import { formatDate, formatTime } from "@/lib/utils/date"
 import { formatPhone } from "@/lib/utils/format"
 import { Badge } from "@/components/ui/badge"
@@ -166,11 +168,11 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
     if (!phone || !tenantId) return
     setSaving(true)
     const supabase = createBrowserClient()
-    const bmi = newVitals.weight && newVitals.height
+    const bmi = newVitals.weight && newVitals.height && newVitals.height > 0
       ? +(newVitals.weight / ((newVitals.height / 100) ** 2)).toFixed(1)
-      : undefined
+      : null
 
-    await supabase.from("vitals").insert({
+    const { error } = await supabase.from("vitals").insert({
       patient_phone: phone,
       tenant_id: tenantId,
       recorded_by: user?.doctorId || user?.name || "",
@@ -182,11 +184,27 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
       spo2: newVitals.spo2 || null,
       weight: newVitals.weight || null,
       height: newVitals.height || null,
-      bmi: bmi || null,
+      bmi: bmi,
       respiratory_rate: newVitals.respiratory_rate || null,
       blood_sugar_fasting: newVitals.blood_sugar_fasting || null,
       blood_sugar_pp: newVitals.blood_sugar_pp || null,
       notes: newVitals.notes || null,
+    })
+
+    if (error) {
+      toast.error("Failed to save vitals")
+      setSaving(false)
+      return
+    }
+
+    logAuditClient({
+      action: "create",
+      entityType: "vitals",
+      entityId: phone,
+      actorEmail: user?.email || "",
+      actorRole: user?.role || "DOCTOR",
+      tenantId,
+      details: { patient_phone: phone },
     })
 
     setNewVitals({})
@@ -203,7 +221,7 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
     if (!phone || !tenantId || !newCondition.condition_name) return
     setSaving(true)
     const supabase = createBrowserClient()
-    await supabase.from("medical_conditions").insert({
+    const { error } = await supabase.from("medical_conditions").insert({
       patient_phone: phone,
       tenant_id: tenantId,
       condition_name: newCondition.condition_name,
@@ -216,6 +234,23 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
       diagnosed_by_name: user?.name || "",
       notes: newCondition.notes || null,
     })
+
+    if (error) {
+      toast.error("Failed to save condition")
+      setSaving(false)
+      return
+    }
+
+    logAuditClient({
+      action: "create",
+      entityType: "medical_condition",
+      entityId: phone,
+      actorEmail: user?.email || "",
+      actorRole: user?.role || "DOCTOR",
+      tenantId,
+      details: { patient_phone: phone, condition_name: newCondition.condition_name },
+    })
+
     setNewCondition({ category: "chronic", severity: "moderate", status: "active" })
     setShowAddCondition(false)
     setSaving(false)
@@ -230,7 +265,7 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
     if (!phone || !tenantId || !newAllergy.allergen) return
     setSaving(true)
     const supabase = createBrowserClient()
-    await supabase.from("allergies").insert({
+    const { error } = await supabase.from("allergies").insert({
       patient_phone: phone,
       tenant_id: tenantId,
       allergen: newAllergy.allergen,
@@ -242,6 +277,23 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
       recorded_by_name: user?.name || "",
       notes: newAllergy.notes || null,
     })
+
+    if (error) {
+      toast.error("Failed to save allergy")
+      setSaving(false)
+      return
+    }
+
+    logAuditClient({
+      action: "create",
+      entityType: "allergy",
+      entityId: phone,
+      actorEmail: user?.email || "",
+      actorRole: user?.role || "DOCTOR",
+      tenantId,
+      details: { patient_phone: phone, allergen: newAllergy.allergen },
+    })
+
     setNewAllergy({ allergy_type: "drug", severity: "moderate", status: "active" })
     setShowAddAllergy(false)
     setSaving(false)
@@ -256,7 +308,7 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
     if (!phone || !tenantId) return
     setSaving(true)
     const supabase = createBrowserClient()
-    await supabase.from("clinical_notes").insert({
+    const { error } = await supabase.from("clinical_notes").insert({
       patient_phone: phone,
       tenant_id: tenantId,
       doctor_id: user?.doctorId || "",
@@ -269,6 +321,23 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
       chief_complaint: newNote.chief_complaint || null,
       history_of_illness: newNote.history_of_illness || null,
     })
+
+    if (error) {
+      toast.error("Failed to save clinical note")
+      setSaving(false)
+      return
+    }
+
+    logAuditClient({
+      action: "create",
+      entityType: "clinical_note",
+      entityId: phone,
+      actorEmail: user?.email || "",
+      actorRole: user?.role || "DOCTOR",
+      tenantId,
+      details: { patient_phone: phone, note_type: newNote.note_type },
+    })
+
     setNewNote({ note_type: "consultation" })
     setShowAddNote(false)
     setSaving(false)

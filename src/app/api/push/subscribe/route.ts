@@ -9,11 +9,16 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { subscription, userId, tenantId } = await req.json()
+    const { subscription } = await req.json()
 
     if (!subscription?.endpoint) {
       return NextResponse.json({ error: "Invalid subscription" }, { status: 400 })
     }
+
+    // Use session values instead of request body
+    const sessionUser = session.user as { id?: string; email?: string; tenantId?: string }
+    const userId = sessionUser.id || sessionUser.email || "unknown"
+    const tenantId = sessionUser.tenantId || ""
 
     const supabase = createServerClient()
 

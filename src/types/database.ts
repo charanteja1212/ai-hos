@@ -346,6 +346,8 @@ export interface Tenant {
   abdm_environment?: "sandbox" | "production"
   // Branding / White Label
   branding_config?: BrandingConfig | null
+  // Notification preferences
+  notification_config?: Record<string, unknown> | null
   status: string
   created_at?: string
 }

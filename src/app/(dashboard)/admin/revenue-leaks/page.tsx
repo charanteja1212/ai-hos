@@ -122,7 +122,8 @@ function RevenueLeaksContent() {
         .eq("tenant_id", tenantId).eq("status", "completed").gte("date", from30).lte("date", today),
       supabase.from("invoices")
         .select("invoice_id, booking_id, patient_name, total, payment_status, created_at, type")
-        .eq("tenant_id", tenantId),
+        .eq("tenant_id", tenantId)
+        .gte("created_at", from30 + "T00:00:00"),
       supabase.from("pharmacy_orders")
         .select("order_id, patient_name, total_amount, dispensed_at, status")
         .eq("tenant_id", tenantId).eq("status", "dispensed").gte("created_at", from30 + "T00:00:00"),

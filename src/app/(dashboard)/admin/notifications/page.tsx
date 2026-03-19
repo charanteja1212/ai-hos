@@ -113,9 +113,18 @@ export default function NotificationsPage() {
       .select("notification_config")
       .eq("tenant_id", tenantId)
       .single()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          toast.error("Failed to load notification preferences")
+          setLoading(false)
+          return
+        }
         if (data?.notification_config) {
-          setConfig({ ...DEFAULT_CONFIG, ...data.notification_config })
+          setConfig({
+            push: { ...DEFAULT_CONFIG.push, ...data.notification_config?.push },
+            whatsapp: { ...DEFAULT_CONFIG.whatsapp, ...data.notification_config?.whatsapp },
+            email: { ...DEFAULT_CONFIG.email, ...data.notification_config?.email },
+          })
         }
         setLoading(false)
       })
@@ -140,6 +149,7 @@ export default function NotificationsPage() {
   )
 
   const handleSave = useCallback(async () => {
+    if (!tenantId) return
     setSaving(true)
     const supabase = createBrowserClient()
     try {

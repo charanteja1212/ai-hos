@@ -46,6 +46,7 @@ import {
   MessageSquare,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import type { SessionUser } from "@/types/auth"
 
 const COLORS = ["#2563eb", "#059669", "#d97706", "#dc2626", "#7c3aed", "#06b6d4", "#ec4899", "#84cc16"]
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -77,17 +78,12 @@ function getDateRange(preset: string) {
   }
 }
 
-interface DoctorSession {
-  doctorId?: string
-  doctorName?: string
-}
-
 export default function DoctorAnalyticsPage() {
   const { activeTenantId: tenantId } = useBranch()
   const { data: session } = useSession()
-  const user = session?.user as DoctorSession | undefined
+  const user = session?.user as SessionUser | undefined
   const doctorId = user?.doctorId || ""
-  const doctorName = user?.doctorName || "Doctor"
+  const doctorName = user?.name || "Doctor"
 
   const [range, setRange] = useState("30d")
   const [loading, setLoading] = useState(true)

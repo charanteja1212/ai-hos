@@ -17,6 +17,7 @@ import {
   Clock,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { usePersonFilter, PersonSelectorBar } from "@/components/patient/person-filter"
 import type { SessionUser } from "@/types/auth"
 import type { OPPass } from "@/types/database"
 
@@ -43,6 +44,7 @@ export default function OPPassPage() {
   const { data: session } = useSession()
   const user = session?.user as SessionUser | undefined
   const phone = user?.patientPhone
+  const { filterByPerson, selectedPerson } = usePersonFilter()
 
   const { data: passes, isLoading } = useSWR(
     phone ? `patient-op-passes-${phone}` : null,
@@ -85,13 +87,16 @@ export default function OPPassPage() {
     )
   }
 
-  const opPasses = passes?.passes || []
+  const allPasses = passes?.passes || []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const opPasses = filterByPerson(allPasses as any[]) as typeof allPasses
   const hospitalNames = passes?.hospitalNames || {}
   const activePasses = opPasses.filter(isPassActive)
   const expiredPasses = opPasses.filter((p) => !isPassActive(p))
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
+      <PersonSelectorBar />
       <div>
         <h1 className="text-lg font-bold">OP Passes</h1>
         <p className="text-sm text-muted-foreground">

@@ -148,7 +148,7 @@ export default function PatientPrescriptionsPage() {
                     </span>
                   </div>
                   {rx.items && (
-                    <div className="flex flex-wrap gap-1 mt-3 ml-13">
+                    <div className="flex flex-wrap gap-1 mt-3 ml-14">
                       {(rx.items as PrescriptionItem[]).map((item, j) => (
                         <Badge key={j} variant="secondary" className="text-[10px] gap-1">
                           <Pill className="w-2.5 h-2.5" />

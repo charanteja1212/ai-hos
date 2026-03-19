@@ -91,11 +91,11 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!tenantId) return
     const supabase = createBrowserClient()
-    supabase
+    Promise.resolve(supabase
       .from("tenants")
       .select("*")
       .eq("tenant_id", tenantId)
-      .single()
+      .single())
       .then(({ data }) => {
         if (data) {
           const t = data as Tenant
@@ -124,6 +124,11 @@ export default function SettingsPage() {
             setWardRows(DEFAULT_WARD_ROWS)
           }
         }
+        setLoading(false)
+      })
+      .catch((err) => {
+        console.error("[settings] Failed to load tenant:", err)
+        toast.error("Failed to load settings")
         setLoading(false)
       })
   }, [tenantId])

@@ -13,14 +13,14 @@ import { createServerNotifications } from "@/lib/notifications-server"
 export async function POST(req: NextRequest) {
   console.log("[post-consult] API called")
 
-  // Auth check — log but don't block (fire-and-forget calls may have stale sessions)
-  let authenticated = false
+  // Auth check — block unauthenticated requests
   try {
     const session = await auth()
-    authenticated = !!session?.user
-    console.log("[post-consult] Auth:", authenticated ? "OK" : "FAIL (no session)")
-  } catch (e) {
-    console.error("[post-consult] Auth error:", e instanceof Error ? e.message : e)
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   const body = await req.json()

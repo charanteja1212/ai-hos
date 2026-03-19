@@ -7,7 +7,7 @@ import { sendReply } from "@/lib/whatsapp/send-reply"
 import { isRateLimited } from "@/lib/rate-limit"
 import type { TenantConfig } from "@/lib/whatsapp/types"
 
-const VERIFY_TOKEN = process.env.WA_VERIFY_TOKEN || "care_hospital_whatsapp_2026"
+const VERIFY_TOKEN = process.env.WA_VERIFY_TOKEN
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + "/rest/v1"
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const WA_API_URL_DEFAULT = process.env.WA_API_URL || ""
@@ -21,6 +21,10 @@ export async function GET(req: NextRequest) {
   const mode = params.get("hub.mode")
   const token = params.get("hub.verify_token")
   const challenge = params.get("hub.challenge")
+
+  if (!VERIFY_TOKEN) {
+    return NextResponse.json({ error: "WA_VERIFY_TOKEN not configured" }, { status: 500 })
+  }
 
   if (mode === "subscribe" && token === VERIFY_TOKEN) {
     return new NextResponse(challenge, { status: 200 })

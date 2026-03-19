@@ -140,17 +140,17 @@ export async function POST(req: NextRequest) {
 
   // ── PHASE 1: Signature verification ──
   const secret = WEBHOOK_SECRET();
-  if (secret) {
-    const sig = req.headers.get('x-razorpay-signature') || '';
-    const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
-    if (sig !== expected) {
-      console.error('[webhook][PHASE 1] FAIL — Signature mismatch');
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
-    }
-    console.log('[webhook][PHASE 1] OK — Signature verified');
-  } else {
-    console.log('[webhook][PHASE 1] SKIP — No webhook secret configured');
+  if (!secret) {
+    console.error('[webhook][PHASE 1] FAIL — RAZORPAY_WEBHOOK_SECRET is not configured');
+    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
   }
+  const sig = req.headers.get('x-razorpay-signature') || '';
+  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+  if (sig !== expected) {
+    console.error('[webhook][PHASE 1] FAIL — Signature mismatch');
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+  }
+  console.log('[webhook][PHASE 1] OK — Signature verified');
 
   // ── PHASE 2: Parse event ──
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -254,7 +254,7 @@ export async function POST(req: NextRequest) {
       const ist = nowIST();
       const expiryDate = new Date(ist.ms + 15 * 86400000).toISOString().split('T')[0];
       const opPassId = 'OP' + Date.now() + Math.random().toString(36).slice(2, 6);
-      const verifyUrl = 'https://ainewworld.in/webhook/verify-appointment?id=' + encodeURIComponent(opPassId);
+      const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.ainewworld.in'}/api/verify?id=` + encodeURIComponent(opPassId);
       const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(verifyUrl);
       const expiryDisplay = new Date(expiryDate + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
       console.log('[webhook][PHASE 8] OK — Generated OP Pass:', { opPassId, issueDate: ist.date, expiryDate, expiryDisplay });

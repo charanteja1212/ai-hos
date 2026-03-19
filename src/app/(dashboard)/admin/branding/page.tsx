@@ -82,6 +82,7 @@ function BrandingContent() {
   }, [])
 
   const handleSave = useCallback(async () => {
+    if (!tenantId) return
     const hexRe = /^#[0-9a-fA-F]{6}$/
     if (!hexRe.test(config.primary_color || "")) { toast.error("Primary color must be a valid hex (e.g. #6366f1)"); return }
     if (!hexRe.test(config.secondary_color || "")) { toast.error("Secondary color must be a valid hex (e.g. #8b5cf6)"); return }

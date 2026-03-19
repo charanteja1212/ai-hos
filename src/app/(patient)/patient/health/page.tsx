@@ -45,11 +45,11 @@ export default function HealthPage() {
   const { data: session } = useSession()
   const user = session?.user as SessionUser | undefined
   const phone = user?.patientPhone
-  const { filterByPerson } = usePersonFilter()
+  const { filterByPerson, selectedPerson } = usePersonFilter()
   const supabase = createBrowserClient()
 
   const { data, isLoading } = useSWR(
-    phone ? `patient-health-${phone}` : null,
+    phone ? `patient-health-${phone}-${selectedPerson || 'all'}` : null,
     async () => {
       const [appts, rxs, vitals, labs, conditions, allergies] = await Promise.all([
         supabase
@@ -90,10 +90,10 @@ export default function HealthPage() {
       return {
         appointments: filterByPerson(appts.data || []),
         prescriptions: filterByPerson(rxs.data || []),
-        vitals: vitals.data || [],
+        vitals: filterByPerson(vitals.data || []),
         labOrders: filterByPerson(labs.data || []),
-        conditions: conditions.data || [],
-        allergies: allergies.data || [],
+        conditions: filterByPerson(conditions.data || []),
+        allergies: filterByPerson(allergies.data || []),
       }
     }
   )

@@ -36,12 +36,12 @@ export default function PatientDashboard() {
   const { data: session } = useSession()
   const user = session?.user as SessionUser | undefined
   const phone = user?.patientPhone
-  const { filterByPerson } = usePersonFilter()
+  const { filterByPerson, selectedPerson } = usePersonFilter()
 
   const supabase = createBrowserClient()
 
   const { data: stats, isLoading, error: fetchError, mutate } = useSWR(
-    phone ? `patient-dashboard-${phone}` : null,
+    phone ? `patient-dashboard-${phone}-${selectedPerson || 'all'}` : null,
     async () => {
       const today = new Date().toISOString().split("T")[0]
 
