@@ -159,14 +159,14 @@ export default function PatientProfilePage() {
         animate={{ opacity: 1, y: 0 }}
       >
         <Card className="border-0 shadow-sm overflow-hidden">
-          <div className="bg-gradient-to-r from-teal-500 via-cyan-600 to-cyan-800 p-5 text-white">
+          <div className="bg-muted/50 border-b border-border p-5">
             <div className="flex items-center gap-3">
-              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-xl font-bold">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center text-xl font-bold">
                 {(patient?.name || "P").charAt(0)}
               </div>
               <div>
-                <p className="text-lg font-bold">{patient?.name || "Patient"}</p>
-                <div className="flex items-center gap-3 mt-0.5 text-white/70 text-sm">
+                <p className="text-lg font-bold text-foreground">{patient?.name || "Patient"}</p>
+                <div className="flex items-center gap-3 mt-0.5 text-muted-foreground text-sm">
                   <span className="flex items-center gap-1">
                     <Phone className="w-3.5 h-3.5" />
                     +{phone}

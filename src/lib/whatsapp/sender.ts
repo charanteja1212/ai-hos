@@ -328,6 +328,82 @@ export async function sendDoctorLeaveNotification(
   return sendText(phone, lines.join("\n"), config)
 }
 
+/** Send lab results ready notification */
+export async function sendLabResultNotification(
+  phone: string,
+  data: {
+    patientName: string
+    orderId: string
+    tests: string[]
+    hospitalName: string
+    viewLink?: string
+  },
+  config?: WhatsAppConfig
+): Promise<SendResult> {
+  const firstName = (data.patientName || "").split(" ")[0]
+  const testList = data.tests.slice(0, 5).join(", ")
+  const suffix = data.tests.length > 5 ? ` +${data.tests.length - 5} more` : ""
+
+  const body = [
+    `*${data.hospitalName}*`,
+    `*Lab Results Ready*`,
+    ``,
+    `Dear ${firstName},`,
+    ``,
+    `Your lab results are now available.`,
+    ``,
+    `Order: ${data.orderId}`,
+    `Tests: ${testList}${suffix}`,
+    ``,
+    `Please log in to the Patient Portal to view your detailed results, or visit the hospital reception to collect a printed copy.`,
+    ``,
+    `Regards,`,
+    `${data.hospitalName}`,
+  ].join("\n")
+
+  if (data.viewLink) {
+    return sendInteractiveButton(phone, body, "View Results", data.viewLink, config)
+  }
+  return sendText(phone, body, config)
+}
+
+/** Send payment link via WhatsApp */
+export async function sendPaymentLink(
+  phone: string,
+  data: {
+    patientName: string
+    amount: number
+    invoiceId?: string
+    description: string
+    hospitalName: string
+    paymentLink: string
+  },
+  config?: WhatsAppConfig
+): Promise<SendResult> {
+  const firstName = (data.patientName || "").split(" ")[0]
+  const formattedAmount = `Rs ${data.amount.toLocaleString("en-IN")}`
+
+  const body = [
+    `*${data.hospitalName}*`,
+    `*Payment Request*`,
+    ``,
+    `Dear ${firstName},`,
+    ``,
+    `You have a pending payment:`,
+    ``,
+    data.invoiceId ? `Invoice: ${data.invoiceId}` : null,
+    `Description: ${data.description}`,
+    `Amount: *${formattedAmount}*`,
+    ``,
+    `Please click the button below to complete your payment securely.`,
+    ``,
+    `Regards,`,
+    `${data.hospitalName}`,
+  ].filter(Boolean).join("\n")
+
+  return sendInteractiveButton(phone, body, `Pay ${formattedAmount}`, data.paymentLink, config)
+}
+
 /** Get WhatsApp config for a specific tenant (for per-client numbers) */
 export async function getTenantWhatsAppConfig(
   tenantId: string,

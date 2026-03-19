@@ -464,8 +464,8 @@ export default function AdminPage() {
               <Building2 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{user?.clientName || "All Branches"} — Overview</h2>
-              <p className="text-xs text-gray-400">Cross-branch performance &middot; {crossData.branches.length} branches</p>
+              <h2 className="text-lg font-bold text-foreground">{user?.clientName || "All Branches"} — Overview</h2>
+              <p className="text-xs text-muted-foreground">Cross-branch performance &middot; {crossData.branches.length} branches</p>
             </div>
           </motion.div>
 
@@ -477,13 +477,13 @@ export default function AdminPage() {
               { label: "Appointments", val: crossData.totals.appointments, icon: CalendarDays, accent: "bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400" },
               { label: "Revenue", val: formatCurrency(crossData.totals.revenue), icon: IndianRupee, accent: "bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400" },
             ].map((s) => (
-              <div key={s.label} className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-full pl-1.5 pr-3.5 py-1.5 border border-gray-100 dark:border-gray-800 shadow-sm">
+              <div key={s.label} className="flex items-center gap-2 bg-card rounded-full pl-1.5 pr-3.5 py-1.5 border border-border/60 shadow-sm">
                 <div className={cn("w-7 h-7 rounded-full flex items-center justify-center", s.accent)}>
                   <s.icon className="w-3.5 h-3.5" />
                 </div>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-sm font-extrabold text-gray-900 dark:text-white tabular-nums">{s.val || "\u2014"}</span>
-                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{s.label}</span>
+                  <span className="text-sm font-extrabold text-foreground tabular-nums">{s.val || "\u2014"}</span>
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{s.label}</span>
                 </div>
               </div>
             ))}
@@ -513,10 +513,10 @@ export default function AdminPage() {
       {/* ══════ HEADER ══════ */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
             Hospital Analytics
           </h1>
-          <p className="text-sm text-gray-400 mt-0.5 flex items-center gap-2">
+          <p className="text-sm text-muted-foreground mt-0.5 flex items-center gap-2">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-600" />
@@ -548,13 +548,13 @@ export default function AdminPage() {
           { label: datePreset === "today" ? "Revenue" : "Revenue", val: formatCurrency(data.todayRevenue), icon: IndianRupee, accent: "bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400", sub: datePreset === "today" && revTrend !== 0 ? `${revTrend > 0 ? "+" : ""}${revTrend}%` : undefined },
           { label: "Appointments", val: data.todayAppointments, icon: CalendarDays, accent: "bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400", sub: datePreset === "today" && apptTrend !== 0 ? `${apptTrend > 0 ? "+" : ""}${apptTrend}%` : undefined },
         ].map((s) => (
-          <div key={s.label} className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-full pl-1.5 pr-3.5 py-1.5 border border-gray-100 dark:border-gray-800 shadow-sm">
+          <div key={s.label} className="flex items-center gap-2 bg-card rounded-full pl-1.5 pr-3.5 py-1.5 border border-border/60 shadow-sm">
             <div className={cn("w-7 h-7 rounded-full flex items-center justify-center", s.accent)}>
               <s.icon className="w-3.5 h-3.5" />
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-sm font-extrabold text-gray-900 dark:text-white tabular-nums">{s.val || "\u2014"}</span>
-              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{s.label}</span>
+              <span className="text-sm font-extrabold text-foreground tabular-nums">{s.val || "\u2014"}</span>
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{s.label}</span>
               {s.sub && (
                 <span className={cn("text-[10px] font-bold", s.sub.startsWith("+") ? "text-green-500" : "text-red-500")}>{s.sub}</span>
               )}

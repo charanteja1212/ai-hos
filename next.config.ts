@@ -4,6 +4,18 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig: NextConfig = {
   output: "standalone",
   serverExternalPackages: ["bullmq", "ioredis", "nodemailer", "pino", "pino-pretty"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+      },
+      {
+        protocol: "https",
+        hostname: "*.supabase.in",
+      },
+    ],
+  },
   async headers() {
     return [
       {

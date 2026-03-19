@@ -281,6 +281,7 @@ export const patientNav: RoleNavConfig = {
         { label: "OP Passes", href: "/patient/op-pass", icon: Shield },
         { label: "Prescriptions", href: "/patient/prescriptions", icon: Pill },
         { label: "Lab Results", href: "/patient/lab", icon: TestTube },
+        { label: "Admissions", href: "/patient/admissions", icon: BedDouble },
         { label: "My Health", href: "/patient/health", icon: Heart },
       ],
     },

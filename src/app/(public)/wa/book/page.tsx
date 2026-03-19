@@ -318,7 +318,7 @@ export default function BookPage() {
                         isComplete
                           ? "bg-cyan-700 text-white"
                           : isActive
-                          ? "bg-white dark:bg-slate-900 border-2 border-cyan-700 text-cyan-700"
+                          ? "bg-card border-2 border-primary text-primary"
                           : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
                       }`}
                     >
@@ -356,7 +356,7 @@ export default function BookPage() {
           {step !== "register" && step !== "specialty" && (
             <button
               onClick={goBack}
-              className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center shrink-0 active:scale-95 transition-transform"
+              className="w-10 h-10 rounded-xl bg-card border border-border/60 flex items-center justify-center shrink-0 active:scale-95 transition-transform"
             >
               <ChevronLeft className="w-5 h-5 text-slate-600 dark:text-slate-300" />
             </button>
@@ -382,7 +382,7 @@ export default function BookPage() {
 
       {/* ============ STEP 1: REGISTER ============ */}
       {step === "register" && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="bg-card rounded-xl border border-border/60 shadow-sm">
           <div className="p-4">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 rounded-lg bg-cyan-50 dark:bg-cyan-950/40 flex items-center justify-center">
@@ -405,7 +405,7 @@ export default function BookPage() {
                       value={patientName}
                       onChange={(e) => setPatientName(e.target.value)}
                       placeholder="Enter your name"
-                      className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-cyan-600 focus:border-cyan-600"
+                      className="h-12 rounded-xl border-border focus:ring-cyan-600 focus:border-cyan-600"
                     />
                   </div>
 
@@ -417,7 +417,7 @@ export default function BookPage() {
                         value={patientAge}
                         onChange={(e) => setPatientAge(e.target.value)}
                         placeholder="Age"
-                        className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-cyan-600 focus:border-cyan-600"
+                        className="h-12 rounded-xl border-border focus:ring-cyan-600 focus:border-cyan-600"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -431,7 +431,7 @@ export default function BookPage() {
                             className={`flex-1 h-12 rounded-full text-sm font-medium transition-colors ${
                               patientGender === g.value
                                 ? "bg-cyan-700 text-white"
-                                : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+                                : "bg-card border border-border text-muted-foreground"
                             }`}
                           >
                             {g.label}
@@ -450,7 +450,7 @@ export default function BookPage() {
                         value={patientEmail}
                         onChange={(e) => setPatientEmail(e.target.value)}
                         placeholder="Optional"
-                        className="pl-10 h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-cyan-600 focus:border-cyan-600"
+                        className="pl-10 h-12 rounded-xl border-border focus:ring-cyan-600 focus:border-cyan-600"
                       />
                     </div>
                   </div>
@@ -459,7 +459,7 @@ export default function BookPage() {
 
               {isDependent && (
                 <>
-                  <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+                  <div className="border-t border-border pt-4">
                     <div className="flex items-center gap-2 mb-4">
                       <Users className="w-4 h-4 text-cyan-700" />
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Patient Information</span>
@@ -477,7 +477,7 @@ export default function BookPage() {
                           className={`px-4 h-10 rounded-full text-sm font-medium transition-colors ${
                             relationship === r.value
                               ? "bg-cyan-700 text-white"
-                              : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+                              : "bg-card border border-border text-muted-foreground"
                           }`}
                         >
                           {r.label}
@@ -492,7 +492,7 @@ export default function BookPage() {
                       value={depName}
                       onChange={(e) => setDepName(e.target.value)}
                       placeholder="Patient's full name"
-                      className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-cyan-600 focus:border-cyan-600"
+                      className="h-12 rounded-xl border-border focus:ring-cyan-600 focus:border-cyan-600"
                     />
                   </div>
 
@@ -504,7 +504,7 @@ export default function BookPage() {
                         value={depAge}
                         onChange={(e) => setDepAge(e.target.value)}
                         placeholder="Age"
-                        className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-cyan-600 focus:border-cyan-600"
+                        className="h-12 rounded-xl border-border focus:ring-cyan-600 focus:border-cyan-600"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -518,7 +518,7 @@ export default function BookPage() {
                             className={`flex-1 h-12 rounded-full text-sm font-medium transition-colors ${
                               depGender === g.value
                                 ? "bg-cyan-700 text-white"
-                                : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+                                : "bg-card border border-border text-muted-foreground"
                             }`}
                           >
                             {g.label}
@@ -567,7 +567,7 @@ export default function BookPage() {
                     transition={{ delay: idx * 0.07, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => handleSpecialtySelect(spec)}
-                    className="w-full text-left group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-cyan-200 dark:hover:border-cyan-800 transition-all duration-300"
+                    className="w-full text-left group relative overflow-hidden rounded-2xl bg-card border border-border/60 shadow-sm hover:shadow-lg hover:border-cyan-200 dark:hover:border-cyan-800 transition-all duration-300"
                   >
                     {/* Gradient hover overlay */}
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-50/0 via-cyan-50/0 to-cyan-50/0 group-hover:from-cyan-50/80 group-hover:via-cyan-50/40 group-hover:to-transparent dark:group-hover:from-cyan-950/30 dark:group-hover:via-cyan-950/15 dark:group-hover:to-transparent transition-all duration-500" />
@@ -579,13 +579,13 @@ export default function BookPage() {
                           <div className="relative">
                             {doc.image_url ? (
                               <div className="relative">
-                                <div className="absolute -inset-1 bg-gradient-to-br from-cyan-400 to-indigo-500 rounded-2xl opacity-20 group-hover:opacity-40 blur-sm transition-opacity duration-300" />
+                                <div className="absolute -inset-1 bg-primary/30 rounded-2xl opacity-20 group-hover:opacity-40 blur-sm transition-opacity duration-300" />
                                 <img src={doc.image_url} alt={doc.name} className="relative w-16 h-16 rounded-2xl object-cover border-2 border-white dark:border-slate-800 shadow-md" />
                               </div>
                             ) : (
                               <div className="relative">
-                                <div className="absolute -inset-1 bg-gradient-to-br from-cyan-400 to-indigo-500 rounded-2xl opacity-20 blur-sm" />
-                                <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-600 to-indigo-600 flex items-center justify-center shadow-md">
+                                <div className="absolute -inset-1 bg-primary/30 rounded-2xl opacity-20 blur-sm" />
+                                <div className="relative w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-md">
                                   <span className="text-white font-bold text-lg">{initials}</span>
                                 </div>
                               </div>
@@ -611,7 +611,7 @@ export default function BookPage() {
                         /* Multi doctor - department card */
                         <div className="flex items-center gap-4">
                           <div className="relative">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-600 to-indigo-600 flex items-center justify-center shadow-md">
+                            <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-md">
                               <Stethoscope className="w-7 h-7 text-white" />
                             </div>
                             <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-cyan-700 border-2 border-white dark:border-slate-900 flex items-center justify-center">
@@ -676,11 +676,11 @@ export default function BookPage() {
                   transition={{ delay: idx * 0.1, duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => handleDoctorSelect(doc)}
-                  className="w-full text-left group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300"
+                  className="w-full text-left group relative overflow-hidden rounded-2xl bg-card border border-border/60 shadow-sm hover:shadow-xl transition-all duration-300"
                 >
                   {/* Animated gradient border on hover */}
                   <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-600 via-indigo-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ padding: "1px" }}>
-                    <div className="absolute inset-[1px] rounded-[15px] bg-white dark:bg-slate-900" />
+                    <div className="absolute inset-[1px] rounded-[15px] bg-card" />
                   </div>
 
                   <div className="relative p-5">
@@ -689,13 +689,13 @@ export default function BookPage() {
                       <div className="relative shrink-0">
                         {doc.image_url ? (
                           <div className="relative">
-                            <div className="absolute -inset-1.5 bg-gradient-to-br from-cyan-400 via-indigo-400 to-purple-400 rounded-2xl opacity-25 group-hover:opacity-50 blur-md transition-all duration-500" />
+                            <div className="absolute -inset-1.5 bg-primary/30 rounded-2xl opacity-25 group-hover:opacity-50 blur-md transition-all duration-500" />
                             <img src={doc.image_url} alt={doc.name} className="relative w-20 h-20 rounded-2xl object-cover border-2 border-white dark:border-slate-800 shadow-lg" />
                           </div>
                         ) : (
                           <div className="relative">
-                            <div className="absolute -inset-1.5 bg-gradient-to-br from-cyan-400 to-indigo-500 rounded-2xl opacity-25 blur-md" />
-                            <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-600 via-cyan-700 to-indigo-600 flex items-center justify-center shadow-lg">
+                            <div className="absolute -inset-1.5 bg-primary/30 rounded-2xl opacity-25 blur-md" />
+                            <div className="relative w-20 h-20 rounded-2xl bg-primary flex items-center justify-center shadow-lg">
                               <span className="text-white font-bold text-xl">{initials}</span>
                             </div>
                           </div>
@@ -782,8 +782,8 @@ export default function BookPage() {
                         isSelected
                           ? "bg-cyan-700 text-white shadow-sm"
                           : isToday
-                          ? "bg-white dark:bg-slate-900 border-2 border-cyan-600 dark:border-cyan-600"
-                          : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
+                          ? "bg-card border-2 border-primary"
+                          : "bg-card border border-border/60"
                       }`}
                     >
                       <p className={`text-[10px] font-medium uppercase tracking-wide ${isSelected ? "text-cyan-100" : isToday ? "text-cyan-700 dark:text-cyan-400" : "text-muted-foreground"}`}>
@@ -839,7 +839,7 @@ export default function BookPage() {
 
       {/* ============ STEP 6: CONFIRM ============ */}
       {step === "confirm" && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="bg-card rounded-xl border border-border/60 shadow-sm">
           <div className="p-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-4">Review Appointment</h2>
 
@@ -863,7 +863,7 @@ export default function BookPage() {
               <Button
                 variant="outline"
                 onClick={goBack}
-                className="w-full h-12 rounded-xl border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-medium"
+                className="w-full h-12 rounded-xl border-border text-slate-600 dark:text-slate-300 font-medium"
               >
                 Change Time
               </Button>
@@ -950,7 +950,7 @@ function SlotGroup({ label, icon, slots, selected, onSelect }: {
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors active:scale-95 ${
                 isSelected
                   ? "bg-cyan-700 text-white"
-                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:border-cyan-300 dark:hover:border-cyan-800"
+                  : "bg-card border border-border/60 text-slate-700 dark:text-slate-200 hover:border-cyan-300 dark:hover:border-cyan-800"
               }`}
             >
               {slot.time}
@@ -1088,16 +1088,16 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
       </div>
 
       {/* Booking Details */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 space-y-2 mb-4">
+      <div className="bg-card rounded-xl border border-border/60 shadow-sm p-4 space-y-2 mb-4">
         <InfoRow label="Booking ID" value={bookingResult.booking_id} />
-        <div className="border-t border-slate-200 dark:border-slate-800" />
+        <div className="border-t border-border" />
         <InfoRow label="Patient" value={bookingResult.patient_name} />
         <InfoRow label="Doctor" value={bookingResult.doctor_name} />
         <InfoRow label="Date" value={bookingResult.date} />
         <InfoRow label="Time" value={bookingResult.time} />
         {bookingResult.consultation_fee && (
           <>
-            <div className="border-t border-slate-200 dark:border-slate-800" />
+            <div className="border-t border-border" />
             <InfoRow label="Fee" value={`\u20B9${bookingResult.consultation_fee}`} />
           </>
         )}

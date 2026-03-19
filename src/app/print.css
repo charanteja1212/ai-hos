@@ -51,6 +51,20 @@
     display: none !important;
   }
 
+  /* Hide dashboard chrome when printing */
+  aside,
+  header,
+  .skip-nav,
+  [data-slot="sidebar"],
+  [data-slot="topbar"] {
+    display: none !important;
+  }
+
+  /* Remove sidebar margin so content fills page */
+  .lg\:pl-64 {
+    padding-left: 0 !important;
+  }
+
   /* Page break utilities */
   .print-break-before {
     page-break-before: always;

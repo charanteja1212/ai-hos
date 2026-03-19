@@ -908,6 +908,41 @@ export default function BillingPage() {
               })}
             </div>
 
+            {/* Send Payment Link via WhatsApp */}
+            {selectedInvoice.payment_status !== "paid" && selectedInvoice.patient_phone && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full rounded-xl gap-2"
+                onClick={async () => {
+                  try {
+                    const res = await fetch("/api/notifications/payment-link", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        invoice_id: selectedInvoice.invoice_id,
+                        patient_phone: selectedInvoice.patient_phone,
+                        patient_name: selectedInvoice.patient_name,
+                        amount: selectedInvoice.total,
+                        description: selectedInvoice.type ? `${selectedInvoice.type} charges` : "Hospital services",
+                        tenant_id: tenantId,
+                      }),
+                    })
+                    const data = await res.json()
+                    if (data.success) {
+                      toast.success("Payment link sent via WhatsApp")
+                    } else {
+                      toast.error("Failed to send payment link")
+                    }
+                  } catch {
+                    toast.error("Failed to send payment link")
+                  }
+                }}
+              >
+                💬 Send Payment Link via WhatsApp
+              </Button>
+            )}
+
             {/* Print */}
             <div className="pt-2 border-t border-border">
               <PrintButton

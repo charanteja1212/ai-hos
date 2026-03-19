@@ -187,10 +187,10 @@ export default function PharmacyPage() {
       {/* ══════ HEADER ══════ */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
             Pharmacy
           </h1>
-          <p className="text-sm text-gray-400 mt-0.5 flex items-center gap-2">
+          <p className="text-sm text-muted-foreground mt-0.5 flex items-center gap-2">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
@@ -199,9 +199,9 @@ export default function PharmacyPage() {
           </p>
         </motion.div>
         <div className="relative max-w-xs w-full sm:w-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            className="pl-9 h-10 rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm"
+            className="pl-9 h-10 rounded-xl border-border bg-card text-sm"
             placeholder="Search patient or order..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -217,15 +217,15 @@ export default function PharmacyPage() {
           { label: "Ready", val: ready.length, icon: CheckCircle2, accent: "bg-green-100 text-green-600 dark:bg-green-950/40 dark:text-green-400" },
           { label: "Total", val: allOrders.length, icon: ShoppingBag, accent: "bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400" },
         ].map((s) => (
-          <div key={s.label} className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-full pl-1.5 pr-3.5 py-1.5 border border-gray-100 dark:border-gray-800 shadow-sm">
+          <div key={s.label} className="flex items-center gap-2 bg-card rounded-full pl-1.5 pr-3.5 py-1.5 border border-border/60 shadow-sm">
             <div className={cn("w-7 h-7 rounded-full flex items-center justify-center", s.accent)}>
               <s.icon className="w-3.5 h-3.5" />
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-sm font-extrabold text-gray-900 dark:text-white tabular-nums">
+              <span className="text-sm font-extrabold text-foreground tabular-nums">
                 {s.val > 0 ? s.val : "\u2014"}
               </span>
-              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{s.label}</span>
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{s.label}</span>
             </div>
           </div>
         ))}
@@ -321,10 +321,10 @@ export default function PharmacyPage() {
           <KanbanColumn
             title="Dispensed"
             count={dispensed.length}
-            dotColor="bg-gray-400"
-            headerBg="bg-gray-50 dark:bg-gray-900/10"
-            countBg="bg-gray-100 dark:bg-gray-900/30"
-            countText="text-gray-700 dark:text-gray-300"
+            dotColor="bg-muted-foreground"
+            headerBg="bg-muted/50"
+            countBg="bg-muted"
+            countText="text-muted-foreground"
             emptyIcon={<ShoppingBag className="w-8 h-8" />}
             emptyTitle="No dispensed orders"
             emptyDescription="Completed orders appear here"

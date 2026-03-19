@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
+  Download,
   Edit,
   Users,
   Phone,
@@ -46,6 +47,7 @@ import {
 import { motion } from "framer-motion"
 import { SectionHeader } from "@/components/shared/section-header"
 import { SearchBar } from "@/components/shared/search-bar"
+import { downloadCSV } from "@/lib/utils/csv-export"
 import { PremiumDialog } from "@/components/shared/premium-dialog"
 import { StatCard } from "@/components/reception/stat-card"
 
@@ -285,6 +287,28 @@ export default function PatientsPage() {
         title="Patient CRM"
         subtitle="Manage patient records, history, and demographics"
         badge={<Badge variant="secondary" className="text-xs">{stats.total}</Badge>}
+        action={
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            disabled={patients.length === 0}
+            onClick={() => downloadCSV(
+              patients.map((p) => ({
+                Name: p.name,
+                Phone: p.phone,
+                Age: p.age || "",
+                Gender: p.gender || "",
+                Blood_Group: p.blood_group || "",
+                Allergies: p.allergies || "",
+                Chronic_Conditions: p.chronic_conditions || "",
+              })),
+              `patients-${new Date().toISOString().split("T")[0]}`
+            )}
+          >
+            <Download className="w-4 h-4" /> Export CSV
+          </Button>
+        }
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 stagger-children">

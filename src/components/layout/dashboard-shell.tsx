@@ -103,6 +103,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <FeaturesProvider user={user}>
     <BranchProvider user={user}>
+      {/* Skip navigation for keyboard/screen-reader accessibility */}
+      <a href="#dashboard-main" className="skip-nav">
+        Skip to content
+      </a>
+
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
@@ -132,7 +137,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
         <main
           id="dashboard-main"
-          className="relative z-0 p-4 sm:p-6 bg-[#F8FAFC] dark:bg-background"
+          className="relative z-0 p-4 sm:p-6 bg-muted/30 dark:bg-background"
           style={{ flex: "1 1 0%", minHeight: 0, overflowY: "auto" }}
         >
           {children}

@@ -64,6 +64,9 @@ import { logAuditClient } from "@/lib/audit-client"
 import type { SessionUser } from "@/types/auth"
 import type { Patient, Prescription, PrescriptionItem } from "@/types/database"
 import { buildInvoiceData, type TenantTaxConfig } from "@/lib/billing/tax"
+import { checkDrugInteractions, SEVERITY_CONFIG } from "@/lib/clinical/drug-interactions"
+import type { DrugInteraction } from "@/lib/clinical/drug-interactions"
+import { ClinicalAlert, ClinicalAlertStack } from "@/components/shared/clinical-alert"
 
 interface VitalsData {
   bp?: string
@@ -201,6 +204,24 @@ function ConsultPageContent() {
     const matched = labResults.filter((lab) => (lab as { patient_name?: string }).patient_name === currentPatientName)
     return matched.length > 0 || labResults.some((lab) => (lab as { patient_name?: string }).patient_name) ? matched : labResults
   }, [labResults, currentPatientName])
+
+  // Drug interaction checking — fires whenever medicines list changes
+  const drugInteractions = useMemo<DrugInteraction[]>(() => {
+    const names = medicines
+      .map((m) => m.medicine_name.trim())
+      .filter(Boolean)
+    if (names.length < 2) return []
+    return checkDrugInteractions(names)
+  }, [medicines])
+
+  // Check if any prescribed medicine matches a known patient allergy
+  const allergyWarnings = useMemo<string[]>(() => {
+    if (!patient?.allergies) return []
+    const allergyText = patient.allergies.toLowerCase()
+    return medicines
+      .map((m) => m.medicine_name.trim())
+      .filter((name) => name && allergyText.includes(name.toLowerCase()))
+  }, [medicines, patient?.allergies])
 
   const addMedicine = () => {
     setMedicines([...medicines, { medicine_name: "", dosage: "", frequency: "1-0-1", duration: "5 days" }])
@@ -568,20 +589,19 @@ function ConsultPageContent() {
     <div className="flex flex-col h-full -m-4 sm:-m-6">
     <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
     <div className="space-y-6 max-w-5xl pb-4">
-      {/* Header with gradient patient info strip */}
-      <div className="rounded-2xl gradient-blue p-4 sm:p-5 text-white relative overflow-hidden">
-        <div className="absolute inset-0 animate-shimmer rounded-2xl pointer-events-none" />
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative z-10">
+      {/* Header — patient info strip */}
+      <div className="rounded-xl border border-border/60 bg-card p-4 sm:p-5 relative overflow-hidden shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <Button variant="ghost" size="icon" onClick={() => router.push("/doctor")} className="text-white hover:bg-white/20 rounded-xl shrink-0">
+            <Button variant="ghost" size="icon" onClick={() => router.push("/doctor")} className="hover:bg-muted rounded-lg shrink-0">
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-base sm:text-lg font-bold shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center text-base sm:text-lg font-bold text-primary shrink-0">
               {getInitials(patient?.name)}
             </div>
             <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-bold truncate">{patient?.name || "Patient"}</h1>
-              <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-white/70 flex-wrap">
+              <h1 className="text-base sm:text-lg font-bold text-foreground truncate">{patient?.name || "Patient"}</h1>
+              <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground flex-wrap">
                 <span>{patientPhone}</span>
                 {patient?.age && <span>Age: {patient.age}</span>}
                 {patient?.gender && <span>{patient.gender}</span>}
@@ -637,6 +657,29 @@ function ConsultPageContent() {
           <Heart className="w-4 h-4 shrink-0" />
           <strong>Allergies:</strong> {patient.allergies}
         </div>
+      )}
+
+      {/* Drug interaction & allergy-drug warnings */}
+      {(drugInteractions.length > 0 || allergyWarnings.length > 0) && (
+        <ClinicalAlertStack>
+          {allergyWarnings.map((drug) => (
+            <ClinicalAlert
+              key={`allergy-${drug}`}
+              severity="contraindicated"
+              title={`Allergy conflict: ${drug}`}
+              description={`Patient has a recorded allergy that may include "${drug}". Review allergies before prescribing.`}
+            />
+          ))}
+          {drugInteractions.map((interaction, idx) => (
+            <ClinicalAlert
+              key={`interaction-${idx}`}
+              severity={interaction.severity === "contraindicated" ? "contraindicated" : interaction.severity === "major" ? "critical" : "warning"}
+              title={`${SEVERITY_CONFIG[interaction.severity].label}: ${interaction.drug1} + ${interaction.drug2}`}
+              description={`${interaction.description}. ${interaction.recommendation}`}
+              dismissible={interaction.severity === "moderate" || interaction.severity === "minor"}
+            />
+          ))}
+        </ClinicalAlertStack>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -879,15 +922,15 @@ function ConsultPageContent() {
 
         {/* Right: Patient Info & History */}
         <div className="space-y-4">
-          {/* Patient info card with gradient header */}
+          {/* Patient info card */}
           <Card className="overflow-hidden card-hover">
-            <div className="gradient-green px-4 py-3 flex items-center gap-3 text-white">
-              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center font-bold text-sm">
+            <div className="bg-muted/50 border-b border-border px-4 py-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center font-bold text-sm text-emerald-600 dark:text-emerald-400">
                 {getInitials(patient?.name)}
               </div>
               <div>
-                <p className="font-semibold text-sm">{patient?.name}</p>
-                <p className="text-xs text-white/70">{patient?.phone}</p>
+                <p className="font-semibold text-sm text-foreground">{patient?.name}</p>
+                <p className="text-xs text-muted-foreground">{patient?.phone}</p>
               </div>
             </div>
             <CardContent className="pt-4 space-y-2.5 text-sm">
@@ -1160,7 +1203,7 @@ function ConsultPageContent() {
               onClick={handleSave}
               disabled={saving}
               size="sm"
-              className="gap-1.5 gradient-blue hover:opacity-90 transition-opacity"
+              className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
             >
               {saving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

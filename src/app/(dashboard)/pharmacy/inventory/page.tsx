@@ -36,10 +36,12 @@ import {
   Package,
   Archive,
   TrendingDown,
+  Download,
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { SectionHeader } from "@/components/shared/section-header"
 import { SearchBar } from "@/components/shared/search-bar"
+import { downloadCSV } from "@/lib/utils/csv-export"
 import { PremiumDialog } from "@/components/shared/premium-dialog"
 import { StatCard } from "@/components/reception/stat-card"
 import type { Medicine } from "@/types/database"
@@ -200,9 +202,32 @@ export default function InventoryPage() {
         subtitle="Manage medicines and stock levels"
         badge={<Badge variant="secondary" className="text-xs">{stats.total}</Badge>}
         action={
-          <Button onClick={() => { resetForm(); setShowForm(true) }} className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white hover:opacity-90">
-            <Plus className="w-4 h-4 mr-2" /> Add Medicine
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              disabled={medicines.length === 0}
+              onClick={() => downloadCSV(
+                medicines.map((m) => ({
+                  Name: m.medicine_name,
+                  Salt: m.salt || "",
+                  Dosage: m.dosage || "",
+                  Category: m.category || "",
+                  Stock: m.stock,
+                  Min_Stock: m.min_stock,
+                  Price: m.price,
+                  Expiry: m.expiry_date || "",
+                })),
+                `inventory-${new Date().toISOString().split("T")[0]}`
+              )}
+            >
+              <Download className="w-4 h-4" /> Export
+            </Button>
+            <Button onClick={() => { resetForm(); setShowForm(true) }}>
+              <Plus className="w-4 h-4 mr-2" /> Add Medicine
+            </Button>
+          </div>
         }
       />
 
@@ -213,14 +238,24 @@ export default function InventoryPage() {
         <StatCard label="Categories" value={stats.categories} gradient="gradient-purple" icon={<Archive className="w-10 h-10" />} index={3} />
       </div>
 
-      {stats.lowStock > 0 && (
+      {(stats.lowStock > 0 || stats.expired > 0) && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex items-center gap-2 px-4 py-3 rounded-xl bg-destructive/10 text-destructive text-sm"
+          className="space-y-2"
         >
-          <AlertTriangle className="w-4 h-4" />
-          {stats.lowStock} medicine(s) at or below minimum stock level
+          {stats.expired > 0 && (
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span><strong>{stats.expired}</strong> medicine(s) have expired — remove from dispensable inventory immediately</span>
+            </div>
+          )}
+          {stats.lowStock > 0 && (
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-sm">
+              <TrendingDown className="w-4 h-4 shrink-0" />
+              <span><strong>{stats.lowStock}</strong> medicine(s) at or below minimum stock level — consider reordering</span>
+            </div>
+          )}
         </motion.div>
       )}
 

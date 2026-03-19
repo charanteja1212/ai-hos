@@ -168,14 +168,55 @@ export function DischargeSummaryPrint({ admission }: DischargeSummaryPrintProps)
         </>
       )}
 
-      {/* Discharged By */}
-      <div style={PS.signatureBlock}>
-        <div style={PS.signatureInner}>
-          <div style={PS.signatureLine}>
+      {/* Vitals at Discharge */}
+      {summary?.vitals_at_discharge && (
+        <>
+          <h3 style={PS.sectionHeading}>Vitals at Discharge</h3>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
+            {Object.entries(summary.vitals_at_discharge).filter(([, v]) => v).map(([key, value]) => (
+              <div key={key} style={{
+                padding: "6px 14px",
+                border: "1px solid #e2e8f0",
+                borderRadius: 4,
+                backgroundColor: "#f8fafc",
+                textAlign: "center",
+                WebkitPrintColorAdjust: "exact" as const,
+                printColorAdjust: "exact" as const,
+              }}>
+                <p style={{ margin: 0, fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "#94a3b8" }}>
+                  {key === "bp" ? "Blood Pressure" : key === "spo2" ? "SpO2" : key === "temp" ? "Temperature" : key.charAt(0).toUpperCase() + key.slice(1)}
+                </p>
+                <p style={{ margin: "2px 0 0", fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{value as string}</p>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Condition at Discharge */}
+      {summary?.condition_at_discharge && (
+        <div style={{ ...PS.highlightBox("amber"), marginBottom: 14 }}>
+          <p style={{ margin: 0, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Condition at Discharge</p>
+          <p style={{ margin: "4px 0 0", fontSize: 12, fontWeight: 600, lineHeight: 1.5 }}>{summary.condition_at_discharge}</p>
+        </div>
+      )}
+
+      {/* Signatures — Doctor + Patient Acknowledgment */}
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 40, gap: 40 }}>
+        <div style={{ textAlign: "center", width: 220 }}>
+          <div style={{ borderTop: "1px solid #334155", paddingTop: 6 }}>
             <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: "#0f172a" }}>
               {summary?.discharged_by || admission.doctor_name || "Attending Doctor"}
             </p>
             <p style={{ margin: "2px 0 0", fontSize: 9, color: "#94a3b8" }}>Discharged By — Signature & Stamp</p>
+          </div>
+        </div>
+        <div style={{ textAlign: "center", width: 220 }}>
+          <div style={{ borderTop: "1px solid #334155", paddingTop: 6 }}>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: "#0f172a" }}>
+              {admission.patient_name}
+            </p>
+            <p style={{ margin: "2px 0 0", fontSize: 9, color: "#94a3b8" }}>Patient / Attendant — Signature</p>
           </div>
         </div>
       </div>

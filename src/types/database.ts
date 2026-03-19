@@ -135,6 +135,8 @@ export interface DischargeSummary {
   follow_up_instructions: string
   follow_up_date?: string
   discharged_by: string
+  vitals_at_discharge?: Record<string, string>
+  condition_at_discharge?: string
 }
 
 export interface DailyCharge {

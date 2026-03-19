@@ -147,18 +147,18 @@ export default function PatientDashboard() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl bg-gradient-to-r from-teal-500 via-cyan-600 to-cyan-800 p-5 sm:p-6 text-white"
+        className="rounded-xl border border-border/60 bg-card p-5 sm:p-6 shadow-sm"
       >
-        <p className="text-sm text-white/70">{getGreeting()}</p>
-        <h1 className="text-xl sm:text-2xl font-bold mt-0.5">{user?.name}</h1>
+        <p className="text-sm text-muted-foreground">{getGreeting()}</p>
+        <h1 className="text-xl sm:text-2xl font-bold mt-0.5 text-foreground">{user?.name}</h1>
         <div className="flex items-center flex-wrap gap-2 mt-3">
           {stats.hospitals.length > 0 && stats.hospitals.map((tid) => (
-            <Badge key={tid} className="bg-white/20 text-white text-[10px] border-0">
+            <Badge key={tid} variant="secondary" className="text-[10px]">
               <Building2 className="w-3 h-3 mr-1" />
               {stats.hospitalNames[tid] || tid}
             </Badge>
           ))}
-          <Button asChild size="sm" className="ml-auto bg-white/20 hover:bg-white/30 text-white border-0 rounded-xl text-xs gap-1">
+          <Button asChild size="sm" className="ml-auto rounded-lg text-xs gap-1">
             <Link href="/patient/book">
               <CalendarPlus className="w-3.5 h-3.5" />
               Book Appointment

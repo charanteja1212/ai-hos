@@ -245,7 +245,7 @@ function AIAssistantContent() {
                     className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                       msg.role === "assistant"
                         ? "bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/40"
-                        : "bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+                        : "bg-muted border border-border"
                     }`}
                   >
                     {msg.role === "assistant" && (

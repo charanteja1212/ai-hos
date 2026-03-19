@@ -464,7 +464,7 @@ export default function PatientBookPage() {
         {step === "done" && (
           <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
             <Card className="border-0 shadow-md overflow-hidden">
-              <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500" />
+              <div className="h-1 bg-emerald-500" />
               <CardContent className="p-6 text-center space-y-3">
                 <CheckCircle2 className="w-12 h-12 mx-auto text-green-500" />
                 <h2 className="text-lg font-bold">Booking Confirmed!</h2>

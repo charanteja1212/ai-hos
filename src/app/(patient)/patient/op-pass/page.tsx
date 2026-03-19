@@ -160,14 +160,14 @@ function OPPassCard({ pass, index, hospitalName }: { pass: OPPass; index: number
         active ? "shadow-md border-green-200 dark:border-green-900/50" : "opacity-70"
       )}>
         {active && (
-          <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500" />
+          <div className="h-1 bg-emerald-500" />
         )}
         <CardContent className="p-4 sm:p-5">
           <div className="flex items-start gap-4">
             {/* QR Code area */}
             <div className="shrink-0">
               {pass.qr_code_url ? (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-white p-1 border">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-card p-1 border border-border">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={pass.qr_code_url}

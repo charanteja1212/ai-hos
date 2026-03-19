@@ -217,8 +217,8 @@ export default function AppointmentsPage() {
   if (authLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-24">
-        <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
-        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">Loading your appointments...</p>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="mt-3 text-sm text-muted-foreground">Loading your appointments...</p>
       </div>
     );
   }
@@ -232,14 +232,14 @@ export default function AppointmentsPage() {
     return (
       <div className="animate-in fade-in duration-500">
         {/* Header */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 mb-4">
+        <div className="bg-card rounded-xl border border-border/60 shadow-sm p-4 mb-4">
           <div className="flex items-center gap-3">
-            <button onClick={closeReschedule} className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-              <ArrowLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+            <button onClick={closeReschedule} className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+              <ArrowLeft className="w-5 h-5 text-muted-foreground" />
             </button>
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Reschedule</h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
+              <h1 className="text-lg font-semibold text-foreground">Reschedule</h1>
+              <p className="text-sm text-muted-foreground truncate">
                 {rescheduleAppt.doctor_name} &middot; {rescheduleAppt.specialty}
               </p>
             </div>
@@ -259,8 +259,8 @@ export default function AppointmentsPage() {
         {/* Loading */}
         {rescheduleLoading && rescheduleStep !== "confirming" && (
           <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="w-7 h-7 animate-spin text-cyan-600" />
-            <p className="mt-3 text-sm text-slate-400">Loading available slots...</p>
+            <Loader2 className="w-7 h-7 animate-spin text-primary" />
+            <p className="mt-3 text-sm text-muted-foreground">Loading available slots...</p>
           </div>
         )}
 
@@ -281,7 +281,7 @@ export default function AppointmentsPage() {
                 href={rescheduleResult.payment_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full text-center bg-cyan-700 hover:bg-cyan-800 text-white font-medium py-3 px-4 rounded-xl transition-colors"
+                className="block w-full text-center bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3 px-4 rounded-xl transition-colors"
               >
                 Pay Consultation Fee
               </a>
@@ -295,21 +295,21 @@ export default function AppointmentsPage() {
         {/* Date selection */}
         {rescheduleStep === "dates" && !rescheduleLoading && availDates.length > 0 && (
           <div className="space-y-3">
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 px-1">Select a new date</p>
+            <p className="text-sm font-medium text-foreground px-1">Select a new date</p>
             {availDates.map((d) => (
               <button
                 key={d.date_key}
                 onClick={() => { setSelectedDate(d.date); setRescheduleStep("slots"); }}
-                className="w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 flex items-center justify-between hover:border-cyan-300 dark:hover:border-cyan-800 transition-colors"
+                className="w-full bg-card rounded-xl border border-border/60 shadow-sm p-4 flex items-center justify-between hover:border-cyan-300 dark:hover:border-cyan-800 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <CalendarDays className="w-5 h-5 text-cyan-600" />
+                  <CalendarDays className="w-5 h-5 text-primary" />
                   <div className="text-left">
-                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{d.date}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{d.available_count} slots available</p>
+                    <p className="text-sm font-medium text-foreground">{d.date}</p>
+                    <p className="text-xs text-muted-foreground">{d.available_count} slots available</p>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </button>
             ))}
           </div>
@@ -319,8 +319,8 @@ export default function AppointmentsPage() {
         {rescheduleStep === "slots" && dateSlots && (
           <div className="space-y-4">
             <div className="flex items-center justify-between px-1">
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{selectedDate}</p>
-              <button onClick={() => { setRescheduleStep("dates"); setSelectedDate(null); setSelectedSlot(null); }} className="text-xs text-cyan-700 dark:text-cyan-400 font-medium">
+              <p className="text-sm font-medium text-foreground">{selectedDate}</p>
+              <button onClick={() => { setRescheduleStep("dates"); setSelectedDate(null); setSelectedSlot(null); }} className="text-xs text-primary font-medium">
                 Change date
               </button>
             </div>
@@ -339,7 +339,7 @@ export default function AppointmentsPage() {
               <Button
                 onClick={handleReschedule}
                 disabled={rescheduleLoading}
-                className="w-full h-11 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white font-medium"
+                className="w-full h-11 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
               >
                 {rescheduleLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -355,8 +355,8 @@ export default function AppointmentsPage() {
         {/* Confirming state */}
         {rescheduleStep === "confirming" && (
           <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="w-7 h-7 animate-spin text-cyan-600" />
-            <p className="mt-3 text-sm text-slate-400">Rescheduling your appointment...</p>
+            <Loader2 className="w-7 h-7 animate-spin text-primary" />
+            <p className="mt-3 text-sm text-muted-foreground">Rescheduling your appointment...</p>
           </div>
         )}
       </div>
@@ -380,19 +380,19 @@ export default function AppointmentsPage() {
   return (
     <div className="animate-in fade-in duration-500">
       {/* Header */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 mb-4">
+      <div className="bg-card rounded-xl border border-border/60 shadow-sm p-4 mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-cyan-50 dark:bg-cyan-950 flex items-center justify-center shrink-0">
-            <CalendarDays className="w-5 h-5 text-cyan-700 dark:text-cyan-400" />
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <CalendarDays className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
+            <h1 className="text-lg font-semibold text-foreground">{title}</h1>
+            <p className="text-sm text-muted-foreground">{subtitle}</p>
           </div>
         </div>
         {!loading && (
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+          <div className="mt-3 pt-3 border-t border-border">
+            <p className="text-sm text-muted-foreground">
               {activeAppointments.length} upcoming{completedAppointments.length > 0 ? `, ${completedAppointments.length} past` : ""}
             </p>
           </div>
@@ -415,18 +415,18 @@ export default function AppointmentsPage() {
       {/* Loading State */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16">
-          <Loader2 className="w-7 h-7 animate-spin text-cyan-600" />
-          <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">Fetching appointments...</p>
+          <Loader2 className="w-7 h-7 animate-spin text-primary" />
+          <p className="mt-3 text-sm text-muted-foreground">Fetching appointments...</p>
         </div>
       ) : activeAppointments.length === 0 && completedAppointments.length === 0 && cancelledAppointments.length === 0 ? (
         /* Empty State */
         <div className="text-center py-16">
-          <CalendarDays className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-          <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300">No upcoming appointments</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 max-w-[260px] mx-auto">
+          <CalendarDays className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+          <h3 className="text-base font-semibold text-foreground">No upcoming appointments</h3>
+          <p className="text-sm text-muted-foreground mt-1.5 max-w-[260px] mx-auto">
             Go back to WhatsApp and tap &quot;Book Appointment&quot; to schedule your next visit.
           </p>
-          <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+          <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Return to WhatsApp</span>
           </div>
@@ -440,17 +440,17 @@ export default function AppointmentsPage() {
             return (
               <div
                 key={appt.booking_id}
-                className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden"
+                className="bg-card rounded-xl border border-border/60 shadow-sm overflow-hidden"
                 style={{ animationDelay: `${index * 80}ms`, animation: "fadeSlideIn 0.4s ease-out both" }}
               >
                 <div className="p-4">
                   {/* Doctor name + Status badge */}
                   <div className="flex items-center justify-between gap-3 mb-3">
                     <div className="min-w-0">
-                      <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                      <p className="font-semibold text-foreground truncate">
                         {appt.doctor_name}
                       </p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{appt.specialty}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">{appt.specialty}</p>
                     </div>
                     <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${
                       isConfirmed
@@ -467,24 +467,24 @@ export default function AppointmentsPage() {
                   {/* Info grid */}
                   <div className="grid grid-cols-2 gap-3 mb-3">
                     <div className="flex items-center gap-2">
-                      <CalendarDays className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
+                      <CalendarDays className="w-4 h-4 text-muted-foreground shrink-0" />
                       <div>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">Date</p>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{appt.date}</p>
+                        <p className="text-xs text-muted-foreground">Date</p>
+                        <p className="text-sm font-medium text-foreground">{appt.date}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
+                      <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
                       <div>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">Time</p>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{appt.time}</p>
+                        <p className="text-xs text-muted-foreground">Time</p>
+                        <p className="text-sm font-medium text-foreground">{appt.time}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 col-span-2">
-                      <User className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
+                      <User className="w-4 h-4 text-muted-foreground shrink-0" />
                       <div>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">Patient</p>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{appt.patient_name}</p>
+                        <p className="text-xs text-muted-foreground">Patient</p>
+                        <p className="text-sm font-medium text-foreground">{appt.patient_name}</p>
                       </div>
                     </div>
                   </div>
@@ -497,20 +497,20 @@ export default function AppointmentsPage() {
                           ? "bg-cyan-50 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-400"
                           : relDate === "Tomorrow"
                           ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400"
-                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-muted-foreground"
                       }`}>
                         {relDate}
                       </span>
                     ) : (
                       <span />
                     )}
-                    <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+                    <span className="text-xs text-muted-foreground font-mono">
                       {appt.booking_id}
                     </span>
                   </div>
 
                   {/* Actions — Reschedule + Cancel */}
-                  <div className="border-t border-slate-100 dark:border-slate-800 pt-3 mt-3">
+                  <div className="border-t border-border pt-3 mt-3">
                     {confirmCancel === appt.booking_id ? (
                       <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
                         <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
@@ -555,7 +555,7 @@ export default function AppointmentsPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => startReschedule(appt)}
-                          className="flex-1 h-10 rounded-lg text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-800 hover:bg-cyan-50 dark:hover:bg-cyan-950/20 font-medium"
+                          className="flex-1 h-10 rounded-lg text-primary border-cyan-200 dark:border-cyan-800 hover:bg-cyan-50 dark:hover:bg-cyan-950/20 font-medium"
                         >
                           <RefreshCw className="w-4 h-4 mr-2" />
                           Reschedule
@@ -582,23 +582,23 @@ export default function AppointmentsPage() {
       {/* Completed / Expired appointments */}
       {completedAppointments.length > 0 && (
         <div className="mt-4 space-y-3">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 px-1">Past Appointments</p>
+          <p className="text-sm font-medium text-muted-foreground px-1">Past Appointments</p>
           {completedAppointments.map((appt) => {
             const isCompleted = appt.status === "completed";
             return (
               <div
                 key={appt.booking_id}
-                className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden opacity-75"
+                className="bg-card rounded-xl border border-border/60 shadow-sm overflow-hidden opacity-75"
               >
                 <div className="p-4">
                   <div className="flex items-center justify-between gap-3 mb-3">
                     <div className="min-w-0">
-                      <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{appt.doctor_name}</p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{appt.specialty}</p>
+                      <p className="font-semibold text-foreground truncate">{appt.doctor_name}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">{appt.specialty}</p>
                     </div>
                     <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${
                       isCompleted
-                        ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                        ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-muted-foreground"
                         : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
                     }`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${isCompleted ? "bg-slate-400" : "bg-amber-500"}`} />
@@ -607,28 +607,28 @@ export default function AppointmentsPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-3 mb-2">
                     <div className="flex items-center gap-2">
-                      <CalendarDays className="w-4 h-4 text-slate-400 shrink-0" />
+                      <CalendarDays className="w-4 h-4 text-muted-foreground shrink-0" />
                       <div>
-                        <p className="text-xs text-slate-400">Date</p>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{appt.date}</p>
+                        <p className="text-xs text-muted-foreground">Date</p>
+                        <p className="text-sm font-medium text-foreground">{appt.date}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+                      <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
                       <div>
-                        <p className="text-xs text-slate-400">Time</p>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{appt.time}</p>
+                        <p className="text-xs text-muted-foreground">Time</p>
+                        <p className="text-sm font-medium text-foreground">{appt.time}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 col-span-2">
-                      <User className="w-4 h-4 text-slate-400 shrink-0" />
+                      <User className="w-4 h-4 text-muted-foreground shrink-0" />
                       <div>
-                        <p className="text-xs text-slate-400">Patient</p>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{appt.patient_name}</p>
+                        <p className="text-xs text-muted-foreground">Patient</p>
+                        <p className="text-sm font-medium text-foreground">{appt.patient_name}</p>
                       </div>
                     </div>
                   </div>
-                  <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">{appt.booking_id}</span>
+                  <span className="text-xs text-muted-foreground font-mono">{appt.booking_id}</span>
                 </div>
               </div>
             );
@@ -639,7 +639,7 @@ export default function AppointmentsPage() {
       {/* Cancelled appointments — available for reschedule */}
       {cancelledAppointments.length > 0 && (
         <div className="mt-4 space-y-3">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 px-1">Cancelled — Reschedule available</p>
+          <p className="text-sm font-medium text-muted-foreground px-1">Cancelled — Reschedule available</p>
           {cancelledAppointments.map((appt) => (
             <div
               key={appt.booking_id}
@@ -648,8 +648,8 @@ export default function AppointmentsPage() {
               <div className="p-4">
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <div className="min-w-0">
-                    <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{appt.doctor_name}</p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{appt.specialty}</p>
+                    <p className="font-semibold text-foreground truncate">{appt.doctor_name}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{appt.specialty}</p>
                   </div>
                   <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full shrink-0 bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
@@ -658,17 +658,17 @@ export default function AppointmentsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div className="flex items-center gap-2">
-                    <CalendarDays className="w-4 h-4 text-slate-400 shrink-0" />
+                    <CalendarDays className="w-4 h-4 text-muted-foreground shrink-0" />
                     <div>
-                      <p className="text-xs text-slate-400">Original Date</p>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200 line-through">{appt.date}</p>
+                      <p className="text-xs text-muted-foreground">Original Date</p>
+                      <p className="text-sm font-medium text-foreground line-through">{appt.date}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+                    <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
                     <div>
-                      <p className="text-xs text-slate-400">Original Time</p>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200 line-through">{appt.time}</p>
+                      <p className="text-xs text-muted-foreground">Original Time</p>
+                      <p className="text-sm font-medium text-foreground line-through">{appt.time}</p>
                     </div>
                   </div>
                 </div>
@@ -677,7 +677,7 @@ export default function AppointmentsPage() {
                 </div>
                 <Button
                   onClick={() => startReschedule(appt)}
-                  className="w-full h-11 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white font-medium"
+                  className="w-full h-11 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Reschedule Appointment
@@ -726,7 +726,7 @@ function SlotGroup({ icon, label, slots, selected, onSelect }: {
     <div>
       <div className="flex items-center gap-2 mb-2 px-1">
         {icon}
-        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">{label}</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
       </div>
       <div className="grid grid-cols-3 gap-2">
         {slots.map((slot) => (
@@ -736,7 +736,7 @@ function SlotGroup({ icon, label, slots, selected, onSelect }: {
             className={`py-2.5 px-2 rounded-lg text-sm font-medium border transition-colors ${
               selected?.iso === slot.iso
                 ? "bg-cyan-700 text-white border-cyan-700"
-                : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-cyan-300 dark:hover:border-cyan-700"
+                : "bg-white dark:bg-slate-900 text-foreground border-slate-200 dark:border-slate-700 hover:border-cyan-300 dark:hover:border-cyan-700"
             }`}
           >
             {slot.time}
@@ -751,9 +751,9 @@ function ErrorView({ message }: { message: string }) {
   return (
     <div className="text-center py-16">
       <AlertCircle className="w-12 h-12 text-red-400 dark:text-red-500 mx-auto mb-4" />
-      <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Link Expired</h2>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 max-w-[260px] mx-auto">{message}</p>
-      <p className="text-xs text-slate-400 dark:text-slate-500 mt-4 max-w-[260px] mx-auto">
+      <h2 className="text-lg font-semibold text-foreground">Link Expired</h2>
+      <p className="text-sm text-muted-foreground mt-1.5 max-w-[260px] mx-auto">{message}</p>
+      <p className="text-xs text-muted-foreground mt-4 max-w-[260px] mx-auto">
         Go back to WhatsApp and type &quot;menu&quot; to get a new link.
       </p>
     </div>

@@ -46,11 +46,12 @@ import {
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { BedMap } from "@/components/ipd/bed-map"
-import { TransferDialog } from "@/components/ipd/transfer-dialog"
-import { DischargeDialog } from "@/components/ipd/discharge-dialog"
-import { NursingNotesPanel } from "@/components/ipd/nursing-notes-panel"
-import { DailyChargesPanel } from "@/components/ipd/daily-charges-panel"
-import { AdmissionDetail } from "@/components/ipd/admission-detail"
+import dynamic from "next/dynamic"
+const TransferDialog = dynamic(() => import("@/components/ipd/transfer-dialog").then(m => m.TransferDialog))
+const DischargeDialog = dynamic(() => import("@/components/ipd/discharge-dialog").then(m => m.DischargeDialog))
+const NursingNotesPanel = dynamic(() => import("@/components/ipd/nursing-notes-panel").then(m => m.NursingNotesPanel))
+const DailyChargesPanel = dynamic(() => import("@/components/ipd/daily-charges-panel").then(m => m.DailyChargesPanel))
+const AdmissionDetail = dynamic(() => import("@/components/ipd/admission-detail").then(m => m.AdmissionDetail))
 import type { Admission } from "@/types/database"
 import type { ViewMode } from "@/components/ui/view-toggle"
 
@@ -422,7 +423,7 @@ export default function AdmissionsPage() {
         >
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl gradient-orange flex items-center justify-center text-white">
+              <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-600 dark:text-amber-400">
                 <BedDouble className="w-6 h-6" />
               </div>
               <div>

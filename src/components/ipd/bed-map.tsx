@@ -28,16 +28,16 @@ interface BedMapProps {
   onBedClick?: (wardName: string, bed: BedStatus) => void
 }
 
-function getWardGradient(ward: string) {
+function getWardAccent(ward: string) {
   const w = ward.toLowerCase()
-  if (w.includes("icu")) return "from-red-500 to-rose-600"
-  if (w.includes("nicu")) return "from-red-600 to-pink-600"
-  if (w.includes("private")) return "from-purple-500 to-indigo-600"
-  if (w.includes("semi")) return "from-cyan-600 to-cyan-600"
-  if (w.includes("maternity")) return "from-pink-500 to-rose-500"
-  if (w.includes("pediatric")) return "from-emerald-500 to-teal-600"
-  if (w.includes("surgical")) return "from-amber-500 to-orange-600"
-  return "from-cyan-600 to-indigo-600"
+  if (w.includes("icu")) return "bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400"
+  if (w.includes("nicu")) return "bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
+  if (w.includes("private")) return "bg-violet-100 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400"
+  if (w.includes("semi")) return "bg-cyan-100 text-cyan-600 dark:bg-cyan-950/40 dark:text-cyan-400"
+  if (w.includes("maternity")) return "bg-pink-100 text-pink-600 dark:bg-pink-950/40 dark:text-pink-400"
+  if (w.includes("pediatric")) return "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+  if (w.includes("surgical")) return "bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+  return "bg-primary/10 text-primary"
 }
 
 function getWardIcon(ward: string) {
@@ -202,7 +202,7 @@ function WardSection({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: idx * 0.06 }}
-      className="glass-card rounded-2xl overflow-hidden"
+      className="rounded-xl border border-border/60 bg-card overflow-hidden shadow-sm"
     >
       {/* Ward Header */}
       <button
@@ -210,7 +210,7 @@ function WardSection({
         className="w-full p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors"
       >
         {/* Ward icon with gradient */}
-        <div className={cn("w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center text-white shrink-0", getWardGradient(wardName))}>
+        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0", getWardAccent(wardName))}>
           {getWardIcon(wardName)}
         </div>
 
@@ -285,7 +285,7 @@ export function BedMap({ wards, bedMap, totalBeds, occupiedBeds, onBedClick }: B
   return (
     <div className="space-y-4">
       {/* Summary Strip */}
-      <div className="glass rounded-2xl p-4">
+      <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-foreground">Bed Occupancy Overview</p>
@@ -296,15 +296,15 @@ export function BedMap({ wards, bedMap, totalBeds, occupiedBeds, onBedClick }: B
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-4 text-xs">
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-md bg-gradient-to-br from-green-400 to-green-600 shadow-sm" />
+                <span className="w-3 h-3 rounded-md bg-emerald-500" />
                 Available
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-md bg-gradient-to-br from-orange-400 to-amber-600 shadow-sm" />
+                <span className="w-3 h-3 rounded-md bg-amber-500" />
                 Occupied
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-md bg-gradient-to-br from-gray-300 to-gray-400 shadow-sm" />
+                <span className="w-3 h-3 rounded-md bg-muted-foreground/40" />
                 Maintenance
               </span>
             </div>

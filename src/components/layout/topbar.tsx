@@ -169,7 +169,7 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
   const filteredNavCommands = navCommands.filter((a) => a.roles.includes(user.role))
 
   return (
-    <header className="h-16 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-[var(--card)] flex items-center justify-between px-4 sm:px-6 shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+    <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4 sm:px-6 shrink-0 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
       <div className="flex items-center gap-3 min-w-0">
         {onToggleMobile && (
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={onToggleMobile}>
@@ -221,11 +221,11 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
         {/* Search */}
         <button
           onClick={() => setSearchOpen(true)}
-          className="hidden sm:flex items-center gap-2 h-9 px-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+          className="hidden sm:flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-muted/50 text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
         >
           <Search className="w-3.5 h-3.5" />
           <span className="text-xs">Search...</span>
-          <kbd className="pointer-events-none hidden md:inline-flex h-5 select-none items-center gap-1 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-1.5 font-mono text-[10px] font-medium text-muted-foreground ml-4">
+          <kbd className="pointer-events-none hidden md:inline-flex h-5 select-none items-center gap-1 rounded-md border border-border bg-card px-1.5 font-mono text-[10px] font-medium text-muted-foreground ml-4">
             <span className="text-xs">Ctrl</span>K
           </kbd>
         </button>
@@ -336,6 +336,46 @@ export function Topbar({ user, onToggleMobile }: TopbarProps) {
               ))}
             </CommandGroup>
           )}
+          <CommandGroup heading="Utilities">
+            <CommandItem
+              onSelect={() => {
+                setTheme(theme === "dark" ? "light" : "dark")
+                setSearchOpen(false)
+              }}
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4 mr-2" /> : <Moon className="w-4 h-4 mr-2" />}
+              Toggle {theme === "dark" ? "Light" : "Dark"} Mode
+            </CommandItem>
+            <CommandItem
+              onSelect={() => {
+                setShowShortcuts(true)
+                setSearchOpen(false)
+              }}
+            >
+              <KeyRound className="w-4 h-4 mr-2" />
+              Keyboard Shortcuts
+            </CommandItem>
+            <CommandItem
+              onSelect={() => {
+                setShowSetPassword(true)
+                setSearchOpen(false)
+              }}
+            >
+              <KeyRound className="w-4 h-4 mr-2" />
+              Set Password
+            </CommandItem>
+            <CommandItem
+              onSelect={async () => {
+                setSearchOpen(false)
+                const url = user.clientId ? `/login?client=${user.clientId}` : "/login"
+                await signOut({ redirect: false })
+                window.location.href = url
+              }}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </CommandItem>
+          </CommandGroup>
         </CommandList>
       </CommandDialog>
 

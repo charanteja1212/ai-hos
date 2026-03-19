@@ -74,7 +74,7 @@ export default function PrescriptionsPage() {
     return (
       <div className="flex flex-col items-center justify-center py-24">
         <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
-        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">Loading prescriptions...</p>
+        <p className="mt-3 text-sm text-muted-foreground">Loading prescriptions...</p>
       </div>
     );
   }
@@ -84,14 +84,14 @@ export default function PrescriptionsPage() {
   return (
     <div className="animate-in fade-in duration-500">
       {/* Header */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 mb-4">
+      <div className="bg-card rounded-xl border border-border/60 shadow-sm p-4 mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-purple-50 dark:bg-purple-950 flex items-center justify-center shrink-0">
             <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">My Prescriptions</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <h1 className="text-lg font-semibold text-foreground">My Prescriptions</h1>
+            <p className="text-sm text-muted-foreground">
               {prescriptions.length} prescription{prescriptions.length !== 1 ? "s" : ""} on file
             </p>
           </div>
@@ -115,13 +115,13 @@ export default function PrescriptionsPage() {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16">
           <Loader2 className="w-7 h-7 animate-spin text-purple-500" />
-          <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">Loading prescriptions...</p>
+          <p className="mt-3 text-sm text-muted-foreground">Loading prescriptions...</p>
         </div>
       ) : prescriptions.length === 0 ? (
         <div className="text-center py-16">
           <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-          <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300">No prescriptions yet</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 max-w-[260px] mx-auto">
+          <h3 className="text-base font-semibold text-foreground">No prescriptions yet</h3>
+          <p className="text-sm text-muted-foreground mt-1.5 max-w-[260px] mx-auto">
             Your prescriptions will appear here after your doctor consultation.
           </p>
         </div>
@@ -133,7 +133,7 @@ export default function PrescriptionsPage() {
             return (
               <div
                 key={rx.rx_id}
-                className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden"
+                className="bg-card rounded-xl border border-border/60 shadow-sm overflow-hidden"
                 style={{
                   animationDelay: `${index * 80}ms`,
                   animation: "fadeSlideIn 0.4s ease-out both",
@@ -146,18 +146,18 @@ export default function PrescriptionsPage() {
                 >
                   {/* Doctor name + Date */}
                   <div className="flex items-start justify-between gap-3 mb-2">
-                    <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                    <p className="font-semibold text-foreground truncate">
                       {rx.doctor}
                     </p>
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <CalendarDays className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                      <span className="text-sm text-slate-500 dark:text-slate-400">{rx.date}</span>
+                      <CalendarDays className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">{rx.date}</span>
                     </div>
                   </div>
 
                   {/* Specialty */}
                   {rx.specialty && (
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">{rx.specialty}</p>
+                    <p className="text-sm text-muted-foreground mb-2">{rx.specialty}</p>
                   )}
 
                   {/* Diagnosis badge + Chevron */}
@@ -168,13 +168,13 @@ export default function PrescriptionsPage() {
                           {rx.diagnosis}
                         </span>
                       )}
-                      <span className="text-xs text-slate-400 dark:text-slate-500 font-mono shrink-0">
+                      <span className="text-xs text-muted-foreground font-mono shrink-0">
                         {rx.rx_id}
                       </span>
                     </div>
                     {hasMeds && (
                       <ChevronDown
-                        className={`w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0 transition-transform duration-300 ${
+                        className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-300 ${
                           isExpanded ? "rotate-180" : ""
                         }`}
                       />
@@ -192,8 +192,8 @@ export default function PrescriptionsPage() {
                 >
                   <div className="overflow-hidden">
                     <div className="px-4 pb-4">
-                      <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
-                        <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+                      <div className="border-t border-border pt-3">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
                           Medications
                         </p>
                         <div className="space-y-2">
@@ -209,7 +209,7 @@ export default function PrescriptionsPage() {
                             ) => (
                               <div
                                 key={i}
-                                className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50"
+                                className="flex items-start gap-3 p-3 rounded-lg bg-muted/50"
                                 style={{
                                   animationDelay: `${i * 60}ms`,
                                   animation: "fadeSlideIn 0.3s ease-out both",
@@ -217,21 +217,21 @@ export default function PrescriptionsPage() {
                               >
                                 <Pill className="w-4 h-4 text-purple-500 dark:text-purple-400 shrink-0 mt-0.5" />
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-sm text-slate-900 dark:text-slate-100">
+                                  <p className="font-medium text-sm text-foreground">
                                     {med.name}
                                   </p>
                                   {med.dosage && (
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                                    <p className="text-sm text-muted-foreground mt-0.5">
                                       {med.dosage}
                                     </p>
                                   )}
                                   {med.duration && (
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    <p className="text-sm text-muted-foreground">
                                       {med.duration}
                                     </p>
                                   )}
                                   {med.instructions && (
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 italic">
+                                    <p className="text-sm text-muted-foreground italic">
                                       {med.instructions}
                                     </p>
                                   )}
@@ -264,9 +264,9 @@ function ErrorView({ message }: { message: string }) {
   return (
     <div className="text-center py-16">
       <AlertCircle className="w-12 h-12 text-red-400 dark:text-red-500 mx-auto mb-4" />
-      <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Link Expired</h2>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 max-w-[260px] mx-auto">{message}</p>
-      <p className="text-xs text-slate-400 dark:text-slate-500 mt-4 max-w-[260px] mx-auto">
+      <h2 className="text-lg font-semibold text-foreground">Link Expired</h2>
+      <p className="text-sm text-muted-foreground mt-1.5 max-w-[260px] mx-auto">{message}</p>
+      <p className="text-xs text-muted-foreground mt-4 max-w-[260px] mx-auto">
         Go back to WhatsApp and type &quot;menu&quot; to get a new link.
       </p>
     </div>

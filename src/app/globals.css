@@ -180,12 +180,55 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Keyboard-first: visible focus rings only when using keyboard */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Remove outline for mouse/touch users */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
 }
 
 body {
   font-family: var(--font-sans, "Plus Jakarta Sans", system-ui, -apple-system, sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== TYPOGRAPHY SCALE — enterprise consistency ===== */
+/* Use these for semantic sizing across all pages */
+.text-page-title { font-size: 1.25rem; line-height: 1.75rem; font-weight: 700; letter-spacing: -0.025em; }
+.text-section-title { font-size: 1rem; line-height: 1.5rem; font-weight: 600; letter-spacing: -0.01em; }
+.text-card-title { font-size: 0.875rem; line-height: 1.25rem; font-weight: 600; }
+.text-label { font-size: 0.6875rem; line-height: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-foreground); }
+.text-body { font-size: 0.875rem; line-height: 1.375rem; }
+.text-caption { font-size: 0.75rem; line-height: 1rem; color: var(--muted-foreground); }
+.text-stat { font-size: 1.5rem; line-height: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ===== ACCESSIBILITY — skip nav ===== */
+.skip-nav {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 0.5rem 1rem;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+
+.skip-nav:focus {
+  top: 0.5rem;
 }
 
 /* ===== SIDEBAR ===== */
@@ -344,12 +387,51 @@ body {
 
 /* ===== CARD STYLES — clean, bordered ===== */
 .card-hover {
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .card-hover:hover {
   box-shadow: var(--shadow-md);
   border-color: color-mix(in srgb, var(--primary) 20%, var(--border));
+  transform: translateY(-1px);
+}
+
+.card-hover:active {
+  transform: translateY(0);
+}
+
+/* Clickable card — stronger hover feedback for actionable cards */
+.card-interactive {
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.card-interactive:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
+  transform: translateY(-2px);
+}
+
+.card-interactive:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Reduced motion: disable transforms */
+@media (prefers-reduced-motion: reduce) {
+  .card-hover:hover,
+  .card-interactive:hover,
+  .card-hover:active,
+  .card-interactive:active {
+    transform: none;
+  }
+
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-scale-in {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 /* ===== STAT CARD ACCENT COLORS ===== */
@@ -376,7 +458,8 @@ body {
 .dark .icon-red { background: rgba(220, 38, 38, 0.15); color: #F87171; }
 .dark .icon-teal { background: rgba(8, 145, 178, 0.15); color: #22D3EE; }
 
-/* ===== GRADIENT CARDS — kept for backward compat but much subtler ===== */
+/* ===== GRADIENT CARDS — LEGACY (StatCard no longer uses these) ===== */
+/* Kept only for non-StatCard uses (badges, backgrounds, etc.) */
 .gradient-red { background: linear-gradient(135deg, #DC2626, #EF4444); }
 .gradient-orange { background: linear-gradient(135deg, #D97706, #F59E0B); }
 .gradient-green { background: linear-gradient(135deg, #059669, #10B981); }

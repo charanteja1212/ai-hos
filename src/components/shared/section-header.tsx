@@ -15,16 +15,16 @@ interface SectionHeaderProps {
 export function SectionHeader({ title, subtitle, action, icon, badge, variant = "default" }: SectionHeaderProps) {
   if (variant === "glass") {
     return (
-      <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-card p-5 flex items-center justify-between">
+      <div className="rounded-xl border border-border/60 bg-card p-5 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
           {icon && (
-            <div className="w-10 h-10 rounded-xl bg-cyan-50 dark:bg-cyan-900/20 flex items-center justify-center shrink-0 text-cyan-700 dark:text-cyan-400">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               {icon}
             </div>
           )}
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-foreground">{title}</h1>
+              <h1 className="text-xl font-bold text-foreground tracking-tight">{title}</h1>
               {badge}
             </div>
             {subtitle && (
@@ -32,25 +32,25 @@ export function SectionHeader({ title, subtitle, action, icon, badge, variant = 
             )}
           </div>
         </div>
-        {action && <div>{action}</div>}
+        {action && <div className="shrink-0">{action}</div>}
       </div>
     )
   }
 
   return (
-    <div className="flex items-start justify-between">
-      <div className="flex items-center gap-3">
+    <div className="flex items-start justify-between gap-4">
+      <div className="flex items-center gap-3 min-w-0">
         {icon && (
           <div className={cn(
-            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-            "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400"
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+            "bg-primary/10 text-primary"
           )}>
             {icon}
           </div>
         )}
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl font-bold text-foreground tracking-tight">{title}</h1>
+            <h1 className="text-xl font-bold text-foreground tracking-tight truncate">{title}</h1>
             {badge}
           </div>
           {subtitle && (
@@ -58,7 +58,7 @@ export function SectionHeader({ title, subtitle, action, icon, badge, variant = 
           )}
         </div>
       </div>
-      {action && <div>{action}</div>}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   )
 }

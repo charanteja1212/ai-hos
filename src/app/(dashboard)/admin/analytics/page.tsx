@@ -51,6 +51,7 @@ import {
   UserPlus,
   Calendar,
   Target,
+  BedDouble,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -80,6 +81,7 @@ export default function AnalyticsPage() {
   const [queueEntries, setQueueEntries] = useState<Record<string, unknown>[]>([])
   const [labOrders, setLabOrders] = useState<Record<string, unknown>[]>([])
   const [pharmOrders, setPharmOrders] = useState<Record<string, unknown>[]>([])
+  const [admissions, setAdmissions] = useState<Record<string, unknown>[]>([])
 
   const { from, to } = useMemo(() => getDateRange(datePreset), [datePreset])
 
@@ -88,7 +90,7 @@ export default function AnalyticsPage() {
     const supabase = createBrowserClient()
 
     try {
-      const [apptRes, patRes, invRes, queueRes, labRes, pharmRes] = await Promise.all([
+      const [apptRes, patRes, invRes, queueRes, labRes, pharmRes, admRes] = await Promise.all([
         supabase.from("appointments").select("*").eq("tenant_id", tenantId)
           .gte("date", from).lte("date", to).order("date"),
         supabase.from("patients").select("name, phone, age, gender, created_at").eq("tenant_id", tenantId),
@@ -100,6 +102,8 @@ export default function AnalyticsPage() {
           .eq("tenant_id", tenantId).gte("created_at", from + "T00:00:00").lte("created_at", to + "T23:59:59"),
         supabase.from("pharmacy_orders").select("order_id, status, items, total_amount, created_at, dispensed_at")
           .eq("tenant_id", tenantId).gte("created_at", from + "T00:00:00").lte("created_at", to + "T23:59:59"),
+        supabase.from("admissions").select("admission_id, status, ward, bed_number, diagnosis, doctor_name, admission_date, actual_discharge, created_at")
+          .eq("tenant_id", tenantId),
       ])
 
       setAppointments((apptRes.data || []) as Record<string, unknown>[])
@@ -108,6 +112,7 @@ export default function AnalyticsPage() {
       setQueueEntries((queueRes.data || []) as Record<string, unknown>[])
       setLabOrders((labRes.data || []) as Record<string, unknown>[])
       setPharmOrders((pharmRes.data || []) as Record<string, unknown>[])
+      setAdmissions((admRes.data || []) as Record<string, unknown>[])
     } catch (err) {
       console.error("[analytics] Failed to fetch data:", err)
       toast.error("Failed to load analytics data")
@@ -170,12 +175,13 @@ export default function AnalyticsPage() {
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="doctors" className="gap-1.5"><Stethoscope className="w-3.5 h-3.5 hidden sm:block" /> Doctors</TabsTrigger>
           <TabsTrigger value="patients" className="gap-1.5"><Users className="w-3.5 h-3.5 hidden sm:block" /> Patients</TabsTrigger>
           <TabsTrigger value="operations" className="gap-1.5"><Activity className="w-3.5 h-3.5 hidden sm:block" /> Operations</TabsTrigger>
           <TabsTrigger value="financial" className="gap-1.5"><IndianRupee className="w-3.5 h-3.5 hidden sm:block" /> Financial</TabsTrigger>
           <TabsTrigger value="clinical" className="gap-1.5"><TestTube className="w-3.5 h-3.5 hidden sm:block" /> Clinical</TabsTrigger>
+          <TabsTrigger value="ipd" className="gap-1.5"><BedDouble className="w-3.5 h-3.5 hidden sm:block" /> IPD</TabsTrigger>
         </TabsList>
 
         {/* Doctor Performance */}
@@ -201,6 +207,11 @@ export default function AnalyticsPage() {
         {/* Lab & Pharmacy */}
         <TabsContent value="clinical" className="space-y-4 mt-4">
           <ClinicalTab labOrders={labOrders} pharmOrders={pharmOrders} />
+        </TabsContent>
+
+        {/* IPD / Bed Occupancy */}
+        <TabsContent value="ipd" className="space-y-4 mt-4">
+          <IPDTab admissions={admissions} />
         </TabsContent>
       </Tabs>
     </div>
@@ -828,7 +839,7 @@ function ClinicalTab({ labOrders, pharmOrders }: {
                 <p className="text-sm text-muted-foreground">Lab Revenue</p>
                 <p className="text-2xl font-bold">{formatCurrency(labRevenue)}</p>
               </div>
-              <div className="w-10 h-10 rounded-xl gradient-orange flex items-center justify-center text-white">
+              <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-600 dark:text-amber-400">
                 <TestTube className="w-5 h-5" />
               </div>
             </div>
@@ -841,10 +852,179 @@ function ClinicalTab({ labOrders, pharmOrders }: {
                 <p className="text-sm text-muted-foreground">Pharmacy Revenue</p>
                 <p className="text-2xl font-bold">{formatCurrency(pharmRevenue)}</p>
               </div>
-              <div className="w-10 h-10 rounded-xl gradient-green flex items-center justify-center text-white">
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                 <Pill className="w-5 h-5" />
               </div>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  )
+}
+
+// ─── IPD / Bed Occupancy Tab ───────────────────────────────────────────────────
+function IPDTab({ admissions }: { admissions: Record<string, unknown>[] }) {
+  const currentlyAdmitted = admissions.filter((a) => a.status === "admitted")
+  const discharged = admissions.filter((a) => a.status === "discharged")
+  const totalAdmissions = admissions.length
+
+  // Average Length of Stay (ALOS) for discharged patients
+  const alosValues = discharged
+    .map((a) => {
+      const start = a.admission_date ? new Date(a.admission_date as string) : a.created_at ? new Date(a.created_at as string) : null
+      const end = a.actual_discharge ? new Date(a.actual_discharge as string) : null
+      if (!start || !end) return null
+      return Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
+    })
+    .filter((v): v is number => v !== null)
+  const avgLOS = alosValues.length > 0 ? (alosValues.reduce((s, v) => s + v, 0) / alosValues.length).toFixed(1) : "—"
+
+  // Ward-wise occupancy
+  const wardMap: Record<string, { admitted: number; discharged: number }> = {}
+  admissions.forEach((a) => {
+    const ward = (a.ward as string) || "Unassigned"
+    if (!wardMap[ward]) wardMap[ward] = { admitted: 0, discharged: 0 }
+    if (a.status === "admitted") wardMap[ward].admitted++
+    else wardMap[ward].discharged++
+  })
+  const wardData = Object.entries(wardMap)
+    .map(([ward, counts]) => ({ ward, ...counts, total: counts.admitted + counts.discharged }))
+    .sort((a, b) => b.total - a.total)
+
+  // Top diagnoses for admissions
+  const diagMap: Record<string, number> = {}
+  admissions.forEach((a) => {
+    const diag = (a.diagnosis as string) || "Unspecified"
+    diagMap[diag] = (diagMap[diag] || 0) + 1
+  })
+  const topDiagnoses = Object.entries(diagMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([name, count]) => ({ name, count }))
+
+  // Admissions by doctor
+  const doctorMap: Record<string, number> = {}
+  admissions.forEach((a) => {
+    const doc = (a.doctor_name as string) || "Unknown"
+    doctorMap[doc] = (doctorMap[doc] || 0) + 1
+  })
+  const doctorData = Object.entries(doctorMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([name, count]) => ({ name: `Dr. ${name}`, count }))
+
+  // LOS distribution
+  const losDistribution = [
+    { range: "1 day", count: alosValues.filter((v) => v === 1).length },
+    { range: "2-3d", count: alosValues.filter((v) => v >= 2 && v <= 3).length },
+    { range: "4-7d", count: alosValues.filter((v) => v >= 4 && v <= 7).length },
+    { range: "8-14d", count: alosValues.filter((v) => v >= 8 && v <= 14).length },
+    { range: "15+d", count: alosValues.filter((v) => v >= 15).length },
+  ]
+
+  return (
+    <>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard label="Currently Admitted" value={String(currentlyAdmitted.length)} icon={<BedDouble className="w-4 h-4" />} gradient="gradient-blue" subtitle="Active patients" />
+        <StatCard label="Total Admissions" value={String(totalAdmissions)} icon={<Users className="w-4 h-4" />} gradient="gradient-purple" subtitle="All time" />
+        <StatCard label="Discharged" value={String(discharged.length)} icon={<UserCheck className="w-4 h-4" />} gradient="gradient-green" subtitle="Successfully discharged" />
+        <StatCard label="Avg Length of Stay" value={avgLOS === "—" ? "—" : `${avgLOS}d`} icon={<Clock className="w-4 h-4" />} gradient="gradient-orange" subtitle="Days per admission" />
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Ward Occupancy */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold">Ward Occupancy</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {wardData.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">No ward data</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={wardData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis type="number" tick={{ fontSize: 11 }} />
+                  <YAxis dataKey="ward" type="category" width={100} tick={{ fontSize: 11 }} />
+                  <RechartsTooltip />
+                  <Legend />
+                  <Bar dataKey="admitted" name="Admitted" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="discharged" name="Discharged" fill="#22c55e" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Length of Stay Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold">Length of Stay Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {alosValues.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">No discharge data</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={losDistribution}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="range" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <RechartsTooltip />
+                  <Bar dataKey="count" name="Patients" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Bottom Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Top Admission Diagnoses */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold">Top Admission Diagnoses</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topDiagnoses.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">No data</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={topDiagnoses} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis type="number" tick={{ fontSize: 11 }} />
+                  <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 10 }} />
+                  <RechartsTooltip />
+                  <Bar dataKey="count" name="Admissions" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Admissions by Doctor */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold">Admissions by Doctor</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {doctorData.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">No data</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={doctorData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis type="number" tick={{ fontSize: 11 }} />
+                  <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10 }} />
+                  <RechartsTooltip />
+                  <Bar dataKey="count" name="Admissions" fill="#06b6d4" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>

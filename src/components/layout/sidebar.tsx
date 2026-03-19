@@ -68,31 +68,31 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
       aria-label="Main navigation"
       className={cn(
         "h-screen flex flex-col shrink-0 transition-[width] duration-200 ease-in-out",
-        "bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800",
+        "bg-card border-r border-border",
         collapsed ? "w-[72px]" : "w-64"
       )}
     >
-      {/* ── Blue Brand Header Card ── */}
+      {/* ── Brand Header ── */}
       <div className={cn("shrink-0", collapsed ? "px-2 pt-3" : "px-3 pt-3")}>
         <div
           className={cn(
-            "rounded-2xl bg-cyan-700 overflow-hidden",
-            collapsed ? "p-2.5" : "p-4"
+            "rounded-xl bg-primary overflow-hidden",
+            collapsed ? "p-2.5" : "p-3.5"
           )}
         >
           <div className={cn("flex items-center", collapsed ? "justify-center" : "gap-3")}>
-            <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0 overflow-hidden">
+            <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
               {logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={logoUrl} alt="" className="w-full h-full object-contain p-0.5" />
               ) : (
-                <Heart className="w-4 h-4 text-white" />
+                <Heart className="w-4 h-4 text-primary-foreground" />
               )}
             </div>
             {!collapsed && (
               <div className="overflow-hidden whitespace-nowrap min-w-0">
-                <p className="font-bold text-sm text-white tracking-tight">AI-HOS</p>
-                <p className="text-[11px] text-white/50 truncate max-w-[140px]">
+                <p className="font-bold text-sm text-primary-foreground tracking-tight">AI-HOS</p>
+                <p className="text-[11px] text-primary-foreground/50 truncate max-w-[140px]">
                   {hospitalName}
                 </p>
               </div>
@@ -122,14 +122,14 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
 
       {/* ── User ── */}
       {userName && (
-        <div className="border-t border-gray-100 dark:border-gray-800 p-3 shrink-0">
+        <div className="border-t border-border p-3 shrink-0">
           <div
             className={cn(
-              "flex items-center gap-2.5 rounded-xl p-2.5",
+              "flex items-center gap-2.5 rounded-lg p-2.5",
               collapsed && "justify-center"
             )}
           >
-            <div className="w-8 h-8 rounded-full bg-cyan-700 flex items-center justify-center text-[11px] font-bold text-white shrink-0">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-[11px] font-bold text-primary-foreground shrink-0">
               {userName
                 .split(" ")
                 .map((n) => n[0])
@@ -139,10 +139,10 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
             </div>
             {!collapsed && (
               <div className="overflow-hidden min-w-0">
-                <p className="text-[13px] font-semibold text-gray-900 dark:text-white truncate max-w-[140px]">
+                <p className="text-[13px] font-semibold text-foreground truncate max-w-[140px]">
                   {userName}
                 </p>
-                <p className="text-[11px] text-gray-400 capitalize">
+                <p className="text-[11px] text-muted-foreground capitalize">
                   {role.replace(/_/g, " ").toLowerCase()}
                 </p>
               </div>
@@ -152,7 +152,7 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
       )}
 
       {/* ── Language Switcher ── */}
-      <div className="border-t border-gray-100 dark:border-gray-800 px-3 pt-2 shrink-0">
+      <div className="border-t border-border px-3 pt-2 shrink-0">
         <LanguageSwitcher compact={collapsed} />
       </div>
 
@@ -161,7 +161,7 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
         <button
           onClick={() => setCollapsed(!collapsed)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="w-full flex items-center justify-center h-8 rounded-xl text-gray-400 hover:text-cyan-700 hover:bg-cyan-50 dark:hover:bg-cyan-950/20 transition-colors"
+          className="w-full flex items-center justify-center h-8 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
         >
           {collapsed ? (
             <ChevronRight className="w-4 h-4" />
@@ -202,18 +202,18 @@ function SidebarSectionBlock({
           aria-label={`${sectionCollapsed ? "Expand" : "Collapse"} ${section.label} section`}
           className="w-full flex items-center justify-between px-3 py-1.5 group cursor-pointer"
         >
-          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 select-none">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground select-none">
             {section.label}
           </span>
           <ChevronDown
             className={cn(
-              "w-3 h-3 text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 transition-all duration-150",
+              "w-3 h-3 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-all duration-150",
               sectionCollapsed && "-rotate-90"
             )}
           />
         </button>
       ) : (
-        !isFirst && <div className="mx-auto w-6 h-px bg-gray-200 dark:bg-gray-800 my-2" />
+        !isFirst && <div className="mx-auto w-6 h-px bg-border my-2" />
       )}
 
       {!sectionCollapsed && (
@@ -250,17 +250,17 @@ function SidebarNavLink({
       aria-current={active ? "page" : undefined}
       aria-label={collapsed ? item.label : undefined}
       className={cn(
-        "relative flex items-center gap-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150",
+        "relative flex items-center gap-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150",
         collapsed ? "justify-center px-2" : "px-3",
         active
-          ? "bg-cyan-700 text-white font-semibold shadow-sm shadow-cyan-700/20"
-          : "text-gray-600 dark:text-gray-400 hover:text-cyan-700 hover:bg-cyan-50 dark:hover:text-cyan-400 dark:hover:bg-cyan-950/20"
+          ? "bg-primary text-primary-foreground font-semibold shadow-sm"
+          : "text-muted-foreground hover:text-primary hover:bg-primary/10"
       )}
     >
       <item.icon
         className={cn(
           "w-[18px] h-[18px] shrink-0",
-          active ? "text-white" : "text-gray-400 dark:text-gray-500"
+          active ? "text-primary-foreground" : "text-muted-foreground/70"
         )}
       />
       {!collapsed && <span>{item.label}</span>}

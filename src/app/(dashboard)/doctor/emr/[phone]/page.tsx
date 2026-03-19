@@ -415,7 +415,7 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
       )}
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full grid grid-cols-8 mb-4">
+        <TabsList className="w-full flex overflow-x-auto mb-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="vitals">Vitals</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
@@ -892,7 +892,7 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
               <label className="text-xs text-muted-foreground">ICD-10 Code</label>
               <Input placeholder="e.g., I10, E11" value={newCondition.icd_code || ""} onChange={(e) => setNewCondition({ ...newCondition, icd_code: e.target.value })} />
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <div>
                 <label className="text-xs text-muted-foreground">Category</label>
                 <Select value={newCondition.category} onValueChange={(v) => setNewCondition({ ...newCondition, category: v as MedicalCondition["category"] })}>
@@ -950,7 +950,7 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
               <label className="text-xs text-muted-foreground">Allergen *</label>
               <Input placeholder="e.g., Penicillin, Peanuts" value={newAllergy.allergen || ""} onChange={(e) => setNewAllergy({ ...newAllergy, allergen: e.target.value })} />
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <div>
                 <label className="text-xs text-muted-foreground">Type</label>
                 <Select value={newAllergy.allergy_type} onValueChange={(v) => setNewAllergy({ ...newAllergy, allergy_type: v as Allergy["allergy_type"] })}>
