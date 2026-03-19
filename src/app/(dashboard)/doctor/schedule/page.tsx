@@ -32,6 +32,7 @@ import {
   Sun, Save, Copy, ChevronDown, RotateCcw, Coffee,
 } from "lucide-react"
 import { SectionHeader } from "@/components/shared/section-header"
+import { logAuditClient } from "@/lib/audit-client"
 import type { SessionUser } from "@/types/auth"
 
 // ---------- Types ----------
@@ -347,10 +348,15 @@ export default function SchedulePage() {
         .eq("tenant_id", tenantId)
     }
 
+    logAuditClient({
+      action: "update", entityType: "doctor_schedule", entityId: doctorId,
+      actorEmail: user?.email || "doctor", actorRole: user?.role || "DOCTOR", tenantId,
+      details: { self_update: true },
+    })
     toast.success("Schedule saved successfully")
     setSavedWeek(JSON.parse(JSON.stringify(week)))
     setSaving(false)
-  }, [doctorId, tenantId, week])
+  }, [doctorId, tenantId, week, user])
 
   const resetChanges = useCallback(() => {
     if (savedWeek) {

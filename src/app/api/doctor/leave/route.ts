@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import type { SessionUser } from "@/types/auth"
 import { createServerClient } from "@/lib/supabase/server"
 import { sendDoctorLeaveNotification, getTenantWhatsAppConfig, normalizePhone } from "@/lib/whatsapp/sender"
+import { logAudit } from "@/lib/audit"
 import { cancelReminders } from "@/lib/queue/queues"
 import { generateWaToken } from "@/lib/whatsapp/wa-token"
 
@@ -59,6 +60,12 @@ export async function POST(req: NextRequest) {
       console.error("[doctor/leave] Override insert error:", overrideError.message)
       return NextResponse.json({ error: "Failed to save leave" }, { status: 500 })
     }
+
+    logAudit({
+      action: "create", entityType: "date_override", entityId: overrideId,
+      actorEmail: user.email || "doctor", actorRole: user.role, tenantId: tenant_id,
+      details: { doctor_id, date, type, reason },
+    })
 
     // 2. Fetch affected confirmed appointments
     let appointmentQuery = supabase

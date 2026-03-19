@@ -30,6 +30,7 @@ import {
 import { createBrowserClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { logAuditClient } from "@/lib/audit-client"
 import type { SessionUser } from "@/types/auth"
 
 interface PlatformSettings {
@@ -109,6 +110,11 @@ export default function PlatformSettingsPage() {
         console.warn("[settings] Save failed (table may not exist):", error.message)
         toast.success("Settings saved locally", { description: "Note: platform_settings table may need to be created in Supabase" })
       } else {
+        logAuditClient({
+          action: "update", entityType: "platform_settings", entityId: "global",
+          actorEmail: user?.email || "super_admin", actorRole: user?.role || "SUPER_ADMIN", tenantId: "",
+          details: { maintenance_mode: settings.maintenance_mode },
+        })
         toast.success("Settings saved")
       }
     } catch {

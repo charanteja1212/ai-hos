@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useCallback, useMemo } from "react"
+import { useSession } from "next-auth/react"
 import { useBranch } from "@/components/providers/branch-context"
 import { toast } from "sonner"
+import { logAuditClient } from "@/lib/audit-client"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { useMedicines } from "@/hooks/use-pharmacy"
 import { Button } from "@/components/ui/button"
@@ -46,6 +48,8 @@ import { formatCurrency } from "@/lib/utils/format"
 const CATEGORIES = ["Tablet", "Capsule", "Syrup", "Injection", "Cream", "Drops", "Inhaler", "Other"]
 
 export default function InventoryPage() {
+  const { data: invSession } = useSession()
+  const invUser = invSession?.user as { email?: string; role?: string } | undefined
   const { activeTenantId: tenantId } = useBranch()
 
   const { medicines, isLoading, mutate } = useMedicines(tenantId)
@@ -138,13 +142,24 @@ export default function InventoryPage() {
           .eq("medicine_id", editing.medicine_id)
           .eq("tenant_id", tenantId)
         if (error) throw error
+        logAuditClient({
+          action: "update", entityType: "medicine", entityId: editing.medicine_id,
+          actorEmail: invUser?.email || "pharmacist", actorRole: invUser?.role || "PHARMACIST", tenantId,
+          details: { name: formName, category: formCategory, stock: formStock, price: formPrice },
+        })
         toast.success("Medicine updated")
       } else {
+        const medId = `MED-${Date.now()}`
         const { error } = await supabase.from("medicines").insert({
           ...data,
-          medicine_id: `MED-${Date.now()}`,
+          medicine_id: medId,
         })
         if (error) throw error
+        logAuditClient({
+          action: "create", entityType: "medicine", entityId: medId,
+          actorEmail: invUser?.email || "pharmacist", actorRole: invUser?.role || "PHARMACIST", tenantId,
+          details: { name: formName, category: formCategory, stock: formStock, price: formPrice },
+        })
         toast.success("Medicine added")
       }
 

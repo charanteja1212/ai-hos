@@ -35,6 +35,7 @@ import {
   Sparkles,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { logAuditClient } from "@/lib/audit-client"
 import type { SessionUser } from "@/types/auth"
 import type { Appointment } from "@/types/database"
 
@@ -114,9 +115,14 @@ export default function DoctorPage() {
       return
     }
     setDoctorStatus(newStatus)
+    logAuditClient({
+      action: "status_change", entityType: "doctor", entityId: doctorId,
+      actorEmail: user?.email || "doctor", actorRole: user?.role || "DOCTOR", tenantId,
+      details: { status: newStatus },
+    })
     toast.success(newStatus === "on_break" ? "You are now on break" : "You are back from break")
     setTogglingBreak(false)
-  }, [doctorId, doctorStatus, tenantId])
+  }, [doctorId, doctorStatus, tenantId, user])
 
   // Fetch patient history for next patient
   useEffect(() => {
@@ -152,10 +158,15 @@ export default function DoctorPage() {
         .eq("queue_id", queueId)
         .eq("tenant_id", tenantId)
         .eq("doctor_id", doctorId)
+      logAuditClient({
+        action: "status_change", entityType: "queue_entry", entityId: queueId,
+        actorEmail: user?.email || "doctor", actorRole: user?.role || "DOCTOR", tenantId,
+        details: { status: "in_consultation", patient_phone: patientPhone },
+      })
       toast.success("Consultation started")
       router.push(`/doctor/consult?patient=${patientPhone}&queue=${queueId}`)
     },
-    [router, tenantId, doctorId]
+    [router, tenantId, doctorId, user]
   )
 
   const handleComplete = useCallback(async (queueId: string) => {
@@ -184,8 +195,13 @@ export default function DoctorPage() {
         .eq("tenant_id", tenantId)
     }
 
+    logAuditClient({
+      action: "status_change", entityType: "queue_entry", entityId: queueId,
+      actorEmail: user?.email || "doctor", actorRole: user?.role || "DOCTOR", tenantId,
+      details: { status: "completed" },
+    })
     toast.success("Consultation completed")
-  }, [tenantId, doctorId])
+  }, [tenantId, doctorId, user])
 
   // Compute avg consult time
   const consultDurations = completed

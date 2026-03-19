@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
+import { useSession } from "next-auth/react"
 import { useBranch } from "@/components/providers/branch-context"
 import { toast } from "sonner"
+import { logAuditClient } from "@/lib/audit-client"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -45,6 +47,8 @@ export default function AbdmSettingsPage() {
 }
 
 function AbdmSettingsContent() {
+  const { data: abdmSession } = useSession()
+  const abdmUser = abdmSession?.user as { email?: string; role?: string } | undefined
   const { activeTenantId: tenantId } = useBranch()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -149,6 +153,11 @@ function AbdmSettingsContent() {
 
       if (error) throw error
 
+      logAuditClient({
+        action: "update", entityType: "abdm_config", entityId: tenantId,
+        actorEmail: abdmUser?.email || "admin", actorRole: abdmUser?.role || "ADMIN", tenantId,
+        details: { abdm_enabled: abdmEnabled, environment },
+      })
       toast.success("ABDM settings saved")
       setOriginal({ abdmEnabled, facilityId, hipId, hiuId, clientId, clientSecret, environment })
     } catch (err) {

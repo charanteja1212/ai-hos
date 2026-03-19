@@ -58,6 +58,8 @@ import {
   FileText,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useSession } from "next-auth/react"
+import { logAuditClient } from "@/lib/audit-client"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import { useTenant } from "@/hooks/use-tenant"
@@ -124,6 +126,8 @@ function getDateRange(preset: string): { from: string; to: string } {
 }
 
 export default function BillingPage() {
+  const { data: billingSession } = useSession()
+  const billingUser = billingSession?.user as { email?: string; role?: string } | undefined
   const { activeTenantId: tenantId } = useBranch()
 
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -246,6 +250,11 @@ export default function BillingPage() {
     if (error) {
       toast.error("Failed to update payment status")
     } else {
+      logAuditClient({
+        action: "status_change", entityType: "invoice", entityId: invoiceId,
+        actorEmail: billingUser?.email || "admin", actorRole: billingUser?.role || "ADMIN", tenantId,
+        details: { payment_status: newStatus },
+      })
       toast.success(`Invoice marked as ${newStatus}`)
       // Update local state
       setInvoices(prev => prev.map(inv =>
@@ -302,6 +311,11 @@ export default function BillingPage() {
     if (error) {
       toast.error("Failed to apply discount")
     } else {
+      logAuditClient({
+        action: "update", entityType: "invoice", entityId: selectedInvoice.invoice_id,
+        actorEmail: billingUser?.email || "admin", actorRole: billingUser?.role || "ADMIN", tenantId,
+        details: { discount_type: discountType, discount_value: discountValue, new_total: totals.total },
+      })
       toast.success("Discount applied successfully")
       const updated = {
         ...selectedInvoice,
@@ -395,6 +409,11 @@ export default function BillingPage() {
     if (error) {
       toast.error("Failed to update invoices")
     } else {
+      logAuditClient({
+        action: "status_change", entityType: "invoice", entityId: ids.join(","),
+        actorEmail: billingUser?.email || "admin", actorRole: billingUser?.role || "ADMIN", tenantId,
+        details: { bulk: true, count: ids.length, payment_status: bulkAction },
+      })
       toast.success(`${ids.length} invoices marked as ${bulkAction}`)
       setInvoices(prev => prev.map(inv =>
         ids.includes(inv.invoice_id) ? { ...inv, payment_status: bulkAction as Invoice["payment_status"] } : inv

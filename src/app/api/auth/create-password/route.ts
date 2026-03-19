@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { createServerClient } from "@/lib/supabase/server"
+import { logAudit } from "@/lib/audit"
 import type { SessionUser } from "@/types/auth"
 
 export async function POST(req: Request) {
@@ -138,6 +139,12 @@ export async function POST(req: Request) {
         { status: 500 }
       )
     }
+
+    logAudit({
+      action: "create", entityType: "user_credentials", entityId: email,
+      actorEmail: user.email || email, actorRole: user.role, tenantId: user.tenantId || "",
+      details: { role: user.role, entity_table: entityTable },
+    })
 
     return NextResponse.json({ success: true })
   } catch (err) {

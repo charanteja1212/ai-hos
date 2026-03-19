@@ -35,6 +35,7 @@ import {
 } from "lucide-react"
 import { AbhaCard } from "@/components/abdm/abha-card"
 import { AbhaLinkDialog } from "@/components/abdm/abha-link-dialog"
+import { logAuditClient } from "@/lib/audit-client"
 import type { SessionUser } from "@/types/auth"
 
 export default function PatientProfilePage() {
@@ -122,6 +123,11 @@ export default function PatientProfilePage() {
 
       if (error) throw error
 
+      logAuditClient({
+        action: "update", entityType: "patient", entityId: phone,
+        actorEmail: user?.email || phone || "patient", actorRole: user?.role || "PATIENT", tenantId: "",
+        details: { self_update: true },
+      })
       toast.success("Profile updated successfully")
       mutate()
     } catch {

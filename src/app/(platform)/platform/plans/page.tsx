@@ -35,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { logAuditClient } from "@/lib/audit-client"
 import type { SessionUser } from "@/types/auth"
 
 interface ClientWithTier {
@@ -132,6 +133,11 @@ export default function PlansPage() {
       console.error("[plans] tier change error:", error.message)
       toast.error("Failed to update tier")
     } else {
+      logAuditClient({
+        action: "update", entityType: "client_config", entityId: clientId,
+        actorEmail: user?.email || "super_admin", actorRole: user?.role || "SUPER_ADMIN", tenantId: "",
+        details: { new_tier: newTier },
+      })
       toast.success(`Tier updated to ${getTierInfo(newTier).name}`)
       setClients((prev) =>
         prev.map((c) => (c.client_id === clientId ? { ...c, tier: newTier } : c))
