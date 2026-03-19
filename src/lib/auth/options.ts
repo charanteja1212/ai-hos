@@ -5,6 +5,7 @@ import { buildSessionUser } from "@/lib/auth/build-session-user"
 import { signSupabaseJWT } from "@/lib/supabase/sign-jwt"
 import { isRateLimited, resetRateLimit } from "@/lib/rate-limit"
 import { normalizePhone, phoneVariants as getPhoneVariants } from "@/lib/utils/phone"
+import { logAudit } from "@/lib/audit"
 import type { UserRole, SessionUser } from "@/types/auth"
 
 export const authConfig: NextAuthConfig = {
@@ -378,6 +379,15 @@ export const authConfig: NextAuthConfig = {
         token.email = sessionUser.email
         token.patientPhone = sessionUser.patientPhone
         token.logoUrl = sessionUser.logoUrl
+
+        // Audit log for login
+        logAudit({
+          action: "login", entityType: sessionUser.role === "PATIENT" ? "patient" : "staff",
+          entityId: sessionUser.id || sessionUser.patientPhone || "unknown",
+          actorEmail: sessionUser.email || sessionUser.patientPhone || "unknown",
+          actorRole: sessionUser.role,
+          tenantId: sessionUser.tenantId || undefined,
+        })
 
         // Generate custom Supabase JWT for browser RLS
         try {

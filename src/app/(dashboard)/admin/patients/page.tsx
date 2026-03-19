@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
+import { useSession } from "next-auth/react"
 import { useBranch } from "@/components/providers/branch-context"
 import { toast } from "sonner"
 import { createBrowserClient } from "@/lib/supabase/client"
@@ -49,9 +50,13 @@ import { PremiumDialog } from "@/components/shared/premium-dialog"
 import { StatCard } from "@/components/reception/stat-card"
 
 import { useDebounce } from "@/hooks/use-debounce"
+import { logAuditClient } from "@/lib/audit-client"
+import type { SessionUser } from "@/types/auth"
 import type { Patient, Appointment, Prescription, LabOrder } from "@/types/database"
 
 export default function PatientsPage() {
+  const { data: adminSession } = useSession()
+  const adminUser = adminSession?.user as SessionUser | undefined
   const { activeTenantId: tenantId } = useBranch()
 
   const PAGE_SIZE = 50
@@ -238,6 +243,11 @@ export default function PatientsPage() {
         .eq("tenant_id", tenantId)
 
       if (error) throw error
+      logAuditClient({
+        action: "update", entityType: "patient", entityId: selectedPatient.phone,
+        actorEmail: adminUser?.email || "", actorRole: adminUser?.role || "ADMIN", tenantId,
+        details: { name: editName, allergies: editAllergies || undefined, chronic_diseases: editChronicDiseases || undefined },
+      })
       toast.success("Patient updated")
       setEditMode(false)
       fetchPatients()

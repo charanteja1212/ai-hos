@@ -7,6 +7,7 @@
 
 import { createServerClient } from "@/lib/supabase/server"
 import { scheduleReminders, cancelReminders } from "@/lib/queue/queues"
+import { logAudit } from "@/lib/audit"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -422,6 +423,15 @@ export async function bookAppointment(params: BookingParams) {
     hospital_name: tenant?.hospital_name || "Hospital",
   }).catch((err) => console.error("[booking] Failed to schedule reminders:", err))
 
+  // Audit log
+  logAudit({
+    action: "create", entityType: "appointment", entityId: bookingId,
+    actorEmail: params.source === "whatsapp" ? params.patient_phone : "dashboard",
+    actorRole: params.source || "dashboard",
+    tenantId: params.tenant_id,
+    details: { patient_name: params.patient_name, doctor_name: params.doctor_name, date: params.date, time: params.time },
+  })
+
   return {
     success: true,
     booking_id: bookingId,
@@ -467,6 +477,15 @@ export async function cancelAppointment(params: CancelParams) {
     console.error("[booking] Cancel error:", updateError.message)
     return { error: "Failed to cancel appointment" }
   }
+
+  // Audit log
+  logAudit({
+    action: "status_change", entityType: "appointment", entityId: params.booking_id,
+    actorEmail: params.patient_phone || "system",
+    actorRole: "system",
+    tenantId: params.tenant_id,
+    details: { status: "cancelled", patient_name: booking.patient_name, doctor_name: booking.doctor_name },
+  })
 
   // 3. Cancel scheduled reminders
   cancelReminders(params.booking_id).catch(() => {})

@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { logAudit } from '@/lib/audit';
 
 /* ── in-memory dedup (survives across requests within same container) ── */
 const processedPayments = new Set<string>();
@@ -299,6 +300,12 @@ export async function POST(req: NextRequest) {
           payment_id: paymentId, razorpay_payment_id: paymentId, op_pass_id: opPassId,
         });
         console.log('[webhook][PHASE 11] OK — Appointment updated to confirmed/paid');
+        logAudit({
+          action: "status_change", entityType: "appointment", entityId: bookingId,
+          actorEmail: patientPhone || "payment_webhook", actorRole: "system",
+          tenantId: tenantId || undefined,
+          details: { payment_status: "paid", payment_id: paymentId, amount },
+        });
       } catch (e) {
         console.error('[webhook][PHASE 11] FAIL — Appointment update error:', e);
       }
@@ -375,6 +382,11 @@ export async function POST(req: NextRequest) {
           payment_status: 'paid', payment_id: paymentId, payment_link: paymentLinkId,
         });
         console.log('[webhook] Prescription paid:', bookingId);
+        logAudit({
+          action: "status_change", entityType: "prescription", entityId: bookingId,
+          actorEmail: "payment_webhook", actorRole: "system",
+          details: { payment_status: "paid", payment_id: paymentId },
+        });
       } catch (e) {
         console.error('[webhook] FAIL — Prescription update error:', e);
       }

@@ -27,6 +27,7 @@ import {
 import { cn } from "@/lib/utils"
 import type { SessionUser } from "@/types/auth"
 import { createNotification } from "@/lib/notifications"
+import { logAuditClient } from "@/lib/audit-client"
 import type { PharmacyOrder } from "@/types/database"
 import { buildInvoiceData, type TenantTaxConfig } from "@/lib/billing/tax"
 import { humanizeStatus, statusColors, formatPhone } from "@/lib/utils/format"
@@ -124,6 +125,12 @@ export default function PharmacyPage() {
               if (invError) {
                 console.error("Pharmacy invoice creation failed:", invError)
                 toast.error("Order dispensed but invoice creation failed")
+              } else {
+                logAuditClient({
+                  action: "create", entityType: "invoice", entityId: invoiceId,
+                  actorEmail: user?.email || "pharmacy", actorRole: user?.role || "PHARMACIST", tenantId,
+                  details: { type: "pharmacy", patient_name: order.patient_name, total: order.total_amount },
+                })
               }
             }
           }

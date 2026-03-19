@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useState, useMemo } from "react"
+import { useSession } from "next-auth/react"
 import { useBranch } from "@/components/providers/branch-context"
 import { AnimatePresence, motion } from "framer-motion"
 import { toast } from "sonner"
@@ -40,6 +41,8 @@ import {
   Timer,
   ChevronRight,
 } from "lucide-react"
+import { logAuditClient } from "@/lib/audit-client"
+import type { SessionUser } from "@/types/auth"
 import type { QueueEntry } from "@/types/database"
 
 type MobileTab = "waiting" | "consult" | "done"
@@ -53,6 +56,8 @@ function getGreeting() {
 
 export function QueueBoard() {
   const router = useRouter()
+  const { data: session } = useSession()
+  const qbUser = session?.user as SessionUser | undefined
   const { activeTenantId: tenantId } = useBranch()
   const today = getTodayIST()
   const [mobileTab, setMobileTab] = useState<MobileTab>("waiting")
@@ -99,10 +104,20 @@ export function QueueBoard() {
         }
       }
 
+      // Audit log
+      const entry = entries.find((e) => e.queue_id === queueId)
+      logAuditClient({
+        action: "status_change", entityType: "appointment", entityId: queueEntry?.booking_id || queueId,
+        actorEmail: qbUser?.email || "reception",
+        actorRole: qbUser?.role || "RECEPTION",
+        tenantId,
+        details: { status: newStatus, patient_name: entry?.patient_name, doctor_name: entry?.doctor_name },
+      })
+
       toast.success(`Status updated to ${newStatus.replace("_", " ")}`)
       setSelectedId(null)
     },
-    [tenantId],
+    [tenantId, entries, qbUser],
   )
 
   const handlePriorityChange = useCallback(

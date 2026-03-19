@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { logAudit } from '@/lib/audit';
 
 const SB_URL = () => process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1';
 const SB_KEY = () => process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -193,6 +194,12 @@ export async function POST(req: NextRequest) {
       await sbPatch('/appointments?booking_id=eq.' + encodeURIComponent(booking_id), {
         status: 'confirmed', payment_status: 'paid',
         payment_id: razorpay_payment_id, razorpay_payment_id, op_pass_id: opPassId,
+      });
+      logAudit({
+        action: "status_change", entityType: "appointment", entityId: booking_id,
+        actorEmail: patientPhone || "checkout", actorRole: "system",
+        tenantId: tenantId || undefined,
+        details: { payment_status: "paid", payment_id: razorpay_payment_id },
       });
     } catch { /* continue */ }
 

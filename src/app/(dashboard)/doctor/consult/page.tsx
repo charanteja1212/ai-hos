@@ -60,6 +60,7 @@ import { ElapsedTimer } from "@/components/ui/elapsed-timer"
 import { getVitalStatus, getVitalRingClass, getVitalDotClass } from "@/components/ui/normal-range-indicator"
 import { printPrescription } from "@/lib/print-prescription"
 import { StartCallButton } from "@/components/telemedicine/start-call-button"
+import { logAuditClient } from "@/lib/audit-client"
 import type { SessionUser } from "@/types/auth"
 import type { Patient, Prescription, PrescriptionItem } from "@/types/database"
 import { buildInvoiceData, type TenantTaxConfig } from "@/lib/billing/tax"
@@ -280,6 +281,11 @@ function ConsultPageContent() {
         })
         if (error) throw error
         savedParts.push("prescription")
+        logAuditClient({
+          action: "create", entityType: "prescription", entityId: prescriptionId,
+          actorEmail: user?.email || "", actorRole: user?.role || "DOCTOR", tenantId,
+          details: { patient_name: patient?.name, diagnosis, medicines_count: validMedicines.length },
+        })
 
         // Fetch tenant GST config for invoice
         const { data: tenantConfig } = await supabase
@@ -304,6 +310,11 @@ function ConsultPageContent() {
           booking_id: bookingId,
         }, taxConfig)
         await supabase.from("invoices").insert(consultInvoice)
+        logAuditClient({
+          action: "create", entityType: "invoice", entityId: consultInvoice.invoice_id,
+          actorEmail: user?.email || "", actorRole: user?.role || "DOCTOR", tenantId,
+          details: { type: "consultation", patient_name: patient?.name, total: consultInvoice.total },
+        })
       }
 
       // Order lab tests
@@ -336,6 +347,11 @@ function ConsultPageContent() {
           toast.error("Prescription saved but lab order failed — please create manually in lab module")
         } else {
           savedParts.push("lab order")
+          logAuditClient({
+            action: "create", entityType: "lab_order", entityId: `LAB-${Date.now()}`,
+            actorEmail: user?.email || "", actorRole: user?.role || "DOCTOR", tenantId,
+            details: { patient_name: patient?.name, tests: labTests, total: labTotal },
+          })
         }
       }
 
@@ -383,6 +399,12 @@ function ConsultPageContent() {
           })
           .eq("booking_id", bookingId)
           .eq("tenant_id", tenantId)
+
+        logAuditClient({
+          action: "status_change", entityType: "appointment", entityId: bookingId,
+          actorEmail: user?.email || "", actorRole: user?.role || "DOCTOR", tenantId,
+          details: { status: "completed", patient_name: patient?.name },
+        })
       }
 
       // Send post-consultation notifications (must await before navigating away)

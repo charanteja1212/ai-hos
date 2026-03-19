@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import { useSession } from "next-auth/react"
 import { useBranch } from "@/components/providers/branch-context"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
@@ -57,6 +58,7 @@ import { PrintButton } from "@/components/print/print-button"
 import { PrintLayout } from "@/components/print/print-layout"
 import { LabReportPrint } from "@/components/print/lab-report-print"
 import { createNotification } from "@/lib/notifications"
+import { logAuditClient } from "@/lib/audit-client"
 import type { LabOrder } from "@/types/database"
 import { buildInvoiceData, type TenantTaxConfig } from "@/lib/billing/tax"
 import type { ViewMode } from "@/components/ui/view-toggle"
@@ -69,6 +71,8 @@ function getLabStep(status: string): number {
 }
 
 export default function LabPage() {
+  const { data: labSession } = useSession()
+  const labUser = labSession?.user as { email?: string; role?: string } | undefined
   const { activeTenantId: tenantId } = useBranch()
 
   const [viewMode, setViewMode] = useState<ViewMode>("board")
@@ -234,6 +238,12 @@ export default function LabPage() {
             if (invError) {
               console.error("Lab invoice creation failed:", invError)
               toast.error("Results saved but invoice creation failed")
+            } else {
+              logAuditClient({
+                action: "create", entityType: "invoice", entityId: invoiceId,
+                actorEmail: labUser?.email || "lab", actorRole: labUser?.role || "LAB_TECH", tenantId,
+                details: { type: "lab", patient_name: selectedOrder.patient_name, tests: selectedOrder.tests?.map((t: { test_name: string }) => t.test_name) },
+              })
             }
           }
         }
