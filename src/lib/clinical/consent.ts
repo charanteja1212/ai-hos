@@ -241,7 +241,7 @@ export function generateConsentText(
     return { title: type, body: "", risks: [] }
   }
 
-  let title = lang === "hi" ? template.titleHi : template.title
+  const title = lang === "hi" ? template.titleHi : template.title
   let body = lang === "hi" ? template.bodyHi : template.body
 
   // Replace placeholders if details provided
