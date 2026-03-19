@@ -31,6 +31,9 @@ import {
   SearchX,
   Cpu,
   Bot,
+  Bell,
+  Palette,
+  Download,
 } from "lucide-react"
 import type { UserRole } from "@/types/auth"
 import type { TierFeatures } from "@/lib/platform/features"
@@ -144,10 +147,19 @@ const branchAdminNav: RoleNavConfig = {
       ],
     },
     {
+      id: "reports",
+      label: "REPORTS",
+      items: [
+        { label: "Reports & Export", href: "/admin/reports", icon: Download },
+      ],
+    },
+    {
       id: "settings",
       label: "SETTINGS",
       items: [
         { label: "Patient Feedback", href: "/admin/feedback", icon: MessageSquare },
+        { label: "Notifications", href: "/admin/notifications", icon: Bell },
+        { label: "Branding", href: "/admin/branding", icon: Palette, requiredFeature: "white_label" },
         { label: "Hospital Settings", href: "/admin/settings", icon: Settings },
         { label: "Activity Log", href: "/admin/activity", icon: FileText },
       ],

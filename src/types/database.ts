@@ -344,8 +344,20 @@ export interface Tenant {
   abdm_client_id?: string         // ABDM gateway client ID
   abdm_client_secret?: string     // ABDM gateway client secret
   abdm_environment?: "sandbox" | "production"
+  // Branding / White Label
+  branding_config?: BrandingConfig | null
   status: string
   created_at?: string
+}
+
+export interface BrandingConfig {
+  logo_url?: string
+  primary_color?: string
+  secondary_color?: string
+  app_display_name?: string
+  footer_text?: string
+  login_welcome_message?: string
+  show_powered_by?: boolean
 }
 
 export interface Document {
