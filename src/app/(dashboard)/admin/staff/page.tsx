@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
+import { useSession } from "next-auth/react"
 import { useBranch } from "@/components/providers/branch-context"
 import { toast } from "sonner"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { logAuditClient } from "@/lib/audit-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -80,6 +82,8 @@ const ROLE_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
 }
 
 export default function StaffManagementPage() {
+  const { data: staffSession } = useSession()
+  const staffUser = staffSession?.user as { email?: string; role?: string } | undefined
   const { activeTenantId: tenantId } = useBranch()
 
   const [staff, setStaff] = useState<Staff[]>([])
@@ -211,6 +215,11 @@ export default function StaffManagementPage() {
       if (error) {
         toast.error("Failed to update staff. Please try again.")
       } else {
+        logAuditClient({
+          action: "update", entityType: "staff", entityId: editing.staff_id,
+          actorEmail: staffUser?.email || "admin", actorRole: staffUser?.role || "ADMIN", tenantId,
+          details: { name: formName, role: formRole, status: formStatus },
+        })
         toast.success(`${formName} updated successfully`)
         setShowForm(false)
         resetForm()
@@ -233,6 +242,11 @@ export default function StaffManagementPage() {
       if (error) {
         toast.error("Failed to add staff. Please try again.")
       } else {
+        logAuditClient({
+          action: "create", entityType: "staff", entityId: staffId,
+          actorEmail: staffUser?.email || "admin", actorRole: staffUser?.role || "ADMIN", tenantId,
+          details: { name: formName, role: formRole },
+        })
         toast.success(`${formName} added as ${ROLE_LABEL[formRole] || formRole}`)
         setShowForm(false)
         resetForm()

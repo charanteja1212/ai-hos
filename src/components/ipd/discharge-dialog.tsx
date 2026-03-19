@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useCallback, useMemo } from "react"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { logAuditClient } from "@/lib/audit-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -32,6 +34,8 @@ interface DischargeMed {
 }
 
 export function DischargeDialog({ admission, tenantId, open, onClose, onDischarged, userName }: DischargeDialogProps) {
+  const { data: dcSession } = useSession()
+  const dcUser = dcSession?.user as { email?: string; role?: string } | undefined
   const { wards } = useWardBeds(tenantId)
 
   const [finalDiagnosis, setFinalDiagnosis] = useState("")
@@ -151,6 +155,11 @@ export function DischargeDialog({ admission, tenantId, open, onClose, onDischarg
         })
       }
 
+      logAuditClient({
+        action: "status_change", entityType: "admission", entityId: admission.admission_id,
+        actorEmail: dcUser?.email || "staff", actorRole: dcUser?.role || "ADMIN", tenantId,
+        details: { status: "discharged", patient_name: admission.patient_name, ward: admission.ward, days_stayed: billing.daysStayed, total: billing.grandTotal },
+      })
       toast.success(`${admission.patient_name} discharged successfully`)
 
       createNotification({

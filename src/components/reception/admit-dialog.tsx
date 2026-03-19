@@ -1,8 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { logAuditClient } from "@/lib/audit-client"
 import {
   Dialog,
   DialogContent,
@@ -46,6 +48,8 @@ export function AdmitDialog({
   open,
   onClose,
 }: AdmitDialogProps) {
+  const { data: admitSession } = useSession()
+  const admitUser = admitSession?.user as { email?: string; role?: string } | undefined
   const { wards, bedMap, mutate: mutateBeds } = useWardBeds(tenantId)
   const [loading, setLoading] = useState(false)
   const [ward, setWard] = useState("")
@@ -109,6 +113,11 @@ export function AdmitDialog({
         referenceType: "admission",
       })
 
+      logAuditClient({
+        action: "create", entityType: "admission", entityId: `ADM-${Date.now()}`,
+        actorEmail: admitUser?.email || "reception", actorRole: admitUser?.role || "RECEPTION", tenantId,
+        details: { patient_name: patientName, ward, bed_number: bedNumber, doctor_name: doctorName, diagnosis },
+      })
       toast.success(`${patientName} admitted to ${ward} — Bed ${bedNumber}`)
       mutateBeds()
       onClose()

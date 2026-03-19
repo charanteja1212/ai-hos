@@ -84,6 +84,14 @@ export default function PharmacyPage() {
 
         if (error) throw error
 
+        // Log status change
+        const statusOrder = allOrders.find(o => o.order_id === orderId)
+        logAuditClient({
+          action: "status_change", entityType: "pharmacy_order", entityId: orderId,
+          actorEmail: user?.email || "pharmacy", actorRole: user?.role || "PHARMACIST", tenantId,
+          details: { status: newStatus, patient_name: statusOrder?.patient_name },
+        })
+
         // Auto-generate pharmacy invoice on dispense (idempotent — uses order_id)
         if (newStatus === "dispensed") {
           const order = allOrders.find(o => o.order_id === orderId)

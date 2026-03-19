@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useSession } from "next-auth/react"
 import { AnimatePresence, motion } from "framer-motion"
 import { toast } from "sonner"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { logAuditClient } from "@/lib/audit-client"
 import { getTodayIST } from "@/lib/utils/date"
 import { formatTime } from "@/lib/utils/date"
 import { Button } from "@/components/ui/button"
@@ -25,6 +27,8 @@ interface PendingArrivalsProps {
 }
 
 export function PendingArrivals({ tenantId, onCheckInComplete }: PendingArrivalsProps) {
+  const { data: paSession } = useSession()
+  const paUser = paSession?.user as { email?: string; role?: string } | undefined
   const [pending, setPending] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [checkingIn, setCheckingIn] = useState<string | null>(null)
@@ -150,6 +154,11 @@ export function PendingArrivals({ tenantId, onCheckInComplete }: PendingArrivals
         referenceType: "queue_entry",
       })
 
+      logAuditClient({
+        action: "status_change", entityType: "appointment", entityId: appt.booking_id,
+        actorEmail: paUser?.email || "reception", actorRole: paUser?.role || "RECEPTION", tenantId,
+        details: { status: "checked_in", patient_name: appt.patient_name, doctor_name: appt.doctor_name, queue_number: queueNumber },
+      })
       toast.success(`${appt.patient_name} checked in — Queue #${queueNumber}`)
       setPending((prev) => prev.filter((p) => p.booking_id !== appt.booking_id))
       onCheckInComplete()
@@ -158,7 +167,7 @@ export function PendingArrivals({ tenantId, onCheckInComplete }: PendingArrivals
     } finally {
       setCheckingIn(null)
     }
-  }, [tenantId, onCheckInComplete])
+  }, [tenantId, onCheckInComplete, paUser])
 
   if (loading || pending.length === 0) return null
 

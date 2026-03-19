@@ -126,6 +126,12 @@ export default function LabPage() {
           .eq("tenant_id", tenantId)
 
         if (error) throw error
+        const order = allOrders.find(o => o.order_id === orderId)
+        logAuditClient({
+          action: "status_change", entityType: "lab_order", entityId: orderId,
+          actorEmail: labUser?.email || "lab", actorRole: labUser?.role || "LAB_TECH", tenantId,
+          details: { status: newStatus, patient_name: order?.patient_name, doctor_name: order?.doctor_name },
+        })
         toast.success(`Status updated to ${newStatus.replace("_", " ")}`)
         mutate()
       } catch (err) {
@@ -135,7 +141,7 @@ export default function LabPage() {
         setUpdating(false)
       }
     },
-    [mutate, tenantId]
+    [mutate, tenantId, allOrders, labUser]
   )
 
   const handleKanbanAction = useCallback(
@@ -263,6 +269,11 @@ export default function LabPage() {
         })
       }
 
+      logAuditClient({
+        action: "update", entityType: "lab_order", entityId: selectedOrder.order_id,
+        actorEmail: labUser?.email || "lab", actorRole: labUser?.role || "LAB_TECH", tenantId,
+        details: { status: allComplete ? "completed" : "processing", patient_name: selectedOrder.patient_name, tests_count: selectedOrder.tests?.length },
+      })
       toast.success("Results saved")
       setSelectedOrder(null)
       setResultValues({})
@@ -273,7 +284,7 @@ export default function LabPage() {
     } finally {
       setUpdating(false)
     }
-  }, [selectedOrder, resultValues, mutate, tenantId])
+  }, [selectedOrder, resultValues, mutate, tenantId, labUser])
 
   const exportCSV = useCallback(() => {
     if (allOrders.length === 0) {

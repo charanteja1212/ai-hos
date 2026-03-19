@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
+import { useSession } from "next-auth/react"
 import { useBranch } from "@/components/providers/branch-context"
 import { toast } from "sonner"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { logAuditClient } from "@/lib/audit-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -239,6 +241,8 @@ function TimelineBar({ session1, session2 }: { session1: DaySchedule["session1"]
 }
 
 export default function DoctorsManagementPage() {
+  const { data: docSession } = useSession()
+  const docUser = docSession?.user as { email?: string; role?: string } | undefined
   const { activeTenantId: tenantId } = useBranch()
 
   const [doctors, setDoctors] = useState<Doctor[]>([])
@@ -414,6 +418,11 @@ export default function DoctorsManagementPage() {
           .eq("doctor_id", editing.doctor_id)
           .eq("tenant_id", tenantId)
         if (error) throw error
+        logAuditClient({
+          action: "update", entityType: "doctor", entityId: editing.doctor_id,
+          actorEmail: docUser?.email || "admin", actorRole: docUser?.role || "ADMIN", tenantId,
+          details: { name: formName, specialty: formSpecialty, status: formStatus },
+        })
         toast.success("Doctor updated")
       } else {
         const doctorId = `DOC-${Date.now()}`
@@ -422,6 +431,11 @@ export default function DoctorsManagementPage() {
           doctor_id: doctorId,
         })
         if (error) throw error
+        logAuditClient({
+          action: "create", entityType: "doctor", entityId: doctorId,
+          actorEmail: docUser?.email || "admin", actorRole: docUser?.role || "ADMIN", tenantId,
+          details: { name: formName, specialty: formSpecialty },
+        })
         toast.success(`Doctor added — ID: ${doctorId}`)
       }
 
@@ -505,6 +519,11 @@ export default function DoctorsManagementPage() {
     const rows = weekToRows(schedWeek, scheduleDoctor.doctor_id, tenantId)
     const { error: insError } = await supabase.from("doctor_schedules").insert(rows)
     if (insError) { toast.error("Failed to save: " + insError.message) } else {
+      logAuditClient({
+        action: "update", entityType: "doctor_schedule", entityId: scheduleDoctor.doctor_id,
+        actorEmail: docUser?.email || "admin", actorRole: docUser?.role || "ADMIN", tenantId,
+        details: { doctor_name: scheduleDoctor.name },
+      })
       toast.success(`Schedule saved for ${scheduleDoctor.name}`)
       setSchedSavedWeek(JSON.parse(JSON.stringify(schedWeek)))
     }

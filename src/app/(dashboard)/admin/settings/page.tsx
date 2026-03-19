@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
+import { useSession } from "next-auth/react"
 import { useBranch } from "@/components/providers/branch-context"
 import { toast } from "sonner"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { logAuditClient } from "@/lib/audit-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -55,6 +57,8 @@ const DEFAULT_WARD_ROWS: WardRow[] = [
 ]
 
 export default function SettingsPage() {
+  const { data: settingsSession } = useSession()
+  const settingsUser = settingsSession?.user as { email?: string; role?: string } | undefined
   const { activeTenantId: tenantId } = useBranch()
 
   const [tenant, setTenant] = useState<Tenant | null>(null)
@@ -167,6 +171,11 @@ export default function SettingsPage() {
         .eq("tenant_id", tenantId)
 
       if (error) throw error
+      logAuditClient({
+        action: "update", entityType: "tenant", entityId: tenantId,
+        actorEmail: settingsUser?.email || "admin", actorRole: settingsUser?.role || "ADMIN", tenantId,
+        details: { hospital_name: hospitalName, consultation_fee: parseInt(consultationFee), pin_changed: !!(adminPin || receptionPin), gst_enabled: enableGst },
+      })
       toast.success("Settings saved")
       setAdminPin("")
       setReceptionPin("")
@@ -470,6 +479,11 @@ export default function SettingsPage() {
                     .update({ ward_beds: wardBeds })
                     .eq("tenant_id", tenantId)
                   if (error) throw error
+                  logAuditClient({
+                    action: "update", entityType: "ward_config", entityId: tenantId,
+                    actorEmail: settingsUser?.email || "admin", actorRole: settingsUser?.role || "ADMIN", tenantId,
+                    details: { wards_count: Object.keys(wardBeds).length },
+                  })
                   toast.success("Ward configuration saved")
                 } catch (err) {
                   console.error("[settings] Failed to save ward config:", err)

@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { logAuditClient } from "@/lib/audit-client"
 import { getTodayIST } from "@/lib/utils/date"
 import {
   Dialog,
@@ -39,6 +41,8 @@ interface CheckInResult {
 }
 
 export function CheckInDialog({ appointment, open, onClose, tenantId }: CheckInDialogProps) {
+  const { data: ciSession } = useSession()
+  const ciUser = ciSession?.user as { email?: string; role?: string } | undefined
   const { tenant } = useTenant(tenantId)
   const [loading, setLoading] = useState(false)
   const [priority, setPriority] = useState("0")
@@ -192,6 +196,11 @@ export function CheckInDialog({ appointment, open, onClose, tenantId }: CheckInD
       }).catch(() => toast.warning("Queue assigned but WhatsApp notification may not have been sent"))
 
       setResult({ queueNumber, estimatedWait, waitingAhead: waitingAhead || 0 })
+      logAuditClient({
+        action: "status_change", entityType: "appointment", entityId: appointment.booking_id,
+        actorEmail: ciUser?.email || "reception", actorRole: ciUser?.role || "RECEPTION", tenantId,
+        details: { status: "checked_in", patient_name: appointment.patient_name, doctor_name: appointment.doctor_name, queue_number: queueNumber },
+      })
       toast.success(`${appointment.patient_name} checked in — Queue #${queueNumber}`)
     } catch {
       toast.error("Failed to check in patient")
