@@ -25,6 +25,7 @@ import {
   ChevronRight,
   ChevronLeft,
   MessageCircle,
+  Link2,
 } from "lucide-react"
 
 interface OnboardingWizardProps {
@@ -212,16 +213,29 @@ export function OnboardingWizard({ open, onOpenChange, onComplete }: OnboardingW
             <p>Admin PIN: <span className="font-mono text-foreground">{adminPin}</span></p>
             {receptionPin && <p>Reception PIN: <span className="font-mono text-foreground">{receptionPin}</span></p>}
           </div>
-          <Button
-            onClick={() => {
-              reset()
-              onOpenChange(false)
-              onComplete?.()
-            }}
-            className="gradient-purple text-white hover:opacity-90"
-          >
-            Done
-          </Button>
+          <div className="flex gap-3 justify-center">
+            <Button
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => {
+                const link = `${window.location.origin}/onboard/${createdData.clientId}`
+                navigator.clipboard.writeText(link)
+                toast.success("Onboard link copied!")
+              }}
+            >
+              <Link2 className="w-4 h-4" /> Copy Onboard Link
+            </Button>
+            <Button
+              onClick={() => {
+                reset()
+                onOpenChange(false)
+                onComplete?.()
+              }}
+              className="gradient-purple text-white hover:opacity-90"
+            >
+              Done
+            </Button>
+          </div>
         </div>
       ) : (
         <>

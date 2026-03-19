@@ -38,6 +38,7 @@ import {
   IndianRupee,
   MessageCircle,
   Pencil,
+  Link2,
 } from "lucide-react"
 import type { SessionUser } from "@/types/auth"
 import type { Client, Tenant } from "@/types/database"
@@ -338,12 +339,26 @@ export default function ClientDetailPage() {
           </Badge>
         }
         action={
-          <Badge
-            variant="secondary"
-            className={STATUS_BADGE[client.status] || ""}
-          >
-            {client.status}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => {
+                const link = `${window.location.origin}/onboard/${client.client_id}`
+                navigator.clipboard.writeText(link)
+                toast.success("Onboard link copied!")
+              }}
+            >
+              <Link2 className="w-3.5 h-3.5" /> Copy Onboard Link
+            </Button>
+            <Badge
+              variant="secondary"
+              className={STATUS_BADGE[client.status] || ""}
+            >
+              {client.status}
+            </Badge>
+          </div>
         }
       />
 

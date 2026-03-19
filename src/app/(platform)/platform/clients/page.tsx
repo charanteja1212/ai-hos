@@ -31,6 +31,7 @@ import {
   Phone,
   User,
   XCircle,
+  Link2,
 } from "lucide-react"
 import type { SessionUser } from "@/types/auth"
 import type { Client, Tenant } from "@/types/database"
@@ -378,18 +379,33 @@ export default function ClientsListPage() {
                       </div>
                     )}
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={() =>
-                        router.push(
-                          `/platform/clients/${client.client_id}`
-                        )
-                      }
-                    >
-                      <Eye className="w-3.5 h-3.5 mr-2" /> View Details
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() =>
+                          router.push(
+                            `/platform/clients/${client.client_id}`
+                          )
+                        }
+                      >
+                        <Eye className="w-3.5 h-3.5 mr-2" /> View
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const link = `${window.location.origin}/onboard/${client.client_id}`
+                          navigator.clipboard.writeText(link)
+                          toast.success("Onboard link copied!")
+                        }}
+                      >
+                        <Link2 className="w-3.5 h-3.5" /> Copy Link
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
