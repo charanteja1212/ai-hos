@@ -424,71 +424,77 @@ export function BookingForm() {
         const now = new Date().toISOString()
         const bkId = data.booking_id || data.bookingId
 
-        const { count: queueCount } = await supabase
-          .from("queue_entries")
-          .select("*", { count: "exact", head: true })
-          .eq("tenant_id", tenantId)
-          .eq("date", today)
+        // Only auto-create queue entry + check-in for same-day walk-ins
+        // Future-date bookings will be checked in by reception on the appointment day
+        const isSameDay = selectedDate === today
 
-        const queueNumber = (queueCount || 0) + 1
-        const { waitingAhead, estimatedWait } = await calculateEstimatedWait(tenantId, selectedDoctor.doctor_id)
+        if (isSameDay) {
+          const { count: queueCount } = await supabase
+            .from("queue_entries")
+            .select("*", { count: "exact", head: true })
+            .eq("tenant_id", tenantId)
+            .eq("date", today)
 
-        const { error: queueInsertError } = await supabase.from("queue_entries").insert({
-          queue_id: `Q-${Date.now()}`,
-          tenant_id: tenantId,
-          booking_id: bkId,
-          patient_phone: patient.phone,
-          patient_name: patient.name,
-          doctor_id: selectedDoctor.doctor_id,
-          doctor_name: selectedDoctor.name,
-          queue_number: queueNumber,
-          status: "waiting",
-          check_in_time: now,
-          walk_in: true,
-          priority: 0,
-          estimated_wait_minutes: estimatedWait,
-          date: today,
-        })
-        if (queueInsertError) {
-          console.error("Queue insert failed:", queueInsertError)
-          toast.error("Failed to create queue entry")
-        }
+          const queueNumber = (queueCount || 0) + 1
+          const { waitingAhead, estimatedWait } = await calculateEstimatedWait(tenantId, selectedDoctor.doctor_id)
 
-        const { error: apptUpdateError } = await supabase
-          .from("appointments")
-          .update({ check_in_status: "checked_in", arrival_time: now, queue_number: queueNumber })
-          .eq("booking_id", bkId)
-          .eq("tenant_id", tenantId)
-        if (apptUpdateError) console.error("Appointment update failed:", apptUpdateError)
-
-        createNotification({
-          tenantId,
-          type: "queue_checkin",
-          title: "Walk-in patient checked in",
-          message: `${patient.name} is waiting for Dr. ${selectedDoctor.name} (Queue #${queueNumber})`,
-          targetRole: "DOCTOR",
-          targetUserId: selectedDoctor.doctor_id,
-          referenceId: bkId,
-          referenceType: "queue_entry",
-        })
-
-        fetch("/api/queue/notify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            phone: patient.phone,
+          const { error: queueInsertError } = await supabase.from("queue_entries").insert({
+            queue_id: `Q-${Date.now()}`,
+            tenant_id: tenantId,
+            booking_id: bkId,
+            patient_phone: patient.phone,
             patient_name: patient.name,
-            queue_number: queueNumber,
+            doctor_id: selectedDoctor.doctor_id,
             doctor_name: selectedDoctor.name,
-            hospital_name: tenant?.hospital_name || "Hospital",
-            estimated_wait: estimatedWait,
-            waiting_ahead: waitingAhead || 0,
-            queue_url: `${window.location.origin}/queue/${tenantId}`,
-          }),
-          signal: AbortSignal.timeout(5000),
-        }).catch(() => toast.warning("Queue assigned but WhatsApp notification may not have been sent"))
+            queue_number: queueNumber,
+            status: "waiting",
+            check_in_time: now,
+            walk_in: true,
+            priority: 0,
+            estimated_wait_minutes: estimatedWait,
+            date: today,
+          })
+          if (queueInsertError) {
+            console.error("Queue insert failed:", queueInsertError)
+            toast.error("Failed to create queue entry")
+          }
 
-        toast.success(`Queue #${queueNumber} assigned`)
+          const { error: apptUpdateError } = await supabase
+            .from("appointments")
+            .update({ check_in_status: "checked_in", arrival_time: now, queue_number: queueNumber })
+            .eq("booking_id", bkId)
+            .eq("tenant_id", tenantId)
+          if (apptUpdateError) console.error("Appointment update failed:", apptUpdateError)
+
+          createNotification({
+            tenantId,
+            type: "queue_checkin",
+            title: "Walk-in patient checked in",
+            message: `${patient.name} is waiting for Dr. ${selectedDoctor.name} (Queue #${queueNumber})`,
+            targetRole: "DOCTOR",
+            targetUserId: selectedDoctor.doctor_id,
+            referenceId: bkId,
+            referenceType: "queue_entry",
+          })
+
+          fetch("/api/queue/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              phone: patient.phone,
+              patient_name: patient.name,
+              queue_number: queueNumber,
+              doctor_name: selectedDoctor.name,
+              hospital_name: tenant?.hospital_name || "Hospital",
+              estimated_wait: estimatedWait,
+              waiting_ahead: waitingAhead || 0,
+              queue_url: `${window.location.origin}/queue/${tenantId}`,
+            }),
+            signal: AbortSignal.timeout(5000),
+          }).catch(() => toast.warning("Queue assigned but WhatsApp notification may not have been sent"))
+
+          toast.success(`Queue #${queueNumber} assigned`)
+        }
       } else {
         toast.error(data.error || "Booking failed")
       }
