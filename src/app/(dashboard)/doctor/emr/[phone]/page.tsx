@@ -50,6 +50,7 @@ import {
   TrendingUp,
   Clock,
   X,
+  TestTube,
 } from "lucide-react"
 import type { SessionUser } from "@/types/auth"
 import type {
@@ -76,6 +77,7 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
   const [allergies, setAllergies] = useState<Allergy[]>([])
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [labOrders, setLabOrders] = useState<Array<{ order_id: string; tests: Array<{ test_name: string; result?: string; status: string }>; results: Record<string, string> | null; status: string; created_at: string; doctor_name: string }>>([])
   const [loading, setLoading] = useState(true)
 
   // Dialog states
@@ -94,7 +96,7 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
     setLoading(true)
     const supabase = createBrowserClient()
 
-    const [patientRes, vitalsRes, notesRes, condRes, allergyRes, rxRes, apptRes] =
+    const [patientRes, vitalsRes, notesRes, condRes, allergyRes, rxRes, apptRes, labRes] =
       await Promise.all([
         supabase.from("patients").select("*").eq("phone", phone).eq("tenant_id", tenantId).maybeSingle(),
         supabase.from("vitals").select("*").eq("patient_phone", phone).eq("tenant_id", tenantId).order("recorded_at", { ascending: false }).limit(50),
@@ -103,6 +105,7 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
         supabase.from("allergies").select("*").eq("patient_phone", phone).eq("tenant_id", tenantId).order("created_at", { ascending: false }),
         supabase.from("prescriptions").select("*").eq("patient_phone", phone).eq("tenant_id", tenantId).order("created_at", { ascending: false }).limit(20),
         supabase.from("appointments").select("*").eq("patient_phone", phone).eq("tenant_id", tenantId).order("date", { ascending: false }).limit(20),
+        supabase.from("lab_orders").select("order_id, tests, results, status, created_at, doctor_name").eq("patient_phone", phone).eq("tenant_id", tenantId).order("created_at", { ascending: false }).limit(20),
       ])
 
     setPatient(patientRes.data as Patient | null)
@@ -112,6 +115,7 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
     setAllergies((allergyRes.data || []) as Allergy[])
     setPrescriptions((rxRes.data || []) as Prescription[])
     setAppointments((apptRes.data || []) as Appointment[])
+    setLabOrders((labRes.data || []) as typeof labOrders)
     setLoading(false)
   }, [phone, tenantId])
 
@@ -284,10 +288,11 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
       )}
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full grid grid-cols-7 mb-4">
+        <TabsList className="w-full grid grid-cols-8 mb-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="vitals">Vitals</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
+          <TabsTrigger value="lab">Lab</TabsTrigger>
           <TabsTrigger value="conditions">Conditions</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="abdm">ABDM</TabsTrigger>
@@ -501,6 +506,59 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
                     {note.objective && <div><span className="text-xs font-semibold text-green-600">O:</span> <span className="text-sm">{note.objective}</span></div>}
                     {note.assessment && <div><span className="text-xs font-semibold text-amber-600">A:</span> <span className="text-sm">{note.assessment}</span></div>}
                     {note.plan && <div><span className="text-xs font-semibold text-purple-600">P:</span> <span className="text-sm">{note.plan}</span></div>}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ─── Lab Results Tab ─────────────────────────────────────────── */}
+        <TabsContent value="lab" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-sm font-semibold">Lab Orders ({labOrders.length})</h3>
+          </div>
+          {labOrders.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center">
+                <TestTube className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No lab orders found</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {labOrders.map((lab) => (
+                <Card key={lab.order_id}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <TestTube className="w-4 h-4 text-purple-500" />
+                        {lab.order_id}
+                      </CardTitle>
+                      <Badge
+                        variant={lab.status === "completed" ? "default" : "outline"}
+                        className={lab.status === "completed" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" : ""}
+                      >
+                        {lab.status === "completed" ? "Completed" : lab.status}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {lab.created_at ? new Date(lab.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : ""} &middot; {lab.doctor_name}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="rounded-lg border border-border/50 overflow-hidden">
+                      {lab.tests?.map((test, i) => (
+                        <div key={i} className={`flex items-center justify-between px-3 py-2 text-sm ${i < (lab.tests?.length || 0) - 1 ? "border-b border-border/30" : ""}`}>
+                          <span className="font-medium">{test.test_name}</span>
+                          {test.result ? (
+                            <span className="font-bold text-foreground bg-muted px-2.5 py-0.5 rounded-md">{test.result}</span>
+                          ) : (
+                            <span className="text-muted-foreground italic text-xs">Pending</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
               ))}

@@ -94,6 +94,8 @@ function ConsultPageContent() {
   const [saving, setSaving] = useState(false)
   const [patient, setPatient] = useState<Patient | null>(null)
   const [history, setHistory] = useState<Prescription[]>([])
+  const [labResults, setLabResults] = useState<Array<{ order_id: string; tests: Array<{ test_name: string; result?: string; status: string }>; results: Record<string, string> | null; status: string; created_at: string; doctor_name: string }>>([])
+  const [expandedLab, setExpandedLab] = useState<string | null>(null)
 
   // Consultation form
   const [symptoms, setSymptoms] = useState("")
@@ -152,9 +154,17 @@ function ConsultPageContent() {
         .eq("patient_phone", patientPhone)
         .order("created_at", { ascending: false })
         .limit(10),
-    ]).then(([patientRes, historyRes]) => {
+      supabase
+        .from("lab_orders")
+        .select("order_id, tests, results, status, created_at, doctor_name")
+        .eq("tenant_id", tenantId)
+        .eq("patient_phone", patientPhone)
+        .order("created_at", { ascending: false })
+        .limit(10),
+    ]).then(([patientRes, historyRes, labRes]) => {
       if (patientRes.data) setPatient(patientRes.data as Patient)
       if (historyRes.data) setHistory(historyRes.data as Prescription[])
+      if (labRes.data) setLabResults(labRes.data as typeof labResults)
       setLoading(false)
     }).catch((err) => {
       console.error("[consult] Failed to fetch patient data:", err)
@@ -971,6 +981,84 @@ function ConsultPageContent() {
               )}
             </CardContent>
           </Card>
+
+          {/* Lab Results Card */}
+          {labResults.length > 0 && (
+            <Card className="card-hover">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <TestTube className="w-4 h-4 text-purple-500" />
+                  Lab Results
+                  <Badge variant="secondary" className="ml-auto text-xs">
+                    {labResults.filter(l => l.status === "completed").length}/{labResults.length}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-1.5">
+                  {labResults.map((lab) => (
+                    <Collapsible
+                      key={lab.order_id}
+                      open={expandedLab === lab.order_id}
+                      onOpenChange={(open) => setExpandedLab(open ? lab.order_id : null)}
+                    >
+                      <CollapsibleTrigger asChild>
+                        <button className="w-full text-left rounded-lg p-2.5 hover:bg-accent/30 transition-colors group">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span className="font-medium">
+                              {lab.created_at ? formatDate(lab.created_at.split("T")[0]) : "Unknown"}
+                            </span>
+                            <span className="text-muted-foreground/50">&middot;</span>
+                            <Badge
+                              variant={lab.status === "completed" ? "default" : "outline"}
+                              className={cn("text-[10px] py-0", lab.status === "completed" && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300")}
+                            >
+                              {lab.status === "completed" ? "Ready" : lab.status}
+                            </Badge>
+                            <ChevronDown className={cn(
+                              "w-3 h-3 ml-auto transition-transform",
+                              expandedLab === lab.order_id && "rotate-180"
+                            )} />
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {lab.tests?.slice(0, 4).map((test, i) => (
+                              <Badge key={i} variant="outline" className="text-[10px] py-0">
+                                <TestTube className="w-2.5 h-2.5 mr-0.5" />
+                                {test.test_name}
+                              </Badge>
+                            ))}
+                            {(lab.tests?.length || 0) > 4 && (
+                              <Badge variant="outline" className="text-[10px] py-0">+{lab.tests.length - 4}</Badge>
+                            )}
+                          </div>
+                        </button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="ml-2 mr-2 mb-2 p-3 rounded-lg bg-muted/30 border border-border/50 space-y-2">
+                          {lab.tests?.map((test, i) => (
+                            <div key={i} className="flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-2">
+                                <TestTube className="w-3 h-3 text-purple-500 shrink-0" />
+                                <span className="font-medium">{test.test_name}</span>
+                              </div>
+                              {test.result ? (
+                                <span className="font-bold text-foreground bg-muted px-2 py-0.5 rounded">{test.result}</span>
+                              ) : (
+                                <span className="text-muted-foreground italic">Pending</span>
+                              )}
+                            </div>
+                          ))}
+                          <div className="text-[10px] text-muted-foreground pt-1 border-t border-border/30">
+                            Ordered by {lab.doctor_name}
+                          </div>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
