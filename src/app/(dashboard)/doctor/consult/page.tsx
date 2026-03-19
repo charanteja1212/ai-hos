@@ -119,6 +119,8 @@ function ConsultPageContent() {
   const [myHistoryOnly, setMyHistoryOnly] = useState(false)
   // History accordion: which prescription is expanded
   const [expandedRx, setExpandedRx] = useState<string | null>(null)
+  // Current patient name from queue entry (for filtering when phone is shared)
+  const [currentPatientName, setCurrentPatientName] = useState<string>("")
   // Diagnosis suggestions
   const [diagnosisSuggestions, setDiagnosisSuggestions] = useState<string[]>([])
   const [showDiagnosisSuggestions, setShowDiagnosisSuggestions] = useState(false)
@@ -139,6 +141,19 @@ function ConsultPageContent() {
     setLoading(true)
     const supabase = createBrowserClient()
 
+    // Fetch queue entry patient_name for filtering shared-phone records
+    if (queueId) {
+      supabase
+        .from("queue_entries")
+        .select("patient_name")
+        .eq("queue_id", queueId)
+        .eq("tenant_id", tenantId)
+        .single()
+        .then(({ data }) => {
+          if (data?.patient_name) setCurrentPatientName(data.patient_name)
+        })
+    }
+
     Promise.all([
       supabase
         .from("patients")
@@ -156,7 +171,7 @@ function ConsultPageContent() {
         .limit(10),
       supabase
         .from("lab_orders")
-        .select("order_id, tests, results, status, created_at, doctor_name")
+        .select("order_id, tests, results, status, created_at, doctor_name, patient_name")
         .eq("tenant_id", tenantId)
         .eq("patient_phone", patientPhone)
         .order("created_at", { ascending: false })
@@ -170,7 +185,21 @@ function ConsultPageContent() {
       console.error("[consult] Failed to fetch patient data:", err)
       setLoading(false)
     })
-  }, [patientPhone, tenantId])
+  }, [patientPhone, tenantId, queueId])
+
+  // Filter sidebar history by current patient name when phone is shared
+  const filteredHistory = useMemo(() => {
+    if (!currentPatientName) return history
+    const matched = history.filter((rx) => rx.patient_name === currentPatientName)
+    // If no matches by name (old records may not have patient_name), show all
+    return matched.length > 0 || history.some((rx) => rx.patient_name) ? matched : history
+  }, [history, currentPatientName])
+
+  const filteredLabResults = useMemo(() => {
+    if (!currentPatientName) return labResults
+    const matched = labResults.filter((lab) => (lab as { patient_name?: string }).patient_name === currentPatientName)
+    return matched.length > 0 || labResults.some((lab) => (lab as { patient_name?: string }).patient_name) ? matched : labResults
+  }, [labResults, currentPatientName])
 
   const addMedicine = () => {
     setMedicines([...medicines, { medicine_name: "", dosage: "", frequency: "1-0-1", duration: "5 days" }])
@@ -868,7 +897,7 @@ function ConsultPageContent() {
                 <FileText className="w-4 h-4" />
                 Visit History
                 <Badge variant="secondary" className="ml-auto text-xs">
-                  {(myHistoryOnly ? history.filter((rx) => rx.doctor_id === user?.doctorId) : history).length}
+                  {(myHistoryOnly ? filteredHistory.filter((rx) => rx.doctor_id === user?.doctorId) : filteredHistory).length}
                 </Badge>
               </CardTitle>
               <div className="flex gap-1 mt-1">
@@ -891,7 +920,7 @@ function ConsultPageContent() {
               </div>
             </CardHeader>
             <CardContent>
-              {((myHistoryOnly ? history.filter((rx) => rx.doctor_id === user?.doctorId) : history).length === 0) ? (
+              {((myHistoryOnly ? filteredHistory.filter((rx) => rx.doctor_id === user?.doctorId) : filteredHistory).length === 0) ? (
                 <div className="text-center py-4">
                   <FileText className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
                   <p className="text-xs font-medium text-muted-foreground">No previous visits</p>
@@ -899,7 +928,7 @@ function ConsultPageContent() {
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  {(myHistoryOnly ? history.filter((rx) => rx.doctor_id === user?.doctorId) : history).map((rx) => (
+                  {(myHistoryOnly ? filteredHistory.filter((rx) => rx.doctor_id === user?.doctorId) : filteredHistory).map((rx) => (
                     <Collapsible
                       key={rx.prescription_id}
                       open={expandedRx === rx.prescription_id}
@@ -983,20 +1012,20 @@ function ConsultPageContent() {
           </Card>
 
           {/* Lab Results Card */}
-          {labResults.length > 0 && (
+          {filteredLabResults.length > 0 && (
             <Card className="card-hover">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <TestTube className="w-4 h-4 text-purple-500" />
                   Lab Results
                   <Badge variant="secondary" className="ml-auto text-xs">
-                    {labResults.filter(l => l.status === "completed").length}/{labResults.length}
+                    {filteredLabResults.filter(l => l.status === "completed").length}/{filteredLabResults.length}
                   </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-1.5">
-                  {labResults.map((lab) => (
+                  {filteredLabResults.map((lab) => (
                     <Collapsible
                       key={lab.order_id}
                       open={expandedLab === lab.order_id}

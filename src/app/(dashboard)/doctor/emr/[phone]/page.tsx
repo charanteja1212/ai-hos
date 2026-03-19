@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useBranch } from "@/components/providers/branch-context"
@@ -51,6 +51,7 @@ import {
   Clock,
   X,
   TestTube,
+  Users,
 } from "lucide-react"
 import type { SessionUser } from "@/types/auth"
 import type {
@@ -77,8 +78,9 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
   const [allergies, setAllergies] = useState<Allergy[]>([])
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [labOrders, setLabOrders] = useState<Array<{ order_id: string; tests: Array<{ test_name: string; result?: string; status: string }>; results: Record<string, string> | null; status: string; created_at: string; doctor_name: string }>>([])
+  const [labOrders, setLabOrders] = useState<Array<{ order_id: string; tests: Array<{ test_name: string; result?: string; status: string }>; results: Record<string, string> | null; status: string; created_at: string; doctor_name: string; patient_name?: string }>>([])
   const [loading, setLoading] = useState(true)
+  const [selectedPerson, setSelectedPerson] = useState<string | null>(null)
 
   // Dialog states
   const [showAddVitals, setShowAddVitals] = useState(false)
@@ -105,7 +107,7 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
         supabase.from("allergies").select("*").eq("patient_phone", phone).eq("tenant_id", tenantId).order("created_at", { ascending: false }),
         supabase.from("prescriptions").select("*").eq("patient_phone", phone).eq("tenant_id", tenantId).order("created_at", { ascending: false }).limit(20),
         supabase.from("appointments").select("*").eq("patient_phone", phone).eq("tenant_id", tenantId).order("date", { ascending: false }).limit(20),
-        supabase.from("lab_orders").select("order_id, tests, results, status, created_at, doctor_name").eq("patient_phone", phone).eq("tenant_id", tenantId).order("created_at", { ascending: false }).limit(20),
+        supabase.from("lab_orders").select("order_id, tests, results, status, created_at, doctor_name, patient_name").eq("patient_phone", phone).eq("tenant_id", tenantId).order("created_at", { ascending: false }).limit(20),
       ])
 
     setPatient(patientRes.data as Patient | null)
@@ -120,6 +122,41 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
   }, [phone, tenantId])
 
   useEffect(() => { fetchAll() }, [fetchAll])
+
+  // Derive unique person names from appointments for this phone
+  const personNames = useMemo(() => {
+    const names = new Map<string, { count: number; latestDate: string }>()
+    for (const appt of appointments) {
+      const name = appt.patient_name?.trim()
+      if (!name) continue
+      const existing = names.get(name)
+      if (!existing || (appt.date && appt.date > existing.latestDate)) {
+        names.set(name, { count: (existing?.count || 0) + 1, latestDate: appt.date || "" })
+      }
+    }
+    return Array.from(names.entries())
+      .sort((a, b) => b[1].latestDate.localeCompare(a[1].latestDate))
+      .map(([name, info]) => ({ name, count: info.count }))
+  }, [appointments])
+
+  // Auto-select the first person if multiple exist and none selected
+  useEffect(() => {
+    if (personNames.length > 1 && !selectedPerson) {
+      setSelectedPerson(personNames[0].name)
+    }
+  }, [personNames, selectedPerson])
+
+  // Filter records by selected person when multiple people share this phone
+  const hasMultiplePeople = personNames.length > 1
+  const filteredPrescriptions = hasMultiplePeople && selectedPerson
+    ? prescriptions.filter((rx) => rx.patient_name === selectedPerson)
+    : prescriptions
+  const filteredLabOrders = hasMultiplePeople && selectedPerson
+    ? labOrders.filter((lab) => lab.patient_name === selectedPerson)
+    : labOrders
+  const filteredAppointments = hasMultiplePeople && selectedPerson
+    ? appointments.filter((appt) => appt.patient_name === selectedPerson)
+    : appointments
 
   // ─── Add Vitals ─────────────────────────────────────────────────────────────
 
@@ -287,6 +324,27 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
         </div>
       )}
 
+      {/* Person Selector — when multiple people share the same phone */}
+      {hasMultiplePeople && (
+        <div className="flex items-center gap-2 p-2 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+          <Users className="w-4 h-4 text-blue-500 shrink-0" />
+          <span className="text-xs font-medium text-blue-700 dark:text-blue-300 mr-1">Viewing:</span>
+          {personNames.map((p) => (
+            <button
+              key={p.name}
+              onClick={() => setSelectedPerson(p.name)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                selectedPerson === p.name
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-slate-200 dark:border-slate-700"
+              }`}
+            >
+              {p.name} ({p.count})
+            </button>
+          ))}
+        </div>
+      )}
+
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="w-full grid grid-cols-8 mb-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -401,15 +459,15 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Pill className="w-4 h-4" /> Recent Prescriptions ({prescriptions.length})
+                <Pill className="w-4 h-4" /> Recent Prescriptions ({filteredPrescriptions.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {prescriptions.length === 0 ? (
+              {filteredPrescriptions.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">No prescriptions</p>
               ) : (
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {prescriptions.slice(0, 10).map((rx) => (
+                  {filteredPrescriptions.slice(0, 10).map((rx) => (
                     <div key={rx.prescription_id} className="py-2 px-3 rounded-lg bg-muted/30 space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">{rx.diagnosis || "No diagnosis"}</span>
@@ -516,9 +574,9 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
         {/* ─── Lab Results Tab ─────────────────────────────────────────── */}
         <TabsContent value="lab" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-sm font-semibold">Lab Orders ({labOrders.length})</h3>
+            <h3 className="text-sm font-semibold">Lab Orders ({filteredLabOrders.length})</h3>
           </div>
-          {labOrders.length === 0 ? (
+          {filteredLabOrders.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center">
                 <TestTube className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
@@ -527,7 +585,7 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
             </Card>
           ) : (
             <div className="space-y-3">
-              {labOrders.map((lab) => (
+              {filteredLabOrders.map((lab) => (
                 <Card key={lab.order_id}>
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
@@ -676,8 +734,8 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
 
         {/* ─── History Tab ────────────────────────────────────────────── */}
         <TabsContent value="history" className="space-y-4">
-          <h3 className="text-sm font-semibold">Appointment History ({appointments.length})</h3>
-          {appointments.map((appt) => (
+          <h3 className="text-sm font-semibold">Appointment History ({filteredAppointments.length})</h3>
+          {filteredAppointments.map((appt) => (
             <Card key={appt.booking_id}>
               <CardContent className="py-3 px-4">
                 <div className="flex items-center justify-between">
