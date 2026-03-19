@@ -62,6 +62,18 @@ describe('Environment Validation', () => {
     expect(() => validateEnv()).not.toThrow()
   })
 
+  it('should accept NEXTAUTH_SECRET as alternative to AUTH_SECRET', async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-key'
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-role-key'
+    delete process.env.AUTH_SECRET
+    process.env.NEXTAUTH_SECRET = 'test-secret'
+    process.env.SUPABASE_JWT_SECRET = 'test-jwt'
+
+    const { validateEnv } = await import('@/lib/env')
+    expect(() => validateEnv()).not.toThrow()
+  })
+
   it('should reject invalid SUPABASE_URL format', async () => {
     (process.env as Record<string, string>).NODE_ENV = 'production'
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'not-a-url'

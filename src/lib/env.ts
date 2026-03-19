@@ -11,8 +11,9 @@ const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1, "NEXT_PUBLIC_SUPABASE_ANON_KEY is required"),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, "SUPABASE_SERVICE_ROLE_KEY is required"),
 
-  // ─── Auth (required) ───
-  AUTH_SECRET: z.string().min(1, "AUTH_SECRET is required"),
+  // ─── Auth (required — accepts AUTH_SECRET or NEXTAUTH_SECRET) ───
+  AUTH_SECRET: z.string().min(1).optional(),
+  NEXTAUTH_SECRET: z.string().min(1).optional(),
   SUPABASE_JWT_SECRET: z.string().min(1, "SUPABASE_JWT_SECRET is required"),
 
   // ─── WhatsApp (optional but warn) ───
@@ -36,7 +37,10 @@ const envSchema = z.object({
   // ─── App ───
   NEXT_PUBLIC_APP_URL: z.string().optional(),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-})
+}).refine(
+  (data) => data.AUTH_SECRET || data.NEXTAUTH_SECRET,
+  { message: "AUTH_SECRET or NEXTAUTH_SECRET is required", path: ["AUTH_SECRET"] }
+)
 
 export type Env = z.infer<typeof envSchema>
 
