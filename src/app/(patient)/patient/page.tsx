@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { usePersonFilter, PersonSelectorBar } from "@/components/patient/person-filter"
 import type { SessionUser } from "@/types/auth"
 
 const statusColors: Record<string, string> = {
@@ -35,6 +36,7 @@ export default function PatientDashboard() {
   const { data: session } = useSession()
   const user = session?.user as SessionUser | undefined
   const phone = user?.patientPhone
+  const { filterByPerson } = usePersonFilter()
 
   const supabase = createBrowserClient()
 
@@ -50,7 +52,7 @@ export default function PatientDashboard() {
           .eq("patient_phone", phone!),
         supabase
           .from("appointments")
-          .select("booking_id, doctor_name, specialty, date, time, status, tenant_id")
+          .select("booking_id, doctor_name, specialty, date, time, status, tenant_id, patient_name")
           .eq("patient_phone", phone!)
           .gte("date", today)
           .in("status", ["confirmed"])
@@ -58,7 +60,7 @@ export default function PatientDashboard() {
           .limit(3),
         supabase
           .from("prescriptions")
-          .select("prescription_id, doctor_name, diagnosis, items, created_at, tenant_id")
+          .select("prescription_id, doctor_name, diagnosis, items, created_at, tenant_id, patient_name")
           .eq("patient_phone", phone!)
           .order("created_at", { ascending: false })
           .limit(3),
@@ -88,10 +90,10 @@ export default function PatientDashboard() {
 
       return {
         totalVisits: appts.count || 0,
-        upcomingAppointments: upcoming.data || [],
-        recentPrescriptions: rxRecent.data || [],
+        upcomingAppointments: filterByPerson(upcoming.data || []),
+        recentPrescriptions: filterByPerson(rxRecent.data || []),
         unpaidBills: invoicesUnpaid.count || 0,
-        upcomingCount: (upcoming.data || []).length,
+        upcomingCount: filterByPerson(upcoming.data || []).length,
         hospitalNames,
         hospitals: uniqueTenantIds,
       }
@@ -140,6 +142,7 @@ export default function PatientDashboard() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
+      <PersonSelectorBar />
       {/* Welcome Banner */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}

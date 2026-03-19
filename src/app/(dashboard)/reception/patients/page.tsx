@@ -328,7 +328,12 @@ export default function PatientsPage() {
       .order("date", { ascending: false })
       .limit(100)
 
-    setAllAppointments((data || []) as Appointment[])
+    // Filter by patient name to avoid mixing family members sharing the same phone
+    const all = (data || []) as Appointment[]
+    const filtered = patient.name
+      ? all.filter((a) => a.patient_name === patient.name)
+      : all
+    setAllAppointments(filtered.length > 0 ? filtered : all)
     setLoadingDetail(false)
   }, [tenantId])
 

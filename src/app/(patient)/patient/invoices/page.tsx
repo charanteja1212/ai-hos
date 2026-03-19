@@ -30,6 +30,7 @@ import { usePatientInvoices } from "@/hooks/use-patient-invoices"
 import { useTenant } from "@/hooks/use-tenant"
 import { PrintLayout } from "@/components/print/print-layout"
 import { InvoicePrint } from "@/components/print/invoice-print"
+import { usePersonFilter, PersonSelectorBar } from "@/components/patient/person-filter"
 import type { SessionUser } from "@/types/auth"
 import type { Invoice } from "@/types/database"
 
@@ -54,7 +55,9 @@ export default function PatientInvoicesPage() {
   const user = session?.user as SessionUser | undefined
   const phone = user?.patientPhone
 
-  const { invoices, hospitalNames, isLoading } = usePatientInvoices(phone)
+  const { invoices: rawInvoices, hospitalNames, isLoading } = usePatientInvoices(phone)
+  const { filterByPerson } = usePersonFilter()
+  const invoices = filterByPerson(rawInvoices as Record<string, unknown>[]) as typeof rawInvoices
   const [tab, setTab] = useState<Tab>("all")
   const [selected, setSelected] = useState<Invoice | null>(null)
 
@@ -103,6 +106,7 @@ export default function PatientInvoicesPage() {
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
+      <PersonSelectorBar />
       <div>
         <h1 className="text-lg font-bold">Bills & Invoices</h1>
         <p className="text-sm text-muted-foreground">

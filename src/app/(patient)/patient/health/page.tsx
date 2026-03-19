@@ -33,6 +33,7 @@ import {
   Droplets,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { usePersonFilter, PersonSelectorBar } from "@/components/patient/person-filter"
 import type { SessionUser } from "@/types/auth"
 
 interface Condition { condition_name: string; severity?: string }
@@ -44,6 +45,7 @@ export default function HealthPage() {
   const { data: session } = useSession()
   const user = session?.user as SessionUser | undefined
   const phone = user?.patientPhone
+  const { filterByPerson } = usePersonFilter()
   const supabase = createBrowserClient()
 
   const { data, isLoading } = useSWR(
@@ -52,14 +54,14 @@ export default function HealthPage() {
       const [appts, rxs, vitals, labs, conditions, allergies] = await Promise.all([
         supabase
           .from("appointments")
-          .select("booking_id,doctor_name,specialty,date,time,status,tenant_id")
+          .select("booking_id,doctor_name,specialty,date,time,status,tenant_id,patient_name")
           .eq("patient_phone", phone!)
           .eq("status", "completed")
           .order("date", { ascending: false })
           .limit(50),
         supabase
           .from("prescriptions")
-          .select("prescription_id,doctor_name,diagnosis,items,follow_up_date,created_at")
+          .select("prescription_id,doctor_name,diagnosis,items,follow_up_date,created_at,patient_name")
           .eq("patient_phone", phone!)
           .order("created_at", { ascending: false })
           .limit(50),
@@ -71,7 +73,7 @@ export default function HealthPage() {
           .limit(100),
         supabase
           .from("lab_orders")
-          .select("id,test_name,status,results,created_at,doctor_name")
+          .select("id,test_name,status,results,created_at,doctor_name,patient_name")
           .eq("patient_phone", phone!)
           .order("created_at", { ascending: false })
           .limit(30),
@@ -86,10 +88,10 @@ export default function HealthPage() {
       ])
 
       return {
-        appointments: appts.data || [],
-        prescriptions: rxs.data || [],
+        appointments: filterByPerson(appts.data || []),
+        prescriptions: filterByPerson(rxs.data || []),
         vitals: vitals.data || [],
-        labOrders: labs.data || [],
+        labOrders: filterByPerson(labs.data || []),
         conditions: conditions.data || [],
         allergies: allergies.data || [],
       }
@@ -227,6 +229,7 @@ export default function HealthPage() {
 
   return (
     <div className="space-y-6">
+      <PersonSelectorBar />
       <SectionHeader
         variant="glass"
         icon={<Heart className="w-6 h-6" />}

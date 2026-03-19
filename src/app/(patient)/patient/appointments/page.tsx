@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { usePatientAppointments } from "@/hooks/use-patient-appointments"
 import Link from "next/link"
+import { usePersonFilter, PersonSelectorBar } from "@/components/patient/person-filter"
 import type { SessionUser } from "@/types/auth"
 
 const statusColors: Record<string, string> = {
@@ -48,7 +49,9 @@ export default function PatientAppointmentsPage() {
   const user = session?.user as SessionUser | undefined
   const phone = user?.patientPhone
 
-  const { appointments, hospitalNames, isLoading, mutate } = usePatientAppointments(phone)
+  const { appointments: rawAppointments, hospitalNames, isLoading, mutate } = usePatientAppointments(phone)
+  const { filterByPerson } = usePersonFilter()
+  const appointments = filterByPerson(rawAppointments as Record<string, unknown>[]) as typeof rawAppointments
   const [tab, setTab] = useState<Tab>("all")
   const [search, setSearch] = useState("")
   const [cancelTarget, setCancelTarget] = useState<{ booking_id: string; doctor_name: string; date: string; time: string; tenant_id: string } | null>(null)
@@ -126,6 +129,7 @@ export default function PatientAppointmentsPage() {
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
+      <PersonSelectorBar />
       <div>
         <h1 className="text-lg font-bold">Appointments</h1>
         <p className="text-sm text-muted-foreground">{appointments.length} total appointments</p>

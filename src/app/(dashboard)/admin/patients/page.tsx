@@ -70,6 +70,7 @@ export default function PatientsPage() {
   const [patientPrescriptions, setPatientPrescriptions] = useState<Prescription[]>([])
   const [patientLabOrders, setPatientLabOrders] = useState<LabOrder[]>([])
   const [detailLoading, setDetailLoading] = useState(false)
+  const [detailPerson, setDetailPerson] = useState<string>("all")
 
   // Edit form
   const [editName, setEditName] = useState("")
@@ -133,9 +134,43 @@ export default function PatientsPage() {
 
   const stats = { total: totalCount, withAllergies: statCounts.withAllergies, withChronic: statCounts.withChronic }
 
+  // Person-awareness: derive unique person names from detail data
+  const detailPersonNames = useMemo(() => {
+    const names = new Map<string, number>()
+    for (const a of patientAppointments) {
+      if (a.patient_name) names.set(a.patient_name, (names.get(a.patient_name) || 0) + 1)
+    }
+    for (const rx of patientPrescriptions) {
+      if (rx.patient_name && !names.has(rx.patient_name)) names.set(rx.patient_name, 0)
+    }
+    for (const lab of patientLabOrders) {
+      const labName = (lab as unknown as { patient_name?: string }).patient_name
+      if (labName && !names.has(labName)) names.set(labName, 0)
+    }
+    return Array.from(names.entries()).map(([name, count]) => ({ name, count }))
+  }, [patientAppointments, patientPrescriptions, patientLabOrders])
+
+  const hasMultipleDetailPeople = detailPersonNames.length > 1
+
+  const filteredDetailAppointments = useMemo(() => {
+    if (detailPerson === "all" || !hasMultipleDetailPeople) return patientAppointments
+    return patientAppointments.filter((a) => a.patient_name === detailPerson)
+  }, [patientAppointments, detailPerson, hasMultipleDetailPeople])
+
+  const filteredDetailPrescriptions = useMemo(() => {
+    if (detailPerson === "all" || !hasMultipleDetailPeople) return patientPrescriptions
+    return patientPrescriptions.filter((rx) => rx.patient_name === detailPerson)
+  }, [patientPrescriptions, detailPerson, hasMultipleDetailPeople])
+
+  const filteredDetailLabOrders = useMemo(() => {
+    if (detailPerson === "all" || !hasMultipleDetailPeople) return patientLabOrders
+    return patientLabOrders.filter((lab) => (lab as unknown as { patient_name?: string }).patient_name === detailPerson)
+  }, [patientLabOrders, detailPerson, hasMultipleDetailPeople])
+
   const openPatientDetail = useCallback(async (patient: Patient) => {
     setSelectedPatient(patient)
     setEditMode(false)
+    setDetailPerson("all")
     setDetailLoading(true)
 
     // Populate edit fields
@@ -469,6 +504,37 @@ export default function PatientsPage() {
                   )}
                 </div>
 
+                {/* Person selector for shared-phone families */}
+                {hasMultipleDetailPeople && !detailLoading && (
+                  <div className="flex items-center gap-2 p-2 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                    <Users className="w-4 h-4 text-blue-500 shrink-0" />
+                    <span className="text-xs font-medium text-blue-700 dark:text-blue-300 mr-1">Person:</span>
+                    <button
+                      onClick={() => setDetailPerson("all")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        detailPerson === "all"
+                          ? "bg-blue-600 text-white shadow-sm"
+                          : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-slate-200 dark:border-slate-700"
+                      }`}
+                    >
+                      All
+                    </button>
+                    {detailPersonNames.map((p) => (
+                      <button
+                        key={p.name}
+                        onClick={() => setDetailPerson(p.name)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          detailPerson === p.name
+                            ? "bg-blue-600 text-white shadow-sm"
+                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-slate-200 dark:border-slate-700"
+                        }`}
+                      >
+                        {p.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {detailLoading ? (
                   <div className="space-y-3">
                     {Array.from({ length: 4 }).map((_, i) => (
@@ -482,15 +548,15 @@ export default function PatientsPage() {
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                           <div className="w-6 h-6 rounded-md gradient-blue flex items-center justify-center text-white"><Calendar className="w-3 h-3" /></div>
-                          Appointments ({patientAppointments.length})
+                          Appointments ({filteredDetailAppointments.length})
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        {patientAppointments.length === 0 ? (
+                        {filteredDetailAppointments.length === 0 ? (
                           <p className="text-xs text-muted-foreground">No appointments</p>
                         ) : (
                           <div className="space-y-2 max-h-40 overflow-y-auto">
-                            {patientAppointments.map((a) => (
+                            {filteredDetailAppointments.map((a) => (
                               <div key={a.booking_id} className="flex items-center justify-between py-1.5 border-b border-border last:border-0">
                                 <div className="flex items-center gap-2 text-xs">
                                   <Stethoscope className="w-3 h-3 text-muted-foreground" />
@@ -512,15 +578,15 @@ export default function PatientsPage() {
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                           <div className="w-6 h-6 rounded-md gradient-purple flex items-center justify-center text-white"><FileText className="w-3 h-3" /></div>
-                          Prescriptions ({patientPrescriptions.length})
+                          Prescriptions ({filteredDetailPrescriptions.length})
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        {patientPrescriptions.length === 0 ? (
+                        {filteredDetailPrescriptions.length === 0 ? (
                           <p className="text-xs text-muted-foreground">No prescriptions</p>
                         ) : (
                           <div className="space-y-2 max-h-40 overflow-y-auto">
-                            {patientPrescriptions.map((rx) => (
+                            {filteredDetailPrescriptions.map((rx) => (
                               <div key={rx.prescription_id} className="py-1.5 border-b border-border last:border-0">
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2 text-xs">
@@ -549,15 +615,15 @@ export default function PatientsPage() {
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                           <div className="w-6 h-6 rounded-md gradient-teal flex items-center justify-center text-white"><TestTube className="w-3 h-3" /></div>
-                          Lab Orders ({patientLabOrders.length})
+                          Lab Orders ({filteredDetailLabOrders.length})
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        {patientLabOrders.length === 0 ? (
+                        {filteredDetailLabOrders.length === 0 ? (
                           <p className="text-xs text-muted-foreground">No lab orders</p>
                         ) : (
                           <div className="space-y-2 max-h-40 overflow-y-auto">
-                            {patientLabOrders.map((lab) => (
+                            {filteredDetailLabOrders.map((lab) => (
                               <div key={lab.order_id} className="flex items-center justify-between py-1.5 border-b border-border last:border-0">
                                 <div className="flex flex-wrap gap-1">
                                   {lab.tests?.map((t, i) => (

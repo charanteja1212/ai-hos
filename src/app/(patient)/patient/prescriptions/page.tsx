@@ -28,6 +28,7 @@ import { usePatientPrescriptions } from "@/hooks/use-patient-prescriptions"
 import { useTenant } from "@/hooks/use-tenant"
 import { PrintLayout } from "@/components/print/print-layout"
 import { PrescriptionPrint } from "@/components/print/prescription-print"
+import { usePersonFilter, PersonSelectorBar } from "@/components/patient/person-filter"
 import type { SessionUser } from "@/types/auth"
 import type { Prescription, PrescriptionItem } from "@/types/database"
 
@@ -36,7 +37,9 @@ export default function PatientPrescriptionsPage() {
   const user = session?.user as SessionUser | undefined
   const phone = user?.patientPhone
 
-  const { prescriptions, hospitalNames, isLoading } = usePatientPrescriptions(phone)
+  const { prescriptions: rawPrescriptions, hospitalNames, isLoading } = usePatientPrescriptions(phone)
+  const { filterByPerson } = usePersonFilter()
+  const prescriptions = filterByPerson(rawPrescriptions as Record<string, unknown>[]) as typeof rawPrescriptions
   const [search, setSearch] = useState("")
   const [selected, setSelected] = useState<Prescription | null>(null)
 
@@ -83,6 +86,7 @@ export default function PatientPrescriptionsPage() {
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
+      <PersonSelectorBar />
       <div>
         <h1 className="text-lg font-bold">Prescriptions</h1>
         <p className="text-sm text-muted-foreground">{prescriptions.length} prescriptions</p>
