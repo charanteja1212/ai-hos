@@ -208,7 +208,7 @@ function AbdmSettingsContent() {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
           <Card className="card-hover">
             <CardContent className="p-4 text-center">
-              <ShieldCheck className="w-5 h-5 text-blue-500 mx-auto mb-1" />
+              <ShieldCheck className="w-5 h-5 text-cyan-600 mx-auto mb-1" />
               <p className="text-2xl font-bold">{stats.totalConsents}</p>
               <p className="text-[10px] text-muted-foreground">Consents</p>
             </CardContent>

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { createServerClient } from "@/lib/supabase/server"
+import { createRouteLogger } from "@/lib/logger"
+
+const log = createRouteLogger("/api/push/subscribe")
 
 export async function POST(req: Request) {
   const session = await auth()
@@ -36,7 +39,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true })
   } catch (err) {
-    console.error("[push/subscribe] Error:", err)
+    log.error({ err }, "Push subscribe error")
     return NextResponse.json({ error: "Failed to save subscription" }, { status: 500 })
   }
 }

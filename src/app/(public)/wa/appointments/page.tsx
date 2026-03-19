@@ -217,7 +217,7 @@ export default function AppointmentsPage() {
   if (authLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-24">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
         <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">Loading your appointments...</p>
       </div>
     );
@@ -259,7 +259,7 @@ export default function AppointmentsPage() {
         {/* Loading */}
         {rescheduleLoading && rescheduleStep !== "confirming" && (
           <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="w-7 h-7 animate-spin text-blue-500" />
+            <Loader2 className="w-7 h-7 animate-spin text-cyan-600" />
             <p className="mt-3 text-sm text-slate-400">Loading available slots...</p>
           </div>
         )}
@@ -281,7 +281,7 @@ export default function AppointmentsPage() {
                 href={rescheduleResult.payment_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl transition-colors"
+                className="block w-full text-center bg-cyan-700 hover:bg-cyan-800 text-white font-medium py-3 px-4 rounded-xl transition-colors"
               >
                 Pay Consultation Fee
               </a>
@@ -300,10 +300,10 @@ export default function AppointmentsPage() {
               <button
                 key={d.date_key}
                 onClick={() => { setSelectedDate(d.date); setRescheduleStep("slots"); }}
-                className="w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 flex items-center justify-between hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+                className="w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 flex items-center justify-between hover:border-cyan-300 dark:hover:border-cyan-800 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <CalendarDays className="w-5 h-5 text-blue-500" />
+                  <CalendarDays className="w-5 h-5 text-cyan-600" />
                   <div className="text-left">
                     <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{d.date}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">{d.available_count} slots available</p>
@@ -320,7 +320,7 @@ export default function AppointmentsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between px-1">
               <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{selectedDate}</p>
-              <button onClick={() => { setRescheduleStep("dates"); setSelectedDate(null); setSelectedSlot(null); }} className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+              <button onClick={() => { setRescheduleStep("dates"); setSelectedDate(null); setSelectedSlot(null); }} className="text-xs text-cyan-700 dark:text-cyan-400 font-medium">
                 Change date
               </button>
             </div>
@@ -339,7 +339,7 @@ export default function AppointmentsPage() {
               <Button
                 onClick={handleReschedule}
                 disabled={rescheduleLoading}
-                className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                className="w-full h-11 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white font-medium"
               >
                 {rescheduleLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -355,7 +355,7 @@ export default function AppointmentsPage() {
         {/* Confirming state */}
         {rescheduleStep === "confirming" && (
           <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="w-7 h-7 animate-spin text-blue-500" />
+            <Loader2 className="w-7 h-7 animate-spin text-cyan-600" />
             <p className="mt-3 text-sm text-slate-400">Rescheduling your appointment...</p>
           </div>
         )}
@@ -382,8 +382,8 @@ export default function AppointmentsPage() {
       {/* Header */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center shrink-0">
-            <CalendarDays className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <div className="w-10 h-10 rounded-lg bg-cyan-50 dark:bg-cyan-950 flex items-center justify-center shrink-0">
+            <CalendarDays className="w-5 h-5 text-cyan-700 dark:text-cyan-400" />
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h1>
@@ -415,7 +415,7 @@ export default function AppointmentsPage() {
       {/* Loading State */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16">
-          <Loader2 className="w-7 h-7 animate-spin text-blue-500" />
+          <Loader2 className="w-7 h-7 animate-spin text-cyan-600" />
           <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">Fetching appointments...</p>
         </div>
       ) : activeAppointments.length === 0 && completedAppointments.length === 0 && cancelledAppointments.length === 0 ? (
@@ -494,7 +494,7 @@ export default function AppointmentsPage() {
                     {relDate ? (
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         relDate === "Today"
-                          ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400"
+                          ? "bg-cyan-50 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-400"
                           : relDate === "Tomorrow"
                           ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400"
                           : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
@@ -555,7 +555,7 @@ export default function AppointmentsPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => startReschedule(appt)}
-                          className="flex-1 h-10 rounded-lg text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/20 font-medium"
+                          className="flex-1 h-10 rounded-lg text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-800 hover:bg-cyan-50 dark:hover:bg-cyan-950/20 font-medium"
                         >
                           <RefreshCw className="w-4 h-4 mr-2" />
                           Reschedule
@@ -677,7 +677,7 @@ export default function AppointmentsPage() {
                 </div>
                 <Button
                   onClick={() => startReschedule(appt)}
-                  className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                  className="w-full h-11 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white font-medium"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Reschedule Appointment
@@ -735,8 +735,8 @@ function SlotGroup({ icon, label, slots, selected, onSelect }: {
             onClick={() => onSelect(slot)}
             className={`py-2.5 px-2 rounded-lg text-sm font-medium border transition-colors ${
               selected?.iso === slot.iso
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600"
+                ? "bg-cyan-700 text-white border-cyan-700"
+                : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-cyan-300 dark:hover:border-cyan-700"
             }`}
           >
             {slot.time}

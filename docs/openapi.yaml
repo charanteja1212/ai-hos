@@ -1,0 +1,357 @@
+openapi: 3.1.0
+info:
+  title: AI-HOS Hospital Operating System API
+  description: |
+    REST API for AI-HOS — a multi-tenant, AI-powered Hospital Operating System.
+
+    ## Authentication
+    All protected endpoints require a valid session cookie from NextAuth.
+    The session includes `tenantId`, `role`, and user identity claims.
+
+    ## Multi-Tenancy
+    All data is scoped by `tenant_id`. The tenant is injected from the
+    authenticated session — clients cannot specify a different tenant
+    (except SUPER_ADMIN who can switch branches).
+
+    ## Rate Limiting
+    - OTP endpoints: 3 per phone per 15 minutes, 10 per IP per 15 minutes
+    - WhatsApp webhook: 30 messages per user per 5 minutes
+    - Login attempts: 5 per 15 minutes
+  version: 1.0.0
+  contact:
+    name: AI-HOS Support
+
+servers:
+  - url: /api
+    description: API routes
+
+tags:
+  - name: Booking
+    description: Appointment booking operations
+  - name: Patient Auth
+    description: Patient OTP authentication
+  - name: WhatsApp
+    description: WhatsApp bot API
+  - name: Payment
+    description: Razorpay payment integration
+  - name: Admin
+    description: Administrative operations
+  - name: Doctor
+    description: Doctor-specific operations
+  - name: Health
+    description: System health checks
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Liveness check
+      security: []
+      responses:
+        '200':
+          description: Service is running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: "ok" }
+
+  /booking:
+    post:
+      tags: [Booking]
+      summary: Booking operations (staff)
+      description: |
+        Dispatch to booking sub-actions. Requires RECEPTION, DOCTOR, or ADMIN role.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/ListSpecialties'
+                - $ref: '#/components/schemas/CheckAvailability'
+                - $ref: '#/components/schemas/BookAppointment'
+                - $ref: '#/components/schemas/CancelAppointment'
+                - $ref: '#/components/schemas/PatientLookup'
+                - $ref: '#/components/schemas/SavePatient'
+              discriminator:
+                propertyName: action
+      responses:
+        '200':
+          description: Action completed successfully
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /patient-booking:
+    post:
+      tags: [Booking]
+      summary: Patient self-booking
+      description: Same as /booking but restricted to PATIENT role. Injects patient's own phone/name.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/ListSpecialties'
+                - $ref: '#/components/schemas/CheckAvailability'
+                - $ref: '#/components/schemas/BookAppointment'
+      responses:
+        '200':
+          description: Action completed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /patient-appointment:
+    post:
+      tags: [Booking]
+      summary: Patient appointment management
+      description: Cancel own appointments. Requires PATIENT role.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action, booking_id]
+              properties:
+                action: { type: string, enum: [cancel] }
+                booking_id: { type: string }
+      responses:
+        '200':
+          description: Appointment cancelled
+
+  /patient-auth/send-otp:
+    post:
+      tags: [Patient Auth]
+      summary: Send OTP to patient phone
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone: { type: string, example: "9876543210" }
+      responses:
+        '200':
+          description: OTP sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  name: { type: string, description: "Patient first name" }
+        '404':
+          description: Patient not found
+        '429':
+          description: Rate limited
+
+  /wa:
+    post:
+      tags: [WhatsApp]
+      summary: WhatsApp web portal API
+      description: Token-authenticated API for WhatsApp web pages. JWT token from /whatsapp/token.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, action]
+              properties:
+                token: { type: string, description: "JWT token from WhatsApp link" }
+                action:
+                  type: string
+                  enum:
+                    - lookup_patient
+                    - save_patient
+                    - list_specialties
+                    - check_availability
+                    - book_appointment
+                    - list_appointments
+                    - cancel_appointment
+                    - reschedule_appointment
+                    - list_prescriptions
+      responses:
+        '200':
+          description: Action result
+        '401':
+          description: Invalid or expired token
+
+  /whatsapp/webhook:
+    get:
+      tags: [WhatsApp]
+      summary: Meta webhook verification
+      security: []
+      parameters:
+        - name: hub.mode
+          in: query
+          schema: { type: string }
+        - name: hub.verify_token
+          in: query
+          schema: { type: string }
+        - name: hub.challenge
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Challenge response
+        '403':
+          description: Verification failed
+    post:
+      tags: [WhatsApp]
+      summary: Receive WhatsApp messages
+      security: []
+      description: |
+        Receives messages from Meta WhatsApp Cloud API.
+        Always returns 200 to prevent Meta retry storms.
+      responses:
+        '200':
+          description: Always returns ok
+
+  /payment/create-order:
+    post:
+      tags: [Payment]
+      summary: Create Razorpay payment order
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [booking_id, amount, patient_name, patient_phone]
+              properties:
+                booking_id: { type: string }
+                amount: { type: number, minimum: 1 }
+                patient_name: { type: string }
+                patient_phone: { type: string }
+      responses:
+        '200':
+          description: Razorpay order created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order_id: { type: string }
+                  amount: { type: number }
+                  currency: { type: string, example: "INR" }
+
+  /payment/webhook:
+    post:
+      tags: [Payment]
+      summary: Razorpay payment webhook
+      security: []
+      description: Receives payment confirmation from Razorpay. Validates signature.
+      responses:
+        '200':
+          description: Webhook processed
+
+  /doctor/leave:
+    post:
+      tags: [Doctor]
+      summary: Manage doctor leave
+      description: Add/remove leave dates. Requires DOCTOR or ADMIN role.
+      responses:
+        '200':
+          description: Leave updated
+
+components:
+  schemas:
+    ListSpecialties:
+      type: object
+      required: [action]
+      properties:
+        action: { type: string, enum: [list-specialties] }
+
+    CheckAvailability:
+      type: object
+      required: [action, doctor_id]
+      properties:
+        action: { type: string, enum: [check-availability] }
+        doctor_id: { type: string }
+
+    BookAppointment:
+      type: object
+      required: [action, doctor_id, doctor_name, patient_name, patient_phone, date, time]
+      properties:
+        action: { type: string, enum: [book-appointment] }
+        doctor_id: { type: string }
+        doctor_name: { type: string }
+        patient_name: { type: string, minLength: 1, maxLength: 100 }
+        patient_phone: { type: string, pattern: '^\d{10,15}$' }
+        date: { type: string, pattern: '^\d{4}-\d{2}-\d{2}$', example: "2026-03-20" }
+        time: { type: string, pattern: '^([01]?\d|2[0-3]):[0-5]\d$', example: "09:30" }
+        specialty: { type: string }
+        patient_type: { type: string, enum: [SELF, DEPENDENT], default: SELF }
+        dependent_id: { type: string }
+
+    CancelAppointment:
+      type: object
+      required: [action, booking_id]
+      properties:
+        action: { type: string, enum: [cancel-appointment] }
+        booking_id: { type: string }
+
+    PatientLookup:
+      type: object
+      required: [action, phone]
+      properties:
+        action: { type: string, enum: [patient-lookup] }
+        phone: { type: string, pattern: '^\d{10,15}$' }
+
+    SavePatient:
+      type: object
+      required: [action, name, phone]
+      properties:
+        action: { type: string, enum: [save-patient] }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        phone: { type: string, pattern: '^\d{10,15}$' }
+        age: { type: integer, minimum: 0, maximum: 150 }
+        email: { type: string, format: email }
+        gender: { type: string, enum: [Male, Female, Other] }
+        address: { type: string, maxLength: 500 }
+
+  responses:
+    ValidationError:
+      description: Input validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string, example: "Validation failed" }
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    path: { type: array, items: { type: string } }
+                    message: { type: string }
+    Unauthorized:
+      description: Not authenticated
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string, example: "Unauthorized" }
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string, example: "Forbidden" }

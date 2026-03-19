@@ -6,6 +6,9 @@ import { runAgent } from "@/lib/whatsapp/agent"
 import { sendReply } from "@/lib/whatsapp/send-reply"
 import { isRateLimited } from "@/lib/rate-limit"
 import type { TenantConfig } from "@/lib/whatsapp/types"
+import { createRouteLogger, createTenantLogger } from "@/lib/logger"
+
+const log = createRouteLogger("whatsapp/webhook")
 
 const VERIFY_TOKEN = process.env.WA_VERIFY_TOKEN
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + "/rest/v1"
@@ -75,11 +78,11 @@ async function resolveTenant(receiverPhoneId: string): Promise<TenantConfig | nu
       }
     }
   } catch (e) {
-    console.error("[webhook] Tenant resolution error:", e)
+    log.error({ err: e, receiverPhoneId }, "Tenant resolution error")
   }
 
   // No auto-create — tenants must be configured via Super Admin > WhatsApp Routing
-  console.warn("[webhook] No tenant found for phone_number_id:", receiverPhoneId)
+  log.warn({ receiverPhoneId }, "No tenant found for phone_number_id")
   return null
 }
 
@@ -87,22 +90,22 @@ async function resolveTenant(receiverPhoneId: string): Promise<TenantConfig | nu
  * POST — Receive WhatsApp messages and process them through the bot
  */
 export async function POST(req: NextRequest) {
-  console.log("[webhook] POST received")
+  log.info("POST received")
   try {
     const body = await req.json()
-    console.log("[webhook] Body parsed, object:", body?.object)
+    log.info({ object: body?.object }, "Body parsed")
 
     // Ignore status updates (delivery receipts, read receipts)
     if (isStatusUpdate(body)) {
-      console.log("[webhook] Status update, ignoring")
+      log.info("Status update, ignoring")
       return NextResponse.json({ status: "ok" })
     }
 
     // Step 1: Parse the message
     const parsed = parseWebhookPayload(body)
-    console.log("[webhook] Parsed:", parsed?.senderPhone, parsed?.messageBody, parsed?.messageType)
+    log.info({ phone: parsed?.senderPhone, body: parsed?.messageBody, type: parsed?.messageType }, "Parsed message")
     if (!parsed || !parsed.messageBody) {
-      console.log("[webhook] No parseable message, skipping")
+      log.info("No parseable message, skipping")
       return NextResponse.json({ status: "ok" })
     }
 
@@ -137,17 +140,18 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanPhone = (parsed.senderPhone || "").replace(/\D/g, "")
+    const tlog = createTenantLogger(tenantId, { route: "whatsapp/webhook", phone: cleanPhone })
 
     // Step 4: Load session
-    console.log("[webhook] Loading session for:", cleanPhone, "tenant:", tenantId)
+    tlog.info("Loading session")
     const session = await loadSession(cleanPhone, tenantId, parsed.messageId)
-    console.log("[webhook] Session loaded, state:", session.state, "lang:", session.language, "dup:", session.isDuplicateMessage)
+    tlog.info({ state: session.state, lang: session.language, dup: session.isDuplicateMessage }, "Session loaded")
     if (session.isDuplicateMessage) {
       return NextResponse.json({ status: "duplicate" })
     }
 
     // Step 5: Run state machine
-    console.log("[webhook] Running agent, state:", session.state)
+    tlog.info({ state: session.state }, "Running agent")
     const result = await runAgent({
       senderPhone: parsed.senderPhone,
       messageBody: parsed.messageBody,
@@ -162,10 +166,10 @@ export async function POST(req: NextRequest) {
     })
 
     // Step 6: Send reply (skip if empty — live agent mode)
-    console.log("[webhook] Agent result, nextState:", result.nextState, "reply length:", result.reply?.length || 0)
+    tlog.info({ nextState: result.nextState, replyLength: result.reply?.length || 0 }, "Agent result")
     const waToken = tenantConfig.wa_token || WA_TOKEN_DEFAULT
     const waApiUrl = tenantConfig.wa_api_url || WA_API_URL_DEFAULT
-    console.log("[webhook] waApiUrl:", waApiUrl ? "set" : "EMPTY", "waToken:", waToken ? "set" : "EMPTY")
+    tlog.info({ waApiUrl: waApiUrl ? "set" : "EMPTY", waToken: waToken ? "set" : "EMPTY" }, "WA config")
 
     if (result.reply) {
       const sendResult = await sendReply({
@@ -182,7 +186,7 @@ export async function POST(req: NextRequest) {
       })
 
       if (!sendResult.success) {
-        console.error("[webhook] Send failed:", sendResult.error)
+        tlog.error({ err: sendResult.error }, "Send failed")
       }
     }
 
@@ -201,7 +205,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ status: "ok" })
   } catch (error) {
-    console.error("[webhook] Error:", error)
+    log.error({ err: error }, "Unhandled error")
     // Always return 200 to Meta to prevent aggressive retries
     return NextResponse.json({ status: "ok" })
   }

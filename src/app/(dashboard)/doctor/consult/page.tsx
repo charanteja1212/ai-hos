@@ -532,7 +532,7 @@ function ConsultPageContent() {
   const vitalsConfig = [
     { key: "bp" as const, label: "Blood Pressure", unit: "mmHg", placeholder: "120/80", icon: Heart, gradient: "from-rose-500 to-pink-600", bg: "bg-rose-50 dark:bg-rose-950/20" },
     { key: "pulse" as const, label: "Pulse Rate", unit: "bpm", placeholder: "72", icon: Activity, gradient: "from-orange-500 to-amber-600", bg: "bg-orange-50 dark:bg-orange-950/20" },
-    { key: "temp" as const, label: "Temperature", unit: "°F", placeholder: "98.6", icon: Thermometer, gradient: "from-blue-500 to-cyan-600", bg: "bg-blue-50 dark:bg-blue-950/20" },
+    { key: "temp" as const, label: "Temperature", unit: "°F", placeholder: "98.6", icon: Thermometer, gradient: "from-cyan-600 to-cyan-600", bg: "bg-cyan-50 dark:bg-cyan-950/20" },
     { key: "spo2" as const, label: "SpO2", unit: "%", placeholder: "98", icon: Wind, gradient: "from-emerald-500 to-green-600", bg: "bg-emerald-50 dark:bg-emerald-950/20" },
     { key: "weight" as const, label: "Weight", unit: "kg", placeholder: "70", icon: Weight, gradient: "from-violet-500 to-purple-600", bg: "bg-violet-50 dark:bg-violet-950/20" },
   ]
@@ -623,7 +623,7 @@ function ConsultPageContent() {
             }} className="text-white hover:bg-white/20 border border-white/20 hidden sm:flex">
               <Printer className="w-4 h-4 mr-2" /> Print
             </Button>
-            <Button size="sm" onClick={handleSave} disabled={saving} className="bg-white text-blue-600 hover:bg-white/90">
+            <Button size="sm" onClick={handleSave} disabled={saving} className="bg-white text-cyan-700 hover:bg-white/90">
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
               Save & Complete
             </Button>
@@ -742,7 +742,7 @@ function ConsultPageContent() {
               <Card className="card-hover">
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white">
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-600 to-indigo-600 flex items-center justify-center text-white">
                       <Calendar className="w-4 h-4" />
                     </div>
                     <Label className="font-medium">Follow-up after</Label>
@@ -1136,7 +1136,7 @@ function ConsultPageContent() {
         <div className="glass rounded-2xl border border-border/50 p-3 flex items-center justify-between gap-3 shadow-lg">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Timer className="w-3.5 h-3.5 text-blue-500" />
+              <Timer className="w-3.5 h-3.5 text-cyan-600" />
               <span>Session:</span>
               <ElapsedTimer startTime={consultStartRef.current} warningMinutes={15} dangerMinutes={30} />
             </div>

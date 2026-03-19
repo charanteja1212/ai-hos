@@ -18,13 +18,13 @@ interface StatCardProps {
 }
 
 const gradientStyles: Record<string, string> = {
-  "gradient-blue": "from-blue-500 to-blue-700",
+  "gradient-blue": "from-cyan-600 to-cyan-800",
   "gradient-green": "from-emerald-500 to-emerald-700",
   "gradient-orange": "from-amber-500 to-orange-600",
   "gradient-purple": "from-violet-500 to-purple-700",
   "gradient-red": "from-red-500 to-red-700",
   "gradient-teal": "from-cyan-500 to-teal-700",
-  "gradient-blue-premium": "from-blue-500 to-blue-700",
+  "gradient-blue-premium": "from-cyan-600 to-cyan-800",
   "gradient-green-premium": "from-emerald-500 to-emerald-700",
   "gradient-orange-premium": "from-amber-500 to-orange-600",
   "gradient-purple-premium": "from-violet-500 to-purple-700",

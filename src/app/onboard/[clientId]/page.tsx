@@ -68,9 +68,9 @@ const roles: RoleCard[] = [
     signInRole: "ADMIN",
     label: "Admin",
     icon: Shield,
-    color: "#2563EB",
+    color: "#0891B2",
     lightBg: "#EFF6FF",
-    gradient: "from-blue-500 to-blue-700",
+    gradient: "from-cyan-600 to-cyan-800",
     description: "Hospital settings & config",
   },
   {
@@ -297,7 +297,7 @@ export default function OnboardPage() {
 
   if (loadingClient) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">Loading...</p>
@@ -308,7 +308,7 @@ export default function OnboardPage() {
 
   if (clientNotFound) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
         <div className="text-center">
           <div className="w-16 h-16 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-4">
             <Activity className="w-8 h-8 text-red-500" />
@@ -330,9 +330,9 @@ export default function OnboardPage() {
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
+    <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-white to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
       {/* Left branded panel — desktop only */}
-      <div className="hidden lg:flex w-[420px] shrink-0 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-10 flex-col justify-between relative overflow-hidden">
+      <div className="hidden lg:flex w-[420px] shrink-0 bg-gradient-to-br from-cyan-700 via-cyan-800 to-indigo-800 text-white p-10 flex-col justify-between relative overflow-hidden">
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
         <div className="absolute -bottom-32 -left-16 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
 
@@ -349,7 +349,7 @@ export default function OnboardPage() {
           <h1 className="text-3xl font-black leading-tight mb-4">
             Staff Login
           </h1>
-          <p className="text-blue-100/80 leading-relaxed">
+          <p className="text-cyan-100/80 leading-relaxed">
             Select your role and sign in to access the hospital management system.
           </p>
         </div>
@@ -360,7 +360,7 @@ export default function OnboardPage() {
             { icon: Shield, text: "Secure role-based access" },
             { icon: Heart, text: "Patient-first workflows" },
           ].map((item) => (
-            <div key={item.text} className="flex items-center gap-3 text-blue-100/70 text-sm">
+            <div key={item.text} className="flex items-center gap-3 text-cyan-100/70 text-sm">
               <item.icon className="w-4 h-4" />
               <span>{item.text}</span>
             </div>
@@ -373,7 +373,7 @@ export default function OnboardPage() {
         <div className="w-full max-w-md">
           {/* Mobile header */}
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-600 to-indigo-600 flex items-center justify-center text-white">
               <Heart className="w-4 h-4" />
             </div>
             <span className="text-lg font-bold">
@@ -478,7 +478,7 @@ export default function OnboardPage() {
                         idx < branches.length - 1 ? "border-b border-border/30" : ""
                       }`}
                     >
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-600 to-cyan-800 flex items-center justify-center text-white font-bold text-sm shrink-0">
                         {branch.hospital_name
                           .split(" ")
                           .map((n) => n[0])

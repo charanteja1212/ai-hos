@@ -63,42 +63,43 @@
   --radius-4xl: calc(var(--radius) + 14px);
 }
 
-/* ===== LIGHT THEME — Clean hospital white ===== */
+/* ===== LIGHT THEME — AI-HOS Healthcare Teal ===== */
+/* Custom palette: Distinctive teal-cyan — NOT default Tailwind blue */
 :root {
   --background: #FFFFFF;
-  --foreground: #111827;
+  --foreground: #0F1729;
   --card: #FFFFFF;
-  --card-foreground: #111827;
+  --card-foreground: #0F1729;
   --popover: #FFFFFF;
-  --popover-foreground: #111827;
-  --primary: #2563EB;
+  --popover-foreground: #0F1729;
+  --primary: #0E7490;
   --primary-foreground: #FFFFFF;
-  --secondary: #F8FAFC;
-  --secondary-foreground: #334155;
-  --muted: #F1F5F9;
+  --secondary: #F0FDFA;
+  --secondary-foreground: #134E4A;
+  --muted: #F0F9FF;
   --muted-foreground: #64748B;
-  --accent: #EFF6FF;
-  --accent-foreground: #1E40AF;
+  --accent: #ECFEFF;
+  --accent-foreground: #155E75;
   --destructive: #DC2626;
   --destructive-foreground: #FFFFFF;
-  --border: #E5E7EB;
-  --input: #D1D5DB;
-  --ring: #2563EB;
-  --sidebar: #FAFBFC;
-  --sidebar-foreground: #111827;
-  --sidebar-primary: #2563EB;
+  --border: #E0F2FE;
+  --input: #CBD5E1;
+  --ring: #0E7490;
+  --sidebar: #F8FFFE;
+  --sidebar-foreground: #0F1729;
+  --sidebar-primary: #0E7490;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F1F5F9;
-  --sidebar-accent-foreground: #334155;
-  --sidebar-border: #E2E8F0;
-  --sidebar-ring: #2563EB;
+  --sidebar-accent: #ECFEFF;
+  --sidebar-accent-foreground: #134E4A;
+  --sidebar-border: #E0F2FE;
+  --sidebar-ring: #0E7490;
 
-  /* Chart colors — muted, professional */
-  --chart-1: #2563EB;
+  /* Chart colors — distinctive healthcare palette */
+  --chart-1: #0891B2;
   --chart-2: #059669;
   --chart-3: #D97706;
   --chart-4: #7C3AED;
-  --chart-5: #DC2626;
+  --chart-5: #E11D48;
 
   /* Healthcare semantic tokens */
   --success: #059669;
@@ -108,60 +109,67 @@
   --info: #0284C7;
   --info-foreground: #FFFFFF;
 
-  /* Shadows — subtle, professional */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px rgba(0, 0, 0, 0.03);
+  /* Brand gradients */
+  --gradient-primary: linear-gradient(135deg, #0891B2, #06B6D4);
+  --gradient-hero: linear-gradient(135deg, #0E7490 0%, #0891B2 50%, #22D3EE 100%);
+
+  /* Shadows — subtle with teal tint */
+  --shadow-xs: 0 1px 2px rgba(8, 145, 178, 0.04);
+  --shadow-sm: 0 1px 3px rgba(8, 145, 178, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(8, 145, 178, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(8, 145, 178, 0.08), 0 4px 6px rgba(0, 0, 0, 0.03);
 }
 
-/* ===== DARK THEME — Professional dark ===== */
+/* ===== DARK THEME — Healthcare dark with teal accents ===== */
 .dark {
-  --background: #0F172A;
-  --foreground: #F1F5F9;
-  --card: #1E293B;
-  --card-foreground: #F1F5F9;
-  --popover: #1E293B;
-  --popover-foreground: #F1F5F9;
-  --primary: #3B82F6;
-  --primary-foreground: #FFFFFF;
-  --secondary: #1E293B;
-  --secondary-foreground: #CBD5E1;
-  --muted: #334155;
+  --background: #0B1120;
+  --foreground: #F0F9FF;
+  --card: #162032;
+  --card-foreground: #F0F9FF;
+  --popover: #162032;
+  --popover-foreground: #F0F9FF;
+  --primary: #22D3EE;
+  --primary-foreground: #042F2E;
+  --secondary: #162032;
+  --secondary-foreground: #A5F3FC;
+  --muted: #1E3044;
   --muted-foreground: #94A3B8;
-  --accent: #1E3A5F;
-  --accent-foreground: #93C5FD;
+  --accent: #164E63;
+  --accent-foreground: #A5F3FC;
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
-  --border: #334155;
-  --input: #334155;
-  --ring: #3B82F6;
-  --sidebar: #1E293B;
-  --sidebar-foreground: #F1F5F9;
-  --sidebar-primary: #3B82F6;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #334155;
-  --sidebar-accent-foreground: #CBD5E1;
-  --sidebar-border: #334155;
-  --sidebar-ring: #3B82F6;
+  --border: #1E3044;
+  --input: #1E3044;
+  --ring: #22D3EE;
+  --sidebar: #0E1A2E;
+  --sidebar-foreground: #F0F9FF;
+  --sidebar-primary: #22D3EE;
+  --sidebar-primary-foreground: #042F2E;
+  --sidebar-accent: #1E3044;
+  --sidebar-accent-foreground: #A5F3FC;
+  --sidebar-border: #1E3044;
+  --sidebar-ring: #22D3EE;
 
-  --chart-1: #3B82F6;
-  --chart-2: #10B981;
-  --chart-3: #F59E0B;
-  --chart-4: #8B5CF6;
-  --chart-5: #EF4444;
+  --chart-1: #22D3EE;
+  --chart-2: #34D399;
+  --chart-3: #FBBF24;
+  --chart-4: #A78BFA;
+  --chart-5: #FB7185;
 
-  --success: #10B981;
+  --success: #34D399;
   --success-foreground: #FFFFFF;
-  --warning: #F59E0B;
-  --warning-foreground: #FFFFFF;
-  --info: #0EA5E9;
+  --warning: #FBBF24;
+  --warning-foreground: #0F1729;
+  --info: #38BDF8;
   --info-foreground: #FFFFFF;
 
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px rgba(0, 0, 0, 0.15);
+  --gradient-primary: linear-gradient(135deg, #06B6D4, #22D3EE);
+  --gradient-hero: linear-gradient(135deg, #164E63 0%, #0E7490 50%, #22D3EE 100%);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 /* ===== BASE STYLES ===== */
@@ -286,8 +294,8 @@ body {
 
 /* Pulse glow for active items */
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.2); }
-  50% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(8, 145, 178, 0.2); }
+  50% { box-shadow: 0 0 0 6px rgba(8, 145, 178, 0); }
 }
 
 .animate-pulse-glow {
@@ -296,7 +304,7 @@ body {
 
 /* Input focus */
 .input-focus-glow:focus-within {
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.12);
   border-color: var(--primary);
   transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
@@ -346,7 +354,7 @@ body {
 
 /* ===== STAT CARD ACCENT COLORS ===== */
 /* Used for left-border accent on clean white stat cards */
-.accent-blue { border-left: 3px solid #2563EB; }
+.accent-blue { border-left: 3px solid #0891B2; }
 .accent-green { border-left: 3px solid #059669; }
 .accent-orange { border-left: 3px solid #D97706; }
 .accent-purple { border-left: 3px solid #7C3AED; }
@@ -354,14 +362,14 @@ body {
 .accent-teal { border-left: 3px solid #0891B2; }
 
 /* Soft icon backgrounds */
-.icon-blue { background: #EFF6FF; color: #2563EB; }
+.icon-blue { background: #ECFEFF; color: #0891B2; }
 .icon-green { background: #ECFDF5; color: #059669; }
 .icon-orange { background: #FFFBEB; color: #D97706; }
 .icon-purple { background: #F5F3FF; color: #7C3AED; }
 .icon-red { background: #FEF2F2; color: #DC2626; }
 .icon-teal { background: #ECFEFF; color: #0891B2; }
 
-.dark .icon-blue { background: rgba(37, 99, 235, 0.15); color: #60A5FA; }
+.dark .icon-blue { background: rgba(8, 145, 178, 0.15); color: #22D3EE; }
 .dark .icon-green { background: rgba(5, 150, 105, 0.15); color: #34D399; }
 .dark .icon-orange { background: rgba(217, 119, 6, 0.15); color: #FBBF24; }
 .dark .icon-purple { background: rgba(124, 58, 237, 0.15); color: #A78BFA; }
@@ -372,7 +380,7 @@ body {
 .gradient-red { background: linear-gradient(135deg, #DC2626, #EF4444); }
 .gradient-orange { background: linear-gradient(135deg, #D97706, #F59E0B); }
 .gradient-green { background: linear-gradient(135deg, #059669, #10B981); }
-.gradient-blue { background: linear-gradient(135deg, #2563EB, #3B82F6); }
+.gradient-blue { background: linear-gradient(135deg, #0891B2, #06B6D4); }
 .gradient-purple { background: linear-gradient(135deg, #7C3AED, #8B5CF6); }
 .gradient-teal { background: linear-gradient(135deg, #0891B2, #06B6D4); }
 
@@ -495,7 +503,7 @@ body {
 }
 
 /* Premium gradient variants — kept for compat */
-.gradient-blue-premium { background: linear-gradient(135deg, #2563EB, #3B82F6); }
+.gradient-blue-premium { background: linear-gradient(135deg, #0891B2, #22D3EE); }
 .gradient-green-premium { background: linear-gradient(135deg, #059669, #10B981); }
 .gradient-orange-premium { background: linear-gradient(135deg, #D97706, #F59E0B); }
 .gradient-purple-premium { background: linear-gradient(135deg, #7C3AED, #8B5CF6); }

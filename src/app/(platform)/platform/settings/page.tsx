@@ -141,7 +141,7 @@ export default function PlatformSettingsPage() {
     {
       title: "General",
       icon: Globe,
-      color: "bg-blue-500/10 text-blue-600",
+      color: "bg-cyan-600/10 text-cyan-700",
       fields: (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>

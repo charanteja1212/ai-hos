@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils"
 import type { Document } from "@/types/database"
 
 const TYPE_BADGE: Record<string, string> = {
-  xray: "bg-blue-100 text-blue-700",
+  xray: "bg-cyan-100 text-cyan-800",
   lab_report: "bg-orange-100 text-orange-700",
   scan: "bg-purple-100 text-purple-700",
   prescription: "bg-teal-100 text-teal-700",

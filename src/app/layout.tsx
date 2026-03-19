@@ -53,6 +53,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${jakarta.variable} ${mono.variable} font-sans antialiased`}>
+        {/* Skip navigation link for keyboard/screen-reader users */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-white focus:text-cyan-700 focus:rounded-lg focus:shadow-lg focus:ring-2 focus:ring-cyan-600 focus:text-sm focus:font-semibold dark:focus:bg-gray-900 dark:focus:text-cyan-400"
+        >
+          Skip to main content
+        </a>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
@@ -61,7 +68,7 @@ export default function RootLayout({
         >
           <LanguageProvider>
             <TooltipProvider>
-              {children}
+              <main id="main-content">{children}</main>
             </TooltipProvider>
           </LanguageProvider>
           <Toaster richColors position="top-right" />

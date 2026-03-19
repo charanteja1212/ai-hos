@@ -35,27 +35,27 @@ export function humanizeStatus(status: string | null | undefined): string {
 
 export const statusColors: Record<string, string> = {
   confirmed: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
-  completed: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  completed: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300",
   cancelled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
   pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
   pending_payment: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
   no_show: "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300",
   waiting: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
-  active: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  active: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300",
   done: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
   dispensed: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
-  processing: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  processing: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300",
   ready: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
   collected: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
   preparing: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
-  ordered: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  ordered: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300",
   sample_collected: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
 }
 
 export const checkInColors: Record<string, string> = {
   pending: "bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-300",
   checked_in: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
-  in_consultation: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  in_consultation: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300",
   completed: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
   admitted: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
 }

@@ -54,8 +54,8 @@ const DEVICE_TYPES = [
   {
     name: "Blood Pressure Monitor",
     icon: Activity,
-    color: "text-blue-500",
-    bg: "bg-blue-50 dark:bg-blue-900/20",
+    color: "text-cyan-600",
+    bg: "bg-cyan-50 dark:bg-cyan-900/20",
     params: "Systolic, Diastolic",
   },
   {
@@ -117,7 +117,7 @@ function IoTGatewayContent() {
       {/* Stats Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total Devices", value: 0, icon: Cpu, color: "text-blue-500" },
+          { label: "Total Devices", value: 0, icon: Cpu, color: "text-cyan-600" },
           { label: "Online", value: 0, icon: Wifi, color: "text-emerald-500" },
           { label: "Offline", value: 0, icon: WifiOff, color: "text-red-500" },
           { label: "Alerts", value: 0, icon: AlertTriangle, color: "text-amber-500" },

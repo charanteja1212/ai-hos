@@ -18,7 +18,7 @@ export function SectionHeader({ title, subtitle, action, icon, badge, variant = 
       <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-card p-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {icon && (
-            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400">
+            <div className="w-10 h-10 rounded-xl bg-cyan-50 dark:bg-cyan-900/20 flex items-center justify-center shrink-0 text-cyan-700 dark:text-cyan-400">
               {icon}
             </div>
           )}
@@ -43,7 +43,7 @@ export function SectionHeader({ title, subtitle, action, icon, badge, variant = 
         {icon && (
           <div className={cn(
             "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-            "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+            "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400"
           )}>
             {icon}
           </div>

@@ -60,14 +60,14 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  queue_checkin: "text-blue-500",
+  queue_checkin: "text-cyan-600",
   pharmacy_ready: "text-green-500",
   pharmacy_dispensed: "text-teal-500",
   lab_completed: "text-purple-500",
   lab_collected: "text-orange-500",
   new_admission: "text-orange-500",
   patient_discharged: "text-green-500",
-  patient_transferred: "text-blue-500",
+  patient_transferred: "text-cyan-600",
   invoice_created: "text-amber-500",
   live_chat_request: "text-red-500",
   new_booking: "text-indigo-500",

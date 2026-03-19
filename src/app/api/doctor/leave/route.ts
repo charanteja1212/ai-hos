@@ -6,6 +6,9 @@ import { sendDoctorLeaveNotification, getTenantWhatsAppConfig, normalizePhone } 
 import { logAudit } from "@/lib/audit"
 import { cancelReminders } from "@/lib/queue/queues"
 import { generateWaToken } from "@/lib/whatsapp/wa-token"
+import { createRouteLogger } from "@/lib/logger"
+
+const log = createRouteLogger("/api/doctor/leave")
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,7 +60,7 @@ export async function POST(req: NextRequest) {
       .insert(overrideRecord)
 
     if (overrideError) {
-      console.error("[doctor/leave] Override insert error:", overrideError.message)
+      log.error({ err: overrideError }, "Override insert error")
       return NextResponse.json({ error: "Failed to save leave" }, { status: 500 })
     }
 
@@ -84,7 +87,7 @@ export async function POST(req: NextRequest) {
     const { data: affectedAppointments, error: fetchError } = await appointmentQuery
 
     if (fetchError) {
-      console.error("[doctor/leave] Fetch appointments error:", fetchError.message)
+      log.error({ err: fetchError }, "Fetch appointments error")
       // Override saved but couldn't fetch appointments
       return NextResponse.json({
         success: true,
@@ -114,7 +117,7 @@ export async function POST(req: NextRequest) {
       .eq("tenant_id", tenant_id)
 
     if (cancelError) {
-      console.error("[doctor/leave] Cancel error:", cancelError.message)
+      log.error({ err: cancelError }, "Cancel error")
     }
 
     const cancelledCount = cancelError ? 0 : bookingIds.length
@@ -164,7 +167,7 @@ export async function POST(req: NextRequest) {
         )
         return result.success
       } catch (err) {
-        console.error(`[doctor/leave] WhatsApp notify failed for ${appt.booking_id}:`, err)
+        log.error({ err, bookingId: appt.booking_id }, "WhatsApp notify failed")
         return false
       }
     })
@@ -188,7 +191,7 @@ export async function POST(req: NextRequest) {
       message: `Leave saved. ${cancelledCount} appointment(s) cancelled, ${notifiedCount} patient(s) notified via WhatsApp.`,
     })
   } catch (error) {
-    console.error("[doctor/leave] API error:", error)
+    log.error({ err: error }, "API error")
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

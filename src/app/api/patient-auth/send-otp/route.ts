@@ -4,6 +4,7 @@ import { randomInt } from "crypto"
 import { sendOTP } from "@/lib/whatsapp/sender"
 import { isRateLimited } from "@/lib/rate-limit"
 import { normalizePhone, phoneVariants } from "@/lib/utils/phone"
+import { sendOtpSchema } from "@/lib/validations/api-schemas"
 
 export async function POST(req: Request) {
   try {
@@ -18,8 +19,14 @@ export async function POST(req: Request) {
     }
 
     const { phone } = await req.json()
-    if (!phone) {
-      return NextResponse.json({ error: "Phone number is required" }, { status: 400 })
+
+    // Validate input with Zod
+    const validation = sendOtpSchema.safeParse({ phone })
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid phone number", details: validation.error.issues },
+        { status: 400 }
+      )
     }
 
     // Normalize phone to digits only

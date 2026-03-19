@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { createServerClient } from "@/lib/supabase/server"
+import { createRouteLogger } from "@/lib/logger"
+
+const log = createRouteLogger("/api/upload")
 
 const ALLOWED_BUCKETS = ["logos", "doctors", "documents"]
 
@@ -46,7 +49,7 @@ export async function POST(req: NextRequest) {
       .upload(path, file, { upsert: true, cacheControl: "3600" })
 
     if (uploadError) {
-      console.error("[upload] error:", uploadError.message)
+      log.error({ err: uploadError }, "Upload error")
       return NextResponse.json({ error: uploadError.message }, { status: 500 })
     }
 
@@ -54,7 +57,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: urlData.publicUrl })
   } catch (err) {
-    console.error("[upload]", err)
+    log.error({ err }, "Upload failed")
     return NextResponse.json({ error: "Upload failed" }, { status: 500 })
   }
 }

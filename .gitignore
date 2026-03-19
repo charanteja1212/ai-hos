@@ -40,3 +40,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Backups
+backups/
+*.sql.gz
+
+# Supabase temp
+supabase/.temp/
+
+# Test artifacts
+qa_test.js
+qa_test_b64.txt
+tests/e2e/screenshots/
+tests/e2e/test-results/

@@ -247,7 +247,7 @@ export default function HealthPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card className="glass-card">
           <CardContent className="p-4 text-center">
-            <Stethoscope className="w-5 h-5 mx-auto mb-1 text-blue-500" />
+            <Stethoscope className="w-5 h-5 mx-auto mb-1 text-cyan-600" />
             <p className="text-2xl font-bold">{data?.appointments.length || 0}</p>
             <p className="text-xs text-muted-foreground">Total Visits</p>
           </CardContent>
@@ -436,11 +436,11 @@ export default function HealthPage() {
                       <div key={i} className="flex gap-3 px-4 py-3">
                         <div className={cn(
                           "w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5",
-                          event.type === "appointment" && "bg-blue-100 dark:bg-blue-900/30",
+                          event.type === "appointment" && "bg-cyan-100 dark:bg-cyan-900/30",
                           event.type === "prescription" && "bg-green-100 dark:bg-green-900/30",
                           event.type === "lab" && "bg-purple-100 dark:bg-purple-900/30",
                         )}>
-                          {event.type === "appointment" && <Stethoscope className="w-4 h-4 text-blue-600" />}
+                          {event.type === "appointment" && <Stethoscope className="w-4 h-4 text-cyan-700" />}
                           {event.type === "prescription" && <Pill className="w-4 h-4 text-green-600" />}
                           {event.type === "lab" && <TestTube className="w-4 h-4 text-purple-600" />}
                         </div>

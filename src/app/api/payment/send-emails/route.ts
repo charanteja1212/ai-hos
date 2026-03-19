@@ -9,6 +9,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase/server"
 import nodemailer from "nodemailer"
+import { createRouteLogger } from "@/lib/logger"
+
+const log = createRouteLogger("/api/payment/send-emails")
 
 const SMTP_USER = process.env.SMTP_USER || ""
 const SMTP_PASS = process.env.SMTP_PASS || ""
@@ -137,7 +140,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, emails_sent: emailsSent, patient_email: email })
   } catch (err) {
-    console.error("[send-emails] Error:", err)
+    log.error({ err }, "Send emails error")
     return NextResponse.json({ success: false, error: String(err) }, { status: 500 })
   }
 }

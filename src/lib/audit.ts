@@ -1,4 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server"
+import { logger } from "@/lib/logger"
+
+const log = logger.child({ module: "audit" })
 
 interface AuditLogEntry {
   action: "create" | "update" | "delete" | "login" | "status_change"
@@ -27,6 +30,6 @@ export async function logAudit(entry: AuditLogEntry) {
     })
   } catch {
     // Never let audit logging break the main flow
-    console.error("[audit] Failed to log:", entry.action, entry.entityType, entry.entityId)
+    log.error({ action: entry.action, entityType: entry.entityType, entityId: entry.entityId }, "Failed to log audit event")
   }
 }

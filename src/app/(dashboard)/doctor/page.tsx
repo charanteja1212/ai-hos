@@ -236,8 +236,8 @@ export default function DoctorPage() {
           </h1>
           <p className="text-sm text-gray-400 mt-0.5 flex items-center gap-2">
             <span className="relative flex h-2 w-2">
-              <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", doctorStatus === "on_break" ? "bg-amber-400" : "bg-blue-400")} />
-              <span className={cn("relative inline-flex rounded-full h-2 w-2", doctorStatus === "on_break" ? "bg-amber-500" : "bg-blue-500")} />
+              <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", doctorStatus === "on_break" ? "bg-amber-400" : "bg-cyan-400")} />
+              <span className={cn("relative inline-flex rounded-full h-2 w-2", doctorStatus === "on_break" ? "bg-amber-500" : "bg-cyan-600")} />
             </span>
             {user?.specialty} &middot; {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}
           </p>
@@ -288,7 +288,7 @@ export default function DoctorPage() {
       {/* ══════ INLINE STATS BAR ══════ */}
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="flex items-center gap-3 flex-wrap">
         {[
-          { label: "Patients", val: myEntries.length, icon: Users, accent: "bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400" },
+          { label: "Patients", val: myEntries.length, icon: Users, accent: "bg-cyan-100 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-400" },
           { label: "Waiting", val: waiting.length, icon: Clock, accent: "bg-sky-100 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400" },
           { label: "Consult", val: inConsultation.length, icon: Stethoscope, accent: "bg-indigo-100 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400" },
           { label: "Done", val: completed.length, icon: CheckCircle2, accent: "bg-green-100 text-green-600 dark:bg-green-950/40 dark:text-green-400" },
@@ -315,7 +315,7 @@ export default function DoctorPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          className="relative bg-gradient-to-br from-blue-600 via-blue-600 to-indigo-600 rounded-2xl overflow-hidden shadow-lg shadow-blue-600/20"
+          className="relative bg-gradient-to-br from-cyan-700 via-cyan-700 to-indigo-600 rounded-2xl overflow-hidden shadow-lg shadow-cyan-700/20"
         >
           <div className="absolute -right-12 -top-12 w-40 h-40 rounded-full bg-white/[0.04]" />
           <div className="absolute right-10 bottom-0 w-20 h-20 rounded-full bg-white/[0.04]" />
@@ -352,7 +352,7 @@ export default function DoctorPage() {
             <Button
               size="lg"
               onClick={() => handleStartConsultation(nextPatient.queue_id, nextPatient.patient_phone || "")}
-              className="gap-2 text-sm px-6 bg-white text-blue-600 hover:bg-white/90 font-bold rounded-xl shadow-lg shrink-0"
+              className="gap-2 text-sm px-6 bg-white text-cyan-700 hover:bg-white/90 font-bold rounded-xl shadow-lg shrink-0"
             >
               <Play className="w-4 h-4" /> Start Consultation
             </Button>
@@ -372,7 +372,7 @@ export default function DoctorPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {patientHistory.map((visit) => (
               <div key={visit.prescription_id} className="rounded-xl bg-gray-50 dark:bg-gray-800/50 p-3 space-y-1.5">
-                <p className="text-[11px] font-bold text-blue-600">{formatDate(visit.date)}</p>
+                <p className="text-[11px] font-bold text-cyan-700">{formatDate(visit.date)}</p>
                 {visit.symptoms && (
                   <p className="text-[11px] text-gray-500"><span className="font-semibold text-gray-700 dark:text-gray-300">Symptoms:</span> {visit.symptoms.length > 60 ? visit.symptoms.slice(0, 60) + "..." : visit.symptoms}</p>
                 )}
@@ -498,21 +498,21 @@ export default function DoctorPage() {
                   transition={{ delay: i * 0.04 }}
                   className={cn(
                     "group relative bg-white dark:bg-gray-900 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer",
-                    "border border-transparent hover:border-blue-200 dark:hover:border-blue-800/40",
-                    i === 0 && "ring-2 ring-blue-500/20 border-blue-100 dark:border-blue-800/30",
+                    "border border-transparent hover:border-cyan-200 dark:hover:border-cyan-800/40",
+                    i === 0 && "ring-2 ring-cyan-600/20 border-cyan-100 dark:border-cyan-800/30",
                     entry.priority === 2 && "ring-2 ring-red-500/20 border-red-100 dark:border-red-800/30",
                     entry.priority === 1 && "ring-2 ring-amber-500/20 border-amber-100 dark:border-amber-800/30",
                   )}
                 >
-                  {i === 0 && <div className="absolute -top-px left-4 right-4 h-[2px] bg-gradient-to-r from-blue-500 to-indigo-500 rounded-b-full" />}
+                  {i === 0 && <div className="absolute -top-px left-4 right-4 h-[2px] bg-gradient-to-r from-cyan-600 to-indigo-500 rounded-b-full" />}
                   <div className="p-3.5">
                     <div className="flex items-start gap-3">
                       <div className={cn(
                         "w-11 h-11 rounded-xl flex items-center justify-center font-extrabold text-sm shrink-0",
                         entry.priority === 2 ? "bg-red-500 text-white shadow-sm shadow-red-500/20" :
                         entry.priority === 1 ? "bg-amber-500 text-white shadow-sm shadow-amber-500/20" :
-                        i === 0 ? "bg-blue-600 text-white shadow-sm shadow-blue-600/20" :
-                        "bg-blue-50 dark:bg-blue-950/30 text-blue-600"
+                        i === 0 ? "bg-cyan-700 text-white shadow-sm shadow-cyan-700/20" :
+                        "bg-cyan-50 dark:bg-cyan-950/30 text-cyan-700"
                       )}>
                         {entry.queue_number}
                       </div>
@@ -539,8 +539,8 @@ export default function DoctorPage() {
                         className={cn(
                           "h-7 px-3 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all",
                           i === 0
-                            ? "bg-blue-600 text-white shadow-sm shadow-blue-600/20 hover:bg-blue-700"
-                            : "bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-950/30 dark:hover:bg-blue-950/50"
+                            ? "bg-cyan-700 text-white shadow-sm shadow-cyan-700/20 hover:bg-cyan-800"
+                            : "bg-cyan-50 text-cyan-700 hover:bg-cyan-100 dark:bg-cyan-950/30 dark:hover:bg-cyan-950/50"
                         )}
                       >
                         <Play className="w-3 h-3" />
@@ -550,7 +550,7 @@ export default function DoctorPage() {
                   </div>
                   {i === 0 && (
                     <div className="absolute -top-2 right-3">
-                      <span className="text-[9px] font-bold bg-blue-600 text-white px-2 py-0.5 rounded-full shadow-sm flex items-center gap-0.5">
+                      <span className="text-[9px] font-bold bg-cyan-700 text-white px-2 py-0.5 rounded-full shadow-sm flex items-center gap-0.5">
                         <Sparkles className="w-2.5 h-2.5" /> NEXT
                       </span>
                     </div>
@@ -565,10 +565,10 @@ export default function DoctorPage() {
         <div className="flex flex-col bg-[#F7F8FA] dark:bg-gray-900/60 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800/60">
           <div className="flex items-center justify-between px-4 py-3 shrink-0">
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-blue-400" />
+              <div className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
               <span className="text-[13px] font-bold text-gray-700 dark:text-gray-200">Upcoming</span>
             </div>
-            <button onClick={() => router.push("/doctor/patients")} className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-0.5">
+            <button onClick={() => router.push("/doctor/patients")} className="text-[11px] font-bold text-cyan-700 hover:text-cyan-800 flex items-center gap-0.5">
               View All <ArrowRight className="w-3 h-3" />
             </button>
           </div>
@@ -576,7 +576,7 @@ export default function DoctorPage() {
             <div className="px-2.5 pt-2.5 pb-2.5 space-y-2.5">
               {upcoming.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/20 flex items-center justify-center mb-3">
+                  <div className="w-12 h-12 rounded-2xl bg-cyan-50 dark:bg-cyan-950/20 flex items-center justify-center mb-3">
                     <CalendarDays className="w-5 h-5 text-gray-400" />
                   </div>
                   <p className="text-xs font-medium text-gray-400">No upcoming appointments</p>
@@ -587,10 +587,10 @@ export default function DoctorPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04 }}
-                  className="bg-white dark:bg-gray-900 rounded-xl shadow-sm hover:shadow-md transition-all border border-transparent hover:border-blue-200 dark:hover:border-blue-800/40"
+                  className="bg-white dark:bg-gray-900 rounded-xl shadow-sm hover:shadow-md transition-all border border-transparent hover:border-cyan-200 dark:hover:border-cyan-800/40"
                 >
                   <div className="p-3.5 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center text-blue-600 font-bold text-sm shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-cyan-50 dark:bg-cyan-950/30 flex items-center justify-center text-cyan-700 font-bold text-sm shrink-0">
                       {getInitials(apt.patient_name)}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -604,7 +604,7 @@ export default function DoctorPage() {
                     <span className={cn(
                       "text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0",
                       apt.status === "confirmed"
-                        ? "bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400"
+                        ? "bg-cyan-50 text-cyan-700 dark:bg-cyan-950/30 dark:text-cyan-400"
                         : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
                     )}>
                       {humanizeStatus(apt.status)}

@@ -1,5 +1,6 @@
 "use client"
 
+import * as Sentry from "@sentry/nextjs"
 import { useEffect, useState } from "react"
 
 export default function GlobalError({
@@ -12,6 +13,9 @@ export default function GlobalError({
   const [isChunkError, setIsChunkError] = useState(false)
 
   useEffect(() => {
+    // Report to Sentry
+    Sentry.captureException(error)
+
     const msg = error.message || ""
     const chunk =
       msg.includes("Loading chunk") ||
@@ -63,7 +67,7 @@ export default function GlobalError({
                 borderRadius: "0.5rem",
                 border: "none",
                 cursor: "pointer",
-                background: "#2563EB",
+                background: "#0891B2",
                 color: "white",
                 fontSize: "0.875rem",
                 fontWeight: "500",

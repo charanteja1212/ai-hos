@@ -208,7 +208,7 @@ function RevenueLeaksContent() {
   )
 
   const cards = [
-    { label: "Unbilled Appointments", count: stats.apptCount, amount: stats.apptLoss, icon: Stethoscope, bg: "bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400" },
+    { label: "Unbilled Appointments", count: stats.apptCount, amount: stats.apptLoss, icon: Stethoscope, bg: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-400" },
     { label: "Unpaid Invoices", count: stats.invCount, amount: stats.invOut, icon: FileText, bg: "bg-amber-100 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400" },
     { label: "Unbilled Pharmacy", count: stats.pharmCount, amount: stats.pharmLoss, icon: Pill, bg: "bg-teal-100 text-teal-600 dark:bg-teal-900/20 dark:text-teal-400" },
     { label: "Unbilled Lab Orders", count: stats.labCount, amount: stats.labLoss, icon: TestTube, bg: "bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400" },

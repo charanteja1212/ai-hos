@@ -92,17 +92,17 @@ export function PersonSelectorBar() {
   if (!hasMultiplePeople) return null
 
   return (
-    <div className="flex items-center gap-2 p-2 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 mb-4">
-      <Users className="w-4 h-4 text-blue-500 shrink-0" />
-      <span className="text-xs font-medium text-blue-700 dark:text-blue-300 mr-1">Viewing records for:</span>
+    <div className="flex items-center gap-2 p-2 rounded-xl bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-800 mb-4">
+      <Users className="w-4 h-4 text-cyan-600 shrink-0" />
+      <span className="text-xs font-medium text-cyan-800 dark:text-cyan-300 mr-1">Viewing records for:</span>
       {personNames.map((p) => (
         <button
           key={p.name}
           onClick={() => setSelectedPerson(p.name)}
           className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
             selectedPerson === p.name
-              ? "bg-blue-600 text-white shadow-sm"
-              : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-slate-200 dark:border-slate-700"
+              ? "bg-cyan-700 text-white shadow-sm"
+              : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 border border-slate-200 dark:border-slate-700"
           }`}
         >
           {p.name} ({p.count})

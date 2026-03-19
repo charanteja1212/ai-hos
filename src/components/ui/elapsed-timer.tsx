@@ -31,7 +31,7 @@ export function ElapsedTimer({ startTime, warningMinutes = 15, dangerMinutes = 3
     <span
       className={cn(
         "text-xs font-mono",
-        minutes < warningMinutes && "text-blue-600 dark:text-blue-400",
+        minutes < warningMinutes && "text-cyan-600 dark:text-cyan-400",
         minutes >= warningMinutes && minutes < dangerMinutes && "text-amber-600 dark:text-amber-400",
         minutes >= dangerMinutes && "text-red-600 dark:text-red-400 animate-pulse-soft",
         className

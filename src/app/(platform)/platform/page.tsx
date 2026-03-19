@@ -44,7 +44,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 const PLAN_BADGE: Record<string, string> = {
   free: "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300",
-  starter: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  starter: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300",
   professional: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
   enterprise: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
   trial: "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300",
@@ -134,7 +134,7 @@ export default function PlatformDashboardPage() {
       {/* ══════ INLINE STATS BAR ══════ */}
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="flex items-center gap-3 flex-wrap">
         {[
-          { label: "Clients", val: clients.length, icon: Building2, accent: "bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400" },
+          { label: "Clients", val: clients.length, icon: Building2, accent: "bg-cyan-100 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-400" },
           { label: "Branches", val: branches.length, icon: GitBranch, accent: "bg-green-100 text-green-600 dark:bg-green-950/40 dark:text-green-400" },
           { label: "Doctors", val: doctorCount, icon: Stethoscope, accent: "bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400" },
           { label: "Patients", val: patientCount, icon: Users, accent: "bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400" },
@@ -158,7 +158,7 @@ export default function PlatformDashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {[
             { label: "System Health", icon: Activity, href: "/platform/health", color: "bg-green-500/10 text-green-600" },
-            { label: "Analytics", icon: BarChart3, href: "/platform/analytics", color: "bg-blue-500/10 text-blue-600" },
+            { label: "Analytics", icon: BarChart3, href: "/platform/analytics", color: "bg-cyan-600/10 text-cyan-700" },
             { label: "Audit Logs", icon: FileText, href: "/platform/logs", color: "bg-purple-500/10 text-purple-600" },
             { label: "Plans & Tiers", icon: Shield, href: "/platform/plans", color: "bg-amber-500/10 text-amber-600" },
             { label: "Settings", icon: Settings, href: "/platform/settings", color: "bg-gray-500/10 text-gray-600" },

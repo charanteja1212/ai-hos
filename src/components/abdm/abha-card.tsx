@@ -63,7 +63,7 @@ export function AbhaCard({ abhaNumber, abhaAddress, abhaStatus, patientName, com
                 <CheckCircle2 className="w-3 h-3" /> Verified
               </Badge>
             ) : status === "linked" ? (
-              <Badge className="bg-blue-100 text-blue-800 border-0 gap-1">
+              <Badge className="bg-cyan-100 text-cyan-800 border-0 gap-1">
                 <Link2 className="w-3 h-3" /> Linked
               </Badge>
             ) : (

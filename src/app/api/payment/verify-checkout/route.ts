@@ -7,6 +7,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { logAudit } from '@/lib/audit';
+import { createRouteLogger } from '@/lib/logger';
+
+const log = createRouteLogger('payment/verify-checkout');
 
 const SB_URL = () => process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1';
 const SB_KEY = () => process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -118,11 +121,11 @@ export async function POST(req: NextRequest) {
       .update(razorpay_order_id + '|' + razorpay_payment_id)
       .digest('hex');
     if (expectedSig !== razorpay_signature) {
-      console.error('[verify-checkout] Signature mismatch');
+      log.error('Signature mismatch');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
-    console.log('[verify-checkout] Verified:', booking_id, razorpay_payment_id);
+    log.info({ booking_id, razorpay_payment_id }, 'Signature verified');
 
     // 2. Idempotency — check if already confirmed
     const existing = await sbGet('/appointments?booking_id=eq.' + encodeURIComponent(booking_id) + '&select=booking_id,status,payment_status,patient_name,patient_phone,doctor_name,specialty,date,time,tenant_id,patient_type,dependent_id,booked_by_whatsapp_number');
@@ -132,7 +135,7 @@ export async function POST(req: NextRequest) {
     const appt = existing[0];
 
     if (appt.status === 'confirmed' && appt.payment_status === 'paid') {
-      console.log('[verify-checkout] Already processed:', booking_id);
+      log.info({ booking_id }, 'Already processed');
       return NextResponse.json({ status: 'already_processed' });
     }
 
@@ -140,7 +143,7 @@ export async function POST(req: NextRequest) {
     try {
       const existingPass = await sbGet('/op_passes?booking_id=eq.' + encodeURIComponent(booking_id) + '&status=eq.ACTIVE&select=op_pass_id');
       if (Array.isArray(existingPass) && existingPass.length > 0) {
-        console.log('[verify-checkout] OP pass already exists:', booking_id);
+        log.info({ booking_id }, 'OP pass already exists');
         return NextResponse.json({ status: 'already_processed' });
       }
     } catch { /* continue */ }
@@ -251,10 +254,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    console.log('[verify-checkout] SUCCESS:', booking_id);
+    log.info({ booking_id }, 'SUCCESS — checkout verified and processed');
     return NextResponse.json({ status: 'ok', op_pass_id: opPassId });
   } catch (err: unknown) {
-    console.error('[verify-checkout] Error:', err instanceof Error ? err.message : err);
+    log.error({ err }, 'Unhandled error');
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
   }
 }

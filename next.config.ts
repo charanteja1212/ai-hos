@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  serverExternalPackages: ["bullmq", "ioredis", "nodemailer"],
+  serverExternalPackages: ["bullmq", "ioredis", "nodemailer", "pino", "pino-pretty"],
   async headers() {
     return [
       {
@@ -89,7 +90,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.razorpay.com; frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.razorpay.com https://*.ingest.sentry.io; frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com;",
           },
         ],
       },
@@ -97,4 +98,10 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Only upload source maps if Sentry is configured
+  silent: !process.env.NEXT_PUBLIC_SENTRY_DSN,
+  disableLogger: true,
+  // Automatically tree-shake Sentry SDK if DSN is not set
+  tunnelRoute: "/monitoring",
+});

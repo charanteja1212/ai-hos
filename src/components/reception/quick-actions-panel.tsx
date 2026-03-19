@@ -72,7 +72,7 @@ export function QuickActionsPanel({ tenantId, nextPatient, onStatusChange }: Qui
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            className="pl-9 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:bg-white focus:border-blue-500"
+            className="pl-9 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:bg-white focus:border-cyan-600"
             placeholder="Patient name or phone..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -113,7 +113,7 @@ export function QuickActionsPanel({ tenantId, nextPatient, onStatusChange }: Qui
 
       {/* Next Up */}
       {nextPatient && (
-        <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-4 space-y-3 text-white shadow-lg">
+        <div className="bg-gradient-to-br from-cyan-600 to-cyan-800 rounded-2xl p-4 space-y-3 text-white shadow-lg">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
             <h3 className="text-sm font-semibold text-white">Next Up</h3>
@@ -135,7 +135,7 @@ export function QuickActionsPanel({ tenantId, nextPatient, onStatusChange }: Qui
           <div className="flex gap-2">
             <Button
               size="sm"
-              className="flex-1 gap-1.5 h-9 rounded-xl bg-white text-blue-700 hover:bg-white/90 font-semibold"
+              className="flex-1 gap-1.5 h-9 rounded-xl bg-white text-cyan-800 hover:bg-white/90 font-semibold"
               onClick={() => onStatusChange(nextPatient.queue_id, "in_consultation")}
             >
               <Play className="w-4 h-4" />
@@ -162,7 +162,7 @@ export function QuickActionsPanel({ tenantId, nextPatient, onStatusChange }: Qui
           className="w-full justify-start gap-2 h-10 rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
           onClick={() => router.push("/reception/book")}
         >
-          <UserPlus className="w-4 h-4 text-blue-600" />
+          <UserPlus className="w-4 h-4 text-cyan-700" />
           New Walk-in Booking
         </Button>
         <Button
@@ -171,7 +171,7 @@ export function QuickActionsPanel({ tenantId, nextPatient, onStatusChange }: Qui
           className="w-full justify-start gap-2 h-10 rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
           onClick={() => router.push("/reception/appointments")}
         >
-          <CalendarSearch className="w-4 h-4 text-blue-600" />
+          <CalendarSearch className="w-4 h-4 text-cyan-700" />
           View Appointments
         </Button>
       </div>

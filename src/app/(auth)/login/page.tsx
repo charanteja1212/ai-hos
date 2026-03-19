@@ -96,9 +96,9 @@ const roles: RoleCard[] = [
     loginMode: "branch",
     label: "Admin",
     icon: Shield,
-    color: "#2563EB",
+    color: "#0891B2",
     lightBg: "#EFF6FF",
-    gradient: "from-blue-500 to-blue-700",
+    gradient: "from-cyan-600 to-cyan-800",
     description: "Hospital settings & config",
   },
   {
@@ -479,7 +479,7 @@ function LoginPageContent() {
     }
   }
 
-  const activeColor = selectedRole?.color || "#2563EB"
+  const activeColor = selectedRole?.color || "#0891B2"
 
   // ---------------------------------------------------------------------------
   // Render
@@ -490,7 +490,7 @@ function LoginPageContent() {
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* LEFT: Blue Brand Panel (desktop only)                              */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <div className="hidden lg:flex lg:w-[45%] xl:w-[40%] relative bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex-col justify-between p-12 overflow-hidden">
+      <div className="hidden lg:flex lg:w-[45%] xl:w-[40%] relative bg-gradient-to-br from-cyan-700 via-cyan-800 to-indigo-800 flex-col justify-between p-12 overflow-hidden">
         {/* Background pattern */}
         <div className="absolute inset-0 opacity-[0.07]" style={{
           backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
@@ -514,7 +514,7 @@ function LoginPageContent() {
               <h2 className="text-white font-bold text-lg tracking-tight">
                 {directClient ? directClient.name : "AI-HOS"}
               </h2>
-              <p className="text-blue-200 text-xs">Hospital Operating System</p>
+              <p className="text-cyan-200 text-xs">Hospital Operating System</p>
             </div>
           </div>
         </div>
@@ -524,7 +524,7 @@ function LoginPageContent() {
           <h1 className="text-white text-4xl xl:text-5xl font-bold leading-[1.1] tracking-tight">
             Smarter<br />Healthcare<br />Management
           </h1>
-          <p className="text-blue-200 text-base mt-4 max-w-sm leading-relaxed">
+          <p className="text-cyan-200 text-base mt-4 max-w-sm leading-relaxed">
             Streamline your hospital operations with AI-powered tools for every department.
           </p>
 
@@ -532,23 +532,23 @@ function LoginPageContent() {
           <div className="flex items-center gap-8 mt-10">
             <div>
               <p className="text-white text-2xl font-bold">50+</p>
-              <p className="text-blue-300 text-xs mt-0.5">Hospitals</p>
+              <p className="text-cyan-300 text-xs mt-0.5">Hospitals</p>
             </div>
             <div className="w-px h-10 bg-white/15" />
             <div>
               <p className="text-white text-2xl font-bold">200+</p>
-              <p className="text-blue-300 text-xs mt-0.5">Doctors</p>
+              <p className="text-cyan-300 text-xs mt-0.5">Doctors</p>
             </div>
             <div className="w-px h-10 bg-white/15" />
             <div>
               <p className="text-white text-2xl font-bold">1M+</p>
-              <p className="text-blue-300 text-xs mt-0.5">Patients</p>
+              <p className="text-cyan-300 text-xs mt-0.5">Patients</p>
             </div>
           </div>
         </div>
 
         {/* Bottom: Trust */}
-        <div className="relative z-10 flex items-center gap-2 text-blue-300 text-xs">
+        <div className="relative z-10 flex items-center gap-2 text-cyan-300 text-xs">
           <Lock className="w-3.5 h-3.5" />
           <span>HIPAA Compliant &middot; End-to-end Encrypted</span>
         </div>
@@ -559,12 +559,12 @@ function LoginPageContent() {
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="flex-1 flex flex-col bg-[#F8FAFC]">
         {/* Mobile: thin blue bar at top */}
-        <div className="lg:hidden h-1 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600" />
+        <div className="lg:hidden h-1 bg-gradient-to-r from-cyan-700 via-cyan-600 to-indigo-600" />
 
         {/* Mobile: logo */}
         <div className="lg:hidden px-6 pt-5 pb-2">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-cyan-700 flex items-center justify-center">
               {directClient?.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={directClient.logo_url} alt="" className="w-6 h-6 object-contain" />
@@ -595,7 +595,7 @@ function LoginPageContent() {
                 >
                   {directClientLoading ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-3">
-                      <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+                      <Loader2 className="w-6 h-6 text-cyan-700 animate-spin" />
                       <p className="text-sm text-gray-400">Loading...</p>
                     </div>
                   ) : (
@@ -622,7 +622,7 @@ function LoginPageContent() {
                               transition={{ delay: i * 0.04, duration: 0.25 }}
                               onClick={() => handleRoleSelect(role)}
                               disabled={fetchingClients}
-                              className={`group w-full flex items-center gap-3.5 px-5 py-3.5 text-left transition-all duration-150 hover:bg-blue-50/50 active:bg-blue-50 disabled:opacity-40 disabled:cursor-wait cursor-pointer ${
+                              className={`group w-full flex items-center gap-3.5 px-5 py-3.5 text-left transition-all duration-150 hover:bg-cyan-50/50 active:bg-cyan-50 disabled:opacity-40 disabled:cursor-wait cursor-pointer ${
                                 i < arr.length - 1 ? "border-b border-gray-100" : ""
                               }`}
                             >
@@ -636,7 +636,7 @@ function LoginPageContent() {
                                 <p className="text-[14px] font-semibold text-gray-900">{role.label}</p>
                                 <p className="text-[11px] text-gray-400 leading-tight">{role.description}</p>
                               </div>
-                              <ChevronRight className="w-4 h-4 text-gray-300 shrink-0 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all duration-150" />
+                              <ChevronRight className="w-4 h-4 text-gray-300 shrink-0 group-hover:text-cyan-600 group-hover:translate-x-0.5 transition-all duration-150" />
                             </motion.button>
                           )
                         })}
@@ -652,7 +652,7 @@ function LoginPageContent() {
                     <div className="mt-5 flex items-center justify-center gap-4">
                       <Link
                         href="/patient-login"
-                        className="inline-flex items-center gap-1.5 text-[12px] text-gray-400 hover:text-blue-600 transition-colors"
+                        className="inline-flex items-center gap-1.5 text-[12px] text-gray-400 hover:text-cyan-700 transition-colors"
                       >
                         <Heart className="w-3 h-3" />
                         <span>Patient Portal</span>
@@ -705,13 +705,13 @@ function LoginPageContent() {
                         transition={{ delay: i * 0.04, duration: 0.25 }}
                         onClick={() => handleClientSelect(client)}
                         disabled={fetchingBranches}
-                        className={`group w-full flex items-center gap-3.5 px-5 py-3.5 text-left transition-all duration-150 hover:bg-blue-50/50 disabled:opacity-40 disabled:cursor-wait cursor-pointer ${
+                        className={`group w-full flex items-center gap-3.5 px-5 py-3.5 text-left transition-all duration-150 hover:bg-cyan-50/50 disabled:opacity-40 disabled:cursor-wait cursor-pointer ${
                           i < clients.length - 1 ? "border-b border-gray-100" : ""
                         }`}
                       >
                         <div
                           className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                          style={{ backgroundColor: selectedRole?.lightBg || "#EFF6FF", color: selectedRole?.color || "#2563EB" }}
+                          style={{ backgroundColor: selectedRole?.lightBg || "#ECFEFF", color: selectedRole?.color || "#0891B2" }}
                         >
                           {client.logo_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
@@ -726,7 +726,7 @@ function LoginPageContent() {
                             {client.branch_count === 1 ? "1 branch" : `${client.branch_count || 0} branches`}
                           </p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-gray-300 shrink-0 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all duration-150" />
+                        <ChevronRight className="w-4 h-4 text-gray-300 shrink-0 group-hover:text-cyan-600 group-hover:translate-x-0.5 transition-all duration-150" />
                       </motion.button>
                     ))}
                   </div>
@@ -774,13 +774,13 @@ function LoginPageContent() {
                         animate={{ opacity: 1 }}
                         transition={{ delay: i * 0.04, duration: 0.25 }}
                         onClick={() => handleBranchSelect(branch)}
-                        className={`group w-full flex items-center gap-3.5 px-5 py-3.5 text-left transition-all duration-150 hover:bg-blue-50/50 cursor-pointer ${
+                        className={`group w-full flex items-center gap-3.5 px-5 py-3.5 text-left transition-all duration-150 hover:bg-cyan-50/50 cursor-pointer ${
                           i < branches.length - 1 ? "border-b border-gray-100" : ""
                         }`}
                       >
                         <div
                           className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                          style={{ backgroundColor: selectedRole?.lightBg || "#EFF6FF", color: selectedRole?.color || "#2563EB" }}
+                          style={{ backgroundColor: selectedRole?.lightBg || "#ECFEFF", color: selectedRole?.color || "#0891B2" }}
                         >
                           <Heart className="w-[18px] h-[18px]" />
                         </div>
@@ -790,7 +790,7 @@ function LoginPageContent() {
                             {branch.city}{branch.branch_code ? ` \u00B7 ${branch.branch_code}` : ""}
                           </p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-gray-300 shrink-0 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all duration-150" />
+                        <ChevronRight className="w-4 h-4 text-gray-300 shrink-0 group-hover:text-cyan-600 group-hover:translate-x-0.5 transition-all duration-150" />
                       </motion.button>
                     ))}
                   </div>
@@ -890,7 +890,7 @@ function LoginPageContent() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 autoFocus
-                                className="h-12 rounded-xl bg-gray-50 border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+                                className="h-12 rounded-xl bg-gray-50 border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-400 focus:bg-white focus:border-cyan-600 focus:ring-2 focus:ring-cyan-600/10"
                               />
                             </div>
                           )}
@@ -906,7 +906,7 @@ function LoginPageContent() {
                                 value={doctorId}
                                 onChange={(e) => setDoctorId(e.target.value)}
                                 autoFocus
-                                className="h-12 rounded-xl bg-gray-50 border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+                                className="h-12 rounded-xl bg-gray-50 border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-400 focus:bg-white focus:border-cyan-600 focus:ring-2 focus:ring-cyan-600/10"
                               />
                             </div>
                           )}
@@ -928,7 +928,7 @@ function LoginPageContent() {
                                   !(selectedRole.loginMode === "branch" && selectedRole.id === "DOCTOR")
                                 }
                                 maxLength={10}
-                                className="h-12 rounded-xl bg-gray-50 border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 pr-10"
+                                className="h-12 rounded-xl bg-gray-50 border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-400 focus:bg-white focus:border-cyan-600 focus:ring-2 focus:ring-cyan-600/10 pr-10"
                               />
                               <button
                                 type="button"
@@ -954,8 +954,8 @@ function LoginPageContent() {
                           <Button
                             type="submit"
                             disabled={loading || !pin || (selectedRole.loginMode === "super_admin" && !email)}
-                            className="w-full h-12 rounded-xl font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-50 hover:brightness-110 shadow-md shadow-blue-600/20"
-                            style={{ backgroundColor: "#2563EB" }}
+                            className="w-full h-12 rounded-xl font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-50 hover:brightness-110 shadow-md shadow-cyan-700/20"
+                            style={{ backgroundColor: "#0891B2" }}
                           >
                             {loading ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -978,7 +978,7 @@ function LoginPageContent() {
                               value={loginEmail}
                               onChange={(e) => setLoginEmail(e.target.value)}
                               autoFocus={authMethod === "password"}
-                              className="h-12 rounded-xl bg-gray-50 border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+                              className="h-12 rounded-xl bg-gray-50 border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-400 focus:bg-white focus:border-cyan-600 focus:ring-2 focus:ring-cyan-600/10"
                             />
                           </div>
 
@@ -989,7 +989,7 @@ function LoginPageContent() {
                               </Label>
                               <Link
                                 href="/forgot-password"
-                                className="text-[12px] text-blue-600 hover:text-blue-700 transition-colors"
+                                className="text-[12px] text-cyan-700 hover:text-cyan-800 transition-colors"
                               >
                                 Forgot password?
                               </Link>
@@ -1001,7 +1001,7 @@ function LoginPageContent() {
                                 placeholder="Enter your password"
                                 value={loginPassword}
                                 onChange={(e) => setLoginPassword(e.target.value)}
-                                className="h-12 rounded-xl bg-gray-50 border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 pr-10"
+                                className="h-12 rounded-xl bg-gray-50 border-gray-200 text-gray-900 text-[14px] placeholder:text-gray-400 focus:bg-white focus:border-cyan-600 focus:ring-2 focus:ring-cyan-600/10 pr-10"
                               />
                               <button
                                 type="button"
@@ -1027,8 +1027,8 @@ function LoginPageContent() {
                           <Button
                             type="submit"
                             disabled={loading || !loginEmail || !loginPassword}
-                            className="w-full h-12 rounded-xl font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-50 hover:brightness-110 shadow-md shadow-blue-600/20"
-                            style={{ backgroundColor: "#2563EB" }}
+                            className="w-full h-12 rounded-xl font-semibold text-white text-[14px] border-0 transition-all duration-150 disabled:opacity-50 hover:brightness-110 shadow-md shadow-cyan-700/20"
+                            style={{ backgroundColor: "#0891B2" }}
                           >
                             {loading ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -1075,7 +1075,7 @@ function LoginSuspenseFallback() {
   return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-white">
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+        <Loader2 className="w-6 h-6 text-cyan-700 animate-spin" />
         <p className="text-sm text-gray-400">Loading...</p>
       </div>
     </div>

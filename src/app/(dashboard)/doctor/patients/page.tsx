@@ -424,7 +424,7 @@ export default function DoctorPatientsPage() {
         title="Patient Details"
         subtitle="Medical history and appointment records"
         icon={<Users className="w-5 h-5" />}
-        gradient="bg-gradient-to-r from-blue-600 to-indigo-600"
+        gradient="bg-gradient-to-r from-cyan-700 to-indigo-600"
         maxWidth="sm:max-w-2xl"
       >
           {detailLoading ? (

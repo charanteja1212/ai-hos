@@ -42,7 +42,7 @@ export function QueueCard({ entry, onStatusChange, onPriorityChange, estimatedWa
         "relative rounded-xl overflow-hidden",
         "bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700",
         "transition-all duration-200",
-        isActive && "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800/40",
+        isActive && "bg-cyan-50/50 dark:bg-cyan-900/10 border-cyan-200 dark:border-cyan-800/40",
         isEmergency && !isActive && "border-red-200 dark:border-red-800/40 bg-red-50/30 dark:bg-red-900/10",
         isUrgent && !isActive && "border-amber-200 dark:border-amber-800/40 bg-amber-50/30 dark:bg-amber-900/10",
       )}
@@ -54,7 +54,7 @@ export function QueueCard({ entry, onStatusChange, onPriorityChange, estimatedWa
           <div className={cn(
             "relative flex items-center justify-center w-9 h-9 rounded-xl font-bold text-sm shrink-0",
             isActive
-              ? "bg-blue-600 text-white"
+              ? "bg-cyan-700 text-white"
               : isEmergency
                 ? "bg-red-600 text-white"
                 : isUrgent
@@ -63,7 +63,7 @@ export function QueueCard({ entry, onStatusChange, onPriorityChange, estimatedWa
           )}>
             {entry.queue_number}
             {isActive && (
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-400 animate-ping-dot" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-cyan-400 animate-ping-dot" />
             )}
           </div>
 
@@ -73,7 +73,7 @@ export function QueueCard({ entry, onStatusChange, onPriorityChange, estimatedWa
             </p>
             {entry.doctor_name && (
               <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1 mt-0.5">
-                <Stethoscope className="w-3 h-3 shrink-0 text-blue-400" />
+                <Stethoscope className="w-3 h-3 shrink-0 text-cyan-400" />
                 {entry.doctor_name}
               </p>
             )}
@@ -136,13 +136,13 @@ export function QueueCard({ entry, onStatusChange, onPriorityChange, estimatedWa
             </span>
           )}
           {entry.status === "waiting" && estimatedWaitMin !== undefined && estimatedWaitMin > 0 && (
-            <span className="text-[10px] font-medium text-blue-600/70 bg-blue-50 dark:bg-blue-900/20 rounded-full px-2 py-0.5">
+            <span className="text-[10px] font-medium text-cyan-700/70 bg-cyan-50 dark:bg-cyan-900/20 rounded-full px-2 py-0.5">
               ~{estimatedWaitMin}m wait
             </span>
           )}
           {isActive && entry.consultation_start && (
             <span className="flex items-center gap-1 ml-auto">
-              <Stethoscope className="w-3 h-3 text-blue-500" />
+              <Stethoscope className="w-3 h-3 text-cyan-600" />
               <ElapsedTimer startTime={entry.consultation_start} warningMinutes={15} dangerMinutes={30} />
             </span>
           )}
@@ -155,7 +155,7 @@ export function QueueCard({ entry, onStatusChange, onPriorityChange, estimatedWa
               <>
                 <Button
                   size="sm"
-                  className="flex-1 h-8 gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
+                  className="flex-1 h-8 gap-1.5 rounded-lg bg-cyan-700 hover:bg-cyan-800 text-white text-xs font-semibold"
                   onClick={() => onStatusChange(entry.queue_id, "in_consultation")}
                 >
                   <Play className="w-3.5 h-3.5" />

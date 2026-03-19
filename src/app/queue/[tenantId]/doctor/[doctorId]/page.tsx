@@ -262,8 +262,8 @@ export default function DoctorQueuePage() {
 
           {/* Next Up */}
           <div className="lg:w-1/3">
-            <p className="text-sm font-bold text-blue-600 tracking-widest uppercase mb-3 flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+            <p className="text-sm font-bold text-cyan-700 tracking-widest uppercase mb-3 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-cyan-600" />
               Next Up
             </p>
             {nextPatient ? (
@@ -273,7 +273,7 @@ export default function DoctorQueuePage() {
                   ? "bg-red-50 border-red-200"
                   : nextPatient.priority === 1
                     ? "bg-amber-50 border-amber-200"
-                    : "bg-blue-50 border-blue-200"
+                    : "bg-cyan-50 border-cyan-200"
               )}>
                 <div className={cn(
                   "w-16 h-16 rounded-full flex items-center justify-center text-3xl font-black text-white shrink-0",
@@ -281,7 +281,7 @@ export default function DoctorQueuePage() {
                     ? "bg-red-500"
                     : nextPatient.priority === 1
                       ? "bg-amber-500"
-                      : "bg-blue-500"
+                      : "bg-cyan-600"
                 )}>
                   {nextPatient.queue_number}
                 </div>
@@ -290,7 +290,7 @@ export default function DoctorQueuePage() {
                   <p className="text-lg font-bold truncate">{nextPatient.patient_name}</p>
                   <p className={cn(
                     "text-xs font-bold uppercase tracking-wider mt-0.5",
-                    nextPatient.priority === 2 ? "text-red-600" : nextPatient.priority === 1 ? "text-amber-600" : "text-blue-600"
+                    nextPatient.priority === 2 ? "text-red-600" : nextPatient.priority === 1 ? "text-amber-600" : "text-cyan-700"
                   )}>
                     {nextPatient.priority === 2 ? "Emergency" : nextPatient.priority === 1 ? "Urgent" : "Be Ready"}
                   </p>

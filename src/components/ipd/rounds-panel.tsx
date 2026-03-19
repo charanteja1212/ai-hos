@@ -158,7 +158,7 @@ export function RoundsPanel({ admission, tenantId, doctorName, onUpdate }: Round
               </div>
               <div className="grid grid-cols-1 gap-1.5">
                 {round.subjective && (
-                  <div><Badge variant="secondary" className="text-[9px] bg-blue-50 text-blue-700 mr-1.5">S</Badge><span className="text-xs">{round.subjective}</span></div>
+                  <div><Badge variant="secondary" className="text-[9px] bg-cyan-50 text-cyan-800 mr-1.5">S</Badge><span className="text-xs">{round.subjective}</span></div>
                 )}
                 {round.objective && (
                   <div><Badge variant="secondary" className="text-[9px] bg-green-50 text-green-700 mr-1.5">O</Badge><span className="text-xs">{round.objective}</span></div>

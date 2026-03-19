@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { apiGuard, isGuardError } from "@/lib/auth/api-guard"
+import { createRouteLogger } from "@/lib/logger"
 import { getGatewayToken, requestAbhaOtp, verifyAbhaOtp } from "@/lib/abdm/abha"
+
+const log = createRouteLogger("/api/abdm")
 import { buildConsentArtifact, generateConsentId } from "@/lib/abdm/consent"
 import {
   buildOPConsultationBundle,
@@ -321,7 +324,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
     }
   } catch (err) {
-    console.error("[ABDM API]", err)
+    log.error({ err }, "ABDM API error")
     const message = err instanceof Error ? err.message : "Internal server error"
     return NextResponse.json({ error: message }, { status: 500 })
   }

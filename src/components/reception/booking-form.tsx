@@ -3,86 +3,22 @@
 import { useState, useCallback, useEffect, useRef } from "react"
 import { useBranch } from "@/components/providers/branch-context"
 import { toast } from "sonner"
-import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Calendar,
-  Clock,
-  CheckCircle2,
-  Loader2,
-  ArrowLeft,
-  Stethoscope,
-  User,
-  MessageCircle,
-  ExternalLink,
-  Sparkles,
-  ChevronRight,
-  Phone,
-  Sun,
-  Sunset,
-  Moon,
-  Search,
-} from "lucide-react"
+import { AnimatePresence } from "framer-motion"
+import { ArrowLeft } from "lucide-react"
 import { createBrowserClient } from "@/lib/supabase/client"
-import { formatDate, formatTime, getTodayIST } from "@/lib/utils/date"
+import { getTodayIST } from "@/lib/utils/date"
 import { cn } from "@/lib/utils"
 import { createNotification } from "@/lib/notifications"
 import { calculateEstimatedWait } from "@/lib/utils/estimated-wait"
 import type { Doctor, Patient } from "@/types/database"
 import { useTenant } from "@/hooks/use-tenant"
-
-type Step = "patient" | "doctor" | "slot" | "confirm" | "done"
-
-interface SlotInfo {
-  date: string
-  dateKey: string
-  day: string
-  availableSlots: number
-}
-
-interface TimeSlot {
-  time: string
-  status: "available" | "booked"
-  capacity?: number
-  iso?: string
-}
-
-interface N8nSlot {
-  time: string
-  capacity: number
-  iso: string
-}
-
-interface N8nDateSlots {
-  morning?: N8nSlot[]
-  afternoon?: N8nSlot[]
-  evening?: N8nSlot[]
-}
-
-interface N8nAvailabilityResponse {
-  success?: boolean
-  available_dates?: { date: string; date_key: string; available_count: number }[]
-  slots_by_date?: Record<string, N8nDateSlots>
-  dates?: SlotInfo[]
-  slots?: Record<string, TimeSlot[]>
-}
-
-const STEPS: { key: Step; label: string; num: number }[] = [
-  { key: "patient", label: "Patient", num: 1 },
-  { key: "doctor", label: "Doctor", num: 2 },
-  { key: "slot", label: "Schedule", num: 3 },
-  { key: "confirm", label: "Confirm", num: 4 },
-]
+import type { Step, SlotInfo, TimeSlot, N8nSlot, N8nDateSlots } from "./booking/types"
+import { STEPS } from "./booking/types"
+import { PatientStep } from "./booking/patient-step"
+import { DoctorStep } from "./booking/doctor-step"
+import { SlotStep } from "./booking/slot-step"
+import { ConfirmStep } from "./booking/confirm-step"
+import { DoneStep } from "./booking/done-step"
 
 export function BookingForm() {
   const { activeTenantId: tenantId } = useBranch()
@@ -521,20 +457,10 @@ export function BookingForm() {
   const currentIdx = STEPS.findIndex((s) => s.key === step)
   const canProceedPatient = phone.replace(/\D/g, "").length >= 10 && patientName.trim().length > 0 && !lookingUp
 
-  const getHour = (t: string) => {
-    const match = t.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i)
-    if (!match) return parseInt(t.split(":")[0]) || 0
-    let h = parseInt(match[1])
-    const period = match[3]?.toUpperCase()
-    if (period === "PM" && h !== 12) h += 12
-    if (period === "AM" && h === 12) h = 0
-    return h
-  }
-
-  const specialties = [...new Set(doctors.map((d) => d.specialty))]
-  const filteredDoctors = doctorSearch
-    ? doctors.filter((d) => d.name.toLowerCase().includes(doctorSearch.toLowerCase()) || d.specialty.toLowerCase().includes(doctorSearch.toLowerCase()))
-    : doctors
+  const handleSelectFamilyMember = useCallback((name: string) => {
+    setPatientName(name)
+    setPatient({ ...(patient || {}), phone: phone.replace(/\D/g, ""), name, tenant_id: tenantId } as Patient)
+  }, [patient, phone, tenantId])
 
   /* ───────────────────── RENDER ───────────────────── */
 
@@ -546,6 +472,7 @@ export function BookingForm() {
           {step !== "patient" && (
             <button
               onClick={goBack}
+              aria-label="Go back to previous step"
               className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -562,7 +489,7 @@ export function BookingForm() {
                 key={s.key}
                 className={cn(
                   "h-1.5 rounded-full transition-all duration-500",
-                  i <= currentIdx ? "bg-blue-500" : "bg-gray-200",
+                  i <= currentIdx ? "bg-cyan-600" : "bg-gray-200",
                   i === currentIdx ? "w-6" : "w-1.5"
                 )}
               />
@@ -578,560 +505,76 @@ export function BookingForm() {
       )}>
         <AnimatePresence mode="wait">
 
-          {/* ═══════════ STEP 1: PATIENT ═══════════ */}
           {step === "patient" && (
-            <motion.div
-              key="patient"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="p-6 space-y-5"
-            >
-              <div>
-                <p className="text-sm font-semibold text-gray-900">Patient Details</p>
-                <p className="text-xs text-gray-400 mt-0.5">Enter phone to auto-fill existing records</p>
-              </div>
-
-              {/* Phone */}
-              <div className="relative">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <Phone className="w-3.5 h-3.5 text-blue-500" />
-                </div>
-                <Input
-                  className="h-12 pl-14 pr-24 text-sm rounded-xl border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 bg-gray-50/50"
-                  placeholder="10-digit mobile number"
-                  value={phone}
-                  onChange={(e) => handlePhoneChange(e.target.value)}
-                  autoFocus
-                  maxLength={13}
-                />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  {lookingUp && (
-                    <div className="flex items-center gap-1 text-blue-500">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span className="text-[10px] font-medium">Searching</span>
-                    </div>
-                  )}
-                  {patientFound === true && !lookingUp && (
-                    <Badge className="bg-emerald-50 text-emerald-600 border-emerald-200 text-[10px] font-semibold gap-1 h-6">
-                      <CheckCircle2 className="w-3 h-3" /> Found
-                    </Badge>
-                  )}
-                  {patientFound === false && !lookingUp && (
-                    <Badge className="bg-amber-50 text-amber-600 border-amber-200 text-[10px] font-semibold gap-1 h-6">
-                      <Sparkles className="w-3 h-3" /> New
-                    </Badge>
-                  )}
-                </div>
-              </div>
-
-              {/* Family member selector — shows all known names for this phone */}
-              {patientFound === true && familyMembers.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  className="space-y-2"
-                >
-                  <p className="text-xs font-medium text-gray-500">
-                    {familyMembers.length === 1 ? "Patient found" : `${familyMembers.length} members found — select or add new`}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {familyMembers.map((name) => (
-                      <button
-                        key={name}
-                        type="button"
-                        onClick={() => { setPatientName(name); setPatient({ ...(patient || {}), phone: phone.replace(/\D/g, ""), name, tenant_id: tenantId } as Patient) }}
-                        className={cn(
-                          "flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all",
-                          patientName === name
-                            ? "border-blue-500 bg-blue-50 text-blue-700"
-                            : "border-gray-200 bg-gray-50/50 text-gray-700 hover:border-blue-300 hover:bg-blue-50/30"
-                        )}
-                      >
-                        <div className={cn(
-                          "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0",
-                          patientName === name ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500"
-                        )}>
-                          {name[0]?.toUpperCase()}
-                        </div>
-                        {name}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newName = ""
-                        setPatientName(newName)
-                        setPatientGender("")
-                        setPatientAge("")
-                      }}
-                      className={cn(
-                        "flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-all",
-                        patientName === "" || !familyMembers.includes(patientName)
-                          ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                          : "border-dashed border-gray-300 text-gray-400 hover:border-emerald-400 hover:text-emerald-600"
-                      )}
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      New member
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Name */}
-              <div>
-                <label className="text-xs font-medium text-gray-500 mb-1.5 block">Full Name</label>
-                <Input
-                  className="h-12 text-sm rounded-xl border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 bg-gray-50/50"
-                  placeholder="Patient full name"
-                  value={patientName}
-                  onChange={(e) => setPatientName(e.target.value)}
-                />
-              </div>
-
-              {/* Gender + Age */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-gray-500 mb-1.5 block">Gender</label>
-                  <Select value={patientGender} onValueChange={setPatientGender}>
-                    <SelectTrigger className="h-12 text-sm rounded-xl border-gray-200 bg-gray-50/50">
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Male">Male</SelectItem>
-                      <SelectItem value="Female">Female</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-500 mb-1.5 block">Age</label>
-                  <Input
-                    className="h-12 text-sm rounded-xl border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 bg-gray-50/50"
-                    type="number"
-                    placeholder="Age"
-                    value={patientAge}
-                    onChange={(e) => setPatientAge(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* CTA */}
-              <Button
-                onClick={proceedFromPatient}
-                disabled={!canProceedPatient || loading}
-                className="w-full h-12 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors gap-2"
-              >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-4 h-4" />}
-                Continue
-              </Button>
-            </motion.div>
+            <PatientStep
+              phone={phone}
+              patientName={patientName}
+              patientGender={patientGender}
+              patientAge={patientAge}
+              lookingUp={lookingUp}
+              patientFound={patientFound}
+              patient={patient}
+              familyMembers={familyMembers}
+              canProceedPatient={canProceedPatient}
+              loading={loading}
+              tenantId={tenantId}
+              onPhoneChange={handlePhoneChange}
+              onPatientNameChange={setPatientName}
+              onPatientGenderChange={setPatientGender}
+              onPatientAgeChange={setPatientAge}
+              onSelectFamilyMember={handleSelectFamilyMember}
+              onProceed={proceedFromPatient}
+            />
           )}
 
-          {/* ═══════════ STEP 2: DOCTOR ═══════════ */}
           {step === "doctor" && (
-            <motion.div
-              key="doctor"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="p-6 space-y-4"
-            >
-              {/* Patient summary */}
-              {patient && (
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 text-xs font-bold shrink-0">
-                    {patient.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{patient.name}</p>
-                    <p className="text-[10px] text-gray-400 font-mono">{patient.phone}</p>
-                  </div>
-                  <Badge variant="secondary" className="text-[10px] font-medium bg-gray-100 text-gray-500">
-                    {patientFound ? "Existing" : "New"}
-                  </Badge>
-                </div>
-              )}
-
-              <div>
-                <p className="text-sm font-semibold text-gray-900">Select Doctor</p>
-                <p className="text-xs text-gray-400 mt-0.5">{doctors.length} doctors available</p>
-              </div>
-
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
-                <Input
-                  className="h-10 pl-9 text-sm rounded-xl border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 bg-gray-50/50"
-                  placeholder="Search doctor or specialty..."
-                  value={doctorSearch}
-                  onChange={(e) => setDoctorSearch(e.target.value)}
-                />
-              </div>
-
-              {/* Doctor list */}
-              <div className="space-y-2 max-h-[420px] overflow-y-auto -mx-1 px-1">
-                {(doctorSearch ? [{ specialty: "Results", doctors: filteredDoctors }] : specialties.map(s => ({ specialty: s, doctors: doctors.filter(d => d.specialty === s) }))).map(({ specialty, doctors: specDoctors }) => (
-                  <div key={specialty}>
-                    {!doctorSearch && (
-                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-3 first:mt-0">{specialty}</p>
-                    )}
-                    {specDoctors.map((doctor, di) => (
-                      <motion.button
-                        key={doctor.doctor_id}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: di * 0.03 }}
-                        onClick={() => fetchAvailability(doctor)}
-                        disabled={loading}
-                        className="w-full flex items-center gap-3 p-3 rounded-xl border border-transparent hover:bg-blue-50/50 hover:border-blue-100 transition-all text-left group mb-1"
-                      >
-                        {(doctor as Doctor & { image_url?: string }).image_url ? (
-                          <img
-                            src={(doctor as Doctor & { image_url?: string }).image_url!}
-                            alt={doctor.name}
-                            className="w-10 h-10 rounded-xl object-cover shrink-0"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-                            <Stethoscope className="w-4 h-4 text-blue-400" />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">{doctor.name}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-xs text-gray-400">{doctor.specialty}</span>
-                            {(doctor as Doctor & { consultation_fee?: number }).consultation_fee && (
-                              <span className="text-xs text-gray-300 font-mono">
-                                ₹{(doctor as Doctor & { consultation_fee?: number }).consultation_fee}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-gray-200 group-hover:text-blue-400 transition-colors shrink-0" />
-                      </motion.button>
-                    ))}
-                  </div>
-                ))}
-              </div>
-
-              {loading && (
-                <div className="flex items-center justify-center py-6 gap-2 text-blue-500">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-sm font-medium">Loading availability...</span>
-                </div>
-              )}
-            </motion.div>
+            <DoctorStep
+              patient={patient}
+              patientFound={patientFound}
+              doctors={doctors}
+              doctorSearch={doctorSearch}
+              loading={loading}
+              onDoctorSearchChange={setDoctorSearch}
+              onSelectDoctor={fetchAvailability}
+            />
           )}
 
-          {/* ═══════════ STEP 3: DATE & TIME ═══════════ */}
           {step === "slot" && (
-            <motion.div
-              key="slot"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="p-6 space-y-5"
-            >
-              {/* Doctor summary */}
-              {selectedDoctor && (
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-                    <Stethoscope className="w-4 h-4 text-blue-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{selectedDoctor.name}</p>
-                    <p className="text-xs text-gray-400">{selectedDoctor.specialty}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Date strip */}
-              {!selectedDate && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-3">Pick a date</p>
-                  <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-                    {availability.map((slot, i) => {
-                      const isToday = slot.date === getTodayIST()
-                      const hasSlots = slot.availableSlots > 0
-                      const d = new Date(slot.date + "T00:00:00")
-                      return (
-                        <motion.button
-                          key={slot.date}
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.04 }}
-                          onClick={() => fetchTimeSlots(slot.date)}
-                          disabled={!hasSlots || loading}
-                          className={cn(
-                            "flex flex-col items-center min-w-[68px] py-3 px-3 rounded-xl border transition-all",
-                            !hasSlots
-                              ? "border-gray-100 opacity-30 cursor-not-allowed"
-                              : "border-gray-200 hover:border-blue-300 hover:bg-blue-50/50",
-                            isToday && hasSlots && "border-blue-300 bg-blue-50/50"
-                          )}
-                        >
-                          <span className="text-[10px] font-medium text-gray-400 uppercase">
-                            {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()]}
-                          </span>
-                          <span className="text-xl font-bold text-gray-900 mt-0.5 leading-none">{d.getDate()}</span>
-                          <span className="text-[10px] text-gray-300 mt-0.5">
-                            {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()]}
-                          </span>
-                          <div className={cn(
-                            "mt-2 text-[9px] font-semibold px-2 py-0.5 rounded-full",
-                            slot.availableSlots > 10
-                              ? "bg-emerald-50 text-emerald-600"
-                              : slot.availableSlots > 3
-                                ? "bg-amber-50 text-amber-600"
-                                : "bg-red-50 text-red-500"
-                          )}>
-                            {slot.availableSlots}
-                          </div>
-                          {isToday && <span className="text-[8px] font-bold text-blue-500 mt-0.5">TODAY</span>}
-                        </motion.button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Time slots */}
-              {selectedDate && (
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-xs font-medium text-gray-500">{formatDate(selectedDate)}</p>
-                    <button
-                      onClick={() => { setSelectedDate(""); setTimeSlots([]); setSelectedTime("") }}
-                      className="text-xs text-blue-500 font-medium hover:underline"
-                    >
-                      Change
-                    </button>
-                  </div>
-
-                  {loading ? (
-                    <div className="grid grid-cols-4 gap-2">
-                      {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-10 rounded-lg" />)}
-                    </div>
-                  ) : (() => {
-                    const available = timeSlots.filter((s) => s.status === "available")
-                    if (available.length === 0) {
-                      return (
-                        <div className="text-center py-10">
-                          <Clock className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                          <p className="text-sm text-gray-400">No slots available</p>
-                          <p className="text-xs text-gray-300 mt-1">Try another date</p>
-                        </div>
-                      )
-                    }
-                    const morning = available.filter((s) => getHour(s.time) < 12)
-                    const afternoon = available.filter((s) => { const h = getHour(s.time); return h >= 12 && h < 17 })
-                    const evening = available.filter((s) => getHour(s.time) >= 17)
-                    const groups = [
-                      { label: "Morning", slots: morning, Icon: Sun, accent: "text-amber-500", bg: "bg-amber-50" },
-                      { label: "Afternoon", slots: afternoon, Icon: Sunset, accent: "text-orange-500", bg: "bg-orange-50" },
-                      { label: "Evening", slots: evening, Icon: Moon, accent: "text-indigo-500", bg: "bg-indigo-50" },
-                    ].filter((g) => g.slots.length > 0)
-
-                    return (
-                      <div className="space-y-4">
-                        {groups.map((group) => (
-                          <div key={group.label}>
-                            <div className="flex items-center gap-2 mb-2">
-                              <group.Icon className={cn("w-3.5 h-3.5", group.accent)} />
-                              <span className="text-xs font-medium text-gray-500">{group.label}</span>
-                              <span className="text-[10px] text-gray-300 ml-auto">{group.slots.length} slots</span>
-                            </div>
-                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                              {group.slots.map((slot) => (
-                                <button
-                                  key={slot.time}
-                                  onClick={() => { setSelectedTime(slot.time); setStep("confirm") }}
-                                  className={cn(
-                                    "py-2.5 px-2 rounded-lg text-sm font-medium border transition-all",
-                                    selectedTime === slot.time
-                                      ? "border-blue-500 bg-blue-500 text-white"
-                                      : "border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 text-gray-700"
-                                  )}
-                                >
-                                  {formatTime(slot.time)}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )
-                  })()}
-                </div>
-              )}
-            </motion.div>
+            <SlotStep
+              selectedDoctor={selectedDoctor}
+              availability={availability}
+              selectedDate={selectedDate}
+              timeSlots={timeSlots}
+              selectedTime={selectedTime}
+              loading={loading}
+              onSelectDate={fetchTimeSlots}
+              onSelectTime={(time) => { setSelectedTime(time); setStep("confirm") }}
+              onChangeDate={() => { setSelectedDate(""); setTimeSlots([]); setSelectedTime("") }}
+            />
           )}
 
-          {/* ═══════════ STEP 4: CONFIRM ═══════════ */}
           {step === "confirm" && (
-            <motion.div
-              key="confirm"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="p-6 space-y-5"
-            >
-              <div>
-                <p className="text-sm font-semibold text-gray-900">Review Appointment</p>
-                <p className="text-xs text-gray-400 mt-0.5">Confirm the details below</p>
-              </div>
-
-              {/* Summary card */}
-              <div className="rounded-xl bg-gray-50 border border-gray-100 divide-y divide-gray-100">
-                {/* Doctor */}
-                <div className="flex items-center gap-3 p-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
-                    <Stethoscope className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900">{selectedDoctor?.name}</p>
-                    <p className="text-xs text-gray-400">{selectedDoctor?.specialty}</p>
-                  </div>
-                </div>
-
-                {/* Patient */}
-                <div className="flex items-center gap-3 p-4">
-                  <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
-                    <User className="w-4 h-4 text-gray-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900">{patient?.name}</p>
-                    <p className="text-xs text-gray-400 font-mono">{patient?.phone}</p>
-                  </div>
-                </div>
-
-                {/* Date & Time */}
-                <div className="grid grid-cols-2 divide-x divide-gray-100">
-                  <div className="flex items-center gap-3 p-4">
-                    <Calendar className="w-4 h-4 text-blue-400 shrink-0" />
-                    <div>
-                      <p className="text-[10px] text-gray-400 font-medium">Date</p>
-                      <p className="text-sm font-semibold text-gray-900">{formatDate(selectedDate)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-4">
-                    <Clock className="w-4 h-4 text-blue-400 shrink-0" />
-                    <div>
-                      <p className="text-[10px] text-gray-400 font-medium">Time</p>
-                      <p className="text-sm font-semibold text-gray-900">{formatTime(selectedTime)}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                onClick={confirmBooking}
-                disabled={loading}
-                className="w-full h-12 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors gap-2"
-              >
-                {loading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Booking...</>
-                ) : (
-                  <><CheckCircle2 className="w-4 h-4" /> Confirm & Assign Queue</>
-                )}
-              </Button>
-            </motion.div>
+            <ConfirmStep
+              selectedDoctor={selectedDoctor}
+              patient={patient}
+              selectedDate={selectedDate}
+              selectedTime={selectedTime}
+              loading={loading}
+              onConfirm={confirmBooking}
+            />
           )}
 
-          {/* ═══════════ STEP 5: DONE ═══════════ */}
           {step === "done" && (
-            <motion.div
-              key="done"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-              className="p-6 text-center space-y-5"
-            >
-              {/* Success icon */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.1 }}
-                className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto"
-              >
-                <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-              </motion.div>
-
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">Appointment Booked</h2>
-                <p className="text-xs text-gray-400 mt-1">Queue assigned automatically</p>
-              </div>
-
-              {/* Booking summary */}
-              <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 text-left space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Booking ID</span>
-                  <span className="text-xs font-mono font-semibold text-blue-600">{bookingId}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Patient</span>
-                  <span className="text-xs font-semibold text-gray-700">{patient?.name}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Doctor</span>
-                  <span className="text-xs font-semibold text-gray-700">{selectedDoctor?.name}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Schedule</span>
-                  <span className="text-xs font-semibold text-gray-700">{formatDate(selectedDate)} · {formatTime(selectedTime)}</span>
-                </div>
-              </div>
-
-              {/* WhatsApp status */}
-              {waSent === true && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-left"
-                >
-                  <MessageCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <p className="text-xs text-emerald-700 font-medium">WhatsApp confirmation sent</p>
-                </motion.div>
-              )}
-              {waSent === false && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="p-3 rounded-xl bg-amber-50 border border-amber-100 text-left space-y-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <MessageCircle className="w-4 h-4 text-amber-500 shrink-0" />
-                    <p className="text-xs text-amber-700 font-medium">WhatsApp not delivered</p>
-                  </div>
-                  <a
-                    href={`https://wa.me/${tenant?.whatsapp_phone_number || "918125442376"}?text=${encodeURIComponent(`Hi, I just booked appointment ${bookingId}`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors"
-                  >
-                    <MessageCircle className="w-3 h-3" />
-                    Open WhatsApp
-                    <ExternalLink className="w-2.5 h-2.5" />
-                  </a>
-                </motion.div>
-              )}
-
-              <Button
-                onClick={reset}
-                className="w-full h-12 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors gap-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                Book Another
-              </Button>
-            </motion.div>
+            <DoneStep
+              bookingId={bookingId}
+              patient={patient}
+              selectedDoctor={selectedDoctor}
+              selectedDate={selectedDate}
+              selectedTime={selectedTime}
+              waSent={waSent}
+              tenant={tenant ? { hospital_name: tenant.hospital_name, whatsapp_phone_number: tenant.whatsapp_phone_number } : null}
+              onReset={reset}
+            />
           )}
 
         </AnimatePresence>

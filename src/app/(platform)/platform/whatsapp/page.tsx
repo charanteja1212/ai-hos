@@ -229,8 +229,8 @@ export default function WhatsAppRoutingPage() {
         </Card>
         <Card className="border-0 shadow-sm flex-1">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4 text-blue-600" />
+            <div className="w-9 h-9 rounded-xl bg-cyan-600/10 flex items-center justify-center">
+              <CheckCircle2 className="w-4 h-4 text-cyan-700" />
             </div>
             <div>
               <p className="text-2xl font-bold">{activeRoutes}</p>

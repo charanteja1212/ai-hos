@@ -33,11 +33,11 @@ function getWardGradient(ward: string) {
   if (w.includes("icu")) return "from-red-500 to-rose-600"
   if (w.includes("nicu")) return "from-red-600 to-pink-600"
   if (w.includes("private")) return "from-purple-500 to-indigo-600"
-  if (w.includes("semi")) return "from-blue-500 to-cyan-600"
+  if (w.includes("semi")) return "from-cyan-600 to-cyan-600"
   if (w.includes("maternity")) return "from-pink-500 to-rose-500"
   if (w.includes("pediatric")) return "from-emerald-500 to-teal-600"
   if (w.includes("surgical")) return "from-amber-500 to-orange-600"
-  return "from-blue-500 to-indigo-600"
+  return "from-cyan-600 to-indigo-600"
 }
 
 function getWardIcon(ward: string) {

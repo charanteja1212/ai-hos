@@ -278,8 +278,8 @@ export default function PublicQueuePage() {
             {nextUpPatients.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                  <h2 className="text-sm font-bold text-blue-600 tracking-widest uppercase">Next Up</h2>
+                  <span className="w-2.5 h-2.5 rounded-full bg-cyan-600" />
+                  <h2 className="text-sm font-bold text-cyan-700 tracking-widest uppercase">Next Up</h2>
                 </div>
                 <div className="space-y-3">
                   {nextUpPatients.map((entry) => (
@@ -291,7 +291,7 @@ export default function PublicQueuePage() {
                           ? "bg-red-50 border-red-200"
                           : entry.priority === 1
                             ? "bg-amber-50 border-amber-200"
-                            : "bg-blue-50 border-blue-200"
+                            : "bg-cyan-50 border-cyan-200"
                       )}
                     >
                       <div className={cn(
@@ -300,7 +300,7 @@ export default function PublicQueuePage() {
                           ? "bg-red-500"
                           : entry.priority === 1
                             ? "bg-amber-500"
-                            : "bg-blue-500"
+                            : "bg-cyan-600"
                       )}>
                         {entry.queue_number}
                       </div>
@@ -314,7 +314,7 @@ export default function PublicQueuePage() {
                           ? "text-red-700 bg-red-100"
                           : entry.priority === 1
                             ? "text-amber-700 bg-amber-100"
-                            : "text-blue-700 bg-blue-100"
+                            : "text-cyan-800 bg-cyan-100"
                       )}>
                         {entry.priority === 2 ? "Emergency" : entry.priority === 1 ? "Urgent" : "Be Ready"}
                       </span>

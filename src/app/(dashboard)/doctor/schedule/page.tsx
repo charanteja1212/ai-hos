@@ -806,8 +806,8 @@ function TimelineBar({ session1, session2 }: { session1: DaySchedule["session1"]
         )}
         {/* Session 2 */}
         {session2 && (
-          <div className="absolute top-0 bottom-0 bg-blue-500/25 dark:bg-blue-500/20 border-l-2 border-r-2 border-blue-500/50" style={{ left: `${s2Left}%`, width: `${s2Width}%` }}>
-            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-blue-700 dark:text-blue-400">S2</span>
+          <div className="absolute top-0 bottom-0 bg-cyan-600/25 dark:bg-cyan-600/20 border-l-2 border-r-2 border-cyan-600/50" style={{ left: `${s2Left}%`, width: `${s2Width}%` }}>
+            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-cyan-800 dark:text-cyan-400">S2</span>
           </div>
         )}
       </div>

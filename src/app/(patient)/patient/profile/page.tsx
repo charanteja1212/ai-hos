@@ -159,7 +159,7 @@ export default function PatientProfilePage() {
         animate={{ opacity: 1, y: 0 }}
       >
         <Card className="border-0 shadow-sm overflow-hidden">
-          <div className="bg-gradient-to-r from-teal-500 via-cyan-600 to-blue-700 p-5 text-white">
+          <div className="bg-gradient-to-r from-teal-500 via-cyan-600 to-cyan-800 p-5 text-white">
             <div className="flex items-center gap-3">
               <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-xl font-bold">
                 {(patient?.name || "P").charAt(0)}

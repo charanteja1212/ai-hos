@@ -6,6 +6,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { createRouteLogger } from '@/lib/logger';
+
+const log = createRouteLogger('payment/create-order');
 
 const SB_URL = () => process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1';
 const SB_KEY = () => process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -74,7 +77,7 @@ export async function POST(req: NextRequest) {
 
     if (!orderRes.ok) {
       const errText = await orderRes.text().catch(() => '');
-      console.error('[create-order] Razorpay error:', orderRes.status, errText.substring(0, 200));
+      log.error({ status: orderRes.status, body: errText.substring(0, 200) }, 'Razorpay order creation failed');
       return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
     }
 
@@ -92,7 +95,7 @@ export async function POST(req: NextRequest) {
       specialty: appt.specialty,
     });
   } catch (err: unknown) {
-    console.error('[create-order] Error:', err instanceof Error ? err.message : err);
+    log.error({ err }, 'Unhandled error');
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

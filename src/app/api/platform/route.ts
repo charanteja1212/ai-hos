@@ -2,6 +2,9 @@ import { NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase/server"
 import { apiGuard, isGuardError } from "@/lib/auth/api-guard"
 import { logAudit } from "@/lib/audit"
+import { createRouteLogger } from "@/lib/logger"
+
+const log = createRouteLogger("/api/platform")
 
 // GET /api/platform — fetch platform data (requires SUPER_ADMIN)
 export async function GET(req: Request) {
@@ -121,7 +124,7 @@ export async function POST(req: Request) {
 
     const { error } = await supabase.from("clients").insert(payload)
     if (error) {
-      console.error("[platform] createClient error:", error.message)
+      log.error({ err: error }, "createClient error")
       return NextResponse.json({ error: "Failed to create client. Check for duplicate values." }, { status: 400 })
     }
 
@@ -146,7 +149,7 @@ export async function POST(req: Request) {
     }
     const { error } = await supabase.from("tenants").insert(payload)
     if (error) {
-      console.error("[platform] createBranch error:", error.message)
+      log.error({ err: error }, "createBranch error")
       return NextResponse.json({ error: "Failed to create branch. Check for duplicate values." }, { status: 400 })
     }
     logAudit({ action: "create", entityType: "tenant", entityId: payload.tenant_id || "unknown", actorEmail: guard.user.email || "system", actorRole: guard.user.role || "SUPER_ADMIN", tenantId: payload.tenant_id, details: { hospital_name: payload.hospital_name } })
@@ -167,7 +170,7 @@ export async function POST(req: Request) {
       .update(updates)
       .eq("tenant_id", tenant_id)
     if (error) {
-      console.error("[platform] updateBranch error:", error.message)
+      log.error({ err: error }, "updateBranch error")
       return NextResponse.json({ error: "Failed to update branch." }, { status: 400 })
     }
     logAudit({ action: "update", entityType: "tenant", entityId: tenant_id, actorEmail: guard.user.email || "system", actorRole: guard.user.role || "SUPER_ADMIN", tenantId: tenant_id, details: updates })
@@ -217,7 +220,7 @@ export async function POST(req: Request) {
         })
         .eq("tenant_id", branch_id)
       if (tenantErr) {
-        console.error("[platform] saveWhatsAppRoute tenant update error:", tenantErr.message)
+        log.error({ err: tenantErr }, "saveWhatsAppRoute tenant update error")
         return NextResponse.json({ error: "Route saved but tenant update failed: " + tenantErr.message }, { status: 400 })
       }
     }

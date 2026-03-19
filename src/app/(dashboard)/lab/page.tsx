@@ -350,7 +350,7 @@ export default function LabPage() {
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="flex items-center gap-3 flex-wrap">
         {[
           { label: "Ordered", val: orderedCount, icon: Clock, accent: "bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400" },
-          { label: "In Progress", val: inProgressCount, icon: Activity, accent: "bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400" },
+          { label: "In Progress", val: inProgressCount, icon: Activity, accent: "bg-cyan-100 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-400" },
           { label: "Completed", val: completedCount, icon: CheckCircle2, accent: "bg-green-100 text-green-600 dark:bg-green-950/40 dark:text-green-400" },
           { label: "Total", val: allOrders.length, icon: TestTube, accent: "bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400" },
         ].map((s) => (
@@ -433,10 +433,10 @@ export default function LabPage() {
             <KanbanColumn
               title="Collected"
               count={collected.length}
-              dotColor="bg-blue-500"
-              headerBg="bg-blue-50 dark:bg-blue-900/10"
-              countBg="bg-blue-100 dark:bg-blue-900/30"
-              countText="text-blue-700 dark:text-blue-300"
+              dotColor="bg-cyan-600"
+              headerBg="bg-cyan-50 dark:bg-cyan-900/10"
+              countBg="bg-cyan-100 dark:bg-cyan-900/30"
+              countText="text-cyan-800 dark:text-cyan-300"
               emptyIcon={<Beaker className="w-8 h-8" />}
               emptyTitle="No samples"
               emptyDescription="Collected samples appear here"
@@ -576,7 +576,7 @@ export default function LabPage() {
                           <DropdownMenuContent align="end">
                             {order.status === "ordered" && (
                               <DropdownMenuItem onClick={() => updateStatus(order.order_id, "sample_collected")} disabled={updating}>
-                                <Beaker className="w-4 h-4 mr-2 text-blue-500" />
+                                <Beaker className="w-4 h-4 mr-2 text-cyan-600" />
                                 Collect Sample
                               </DropdownMenuItem>
                             )}

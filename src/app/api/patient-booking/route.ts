@@ -8,6 +8,9 @@ import {
 } from "@/lib/booking/service"
 import { sendBookingConfirmation, getTenantWhatsAppConfig } from "@/lib/whatsapp/sender"
 import { createServerClient } from "@/lib/supabase/server"
+import { createRouteLogger } from "@/lib/logger"
+
+const log = createRouteLogger("patient-booking")
 
 export async function POST(req: NextRequest) {
   try {
@@ -65,7 +68,7 @@ export async function POST(req: NextRequest) {
             time: body.time,
             bookingId: result.booking_id,
             hospitalName: user.hospitalName || "Hospital",
-          }, waConfig).catch((err) => console.error("[patient-booking] WhatsApp failed:", err))
+          }, waConfig).catch((err) => log.error({ err }, "WhatsApp confirmation failed"))
         })
       }
 

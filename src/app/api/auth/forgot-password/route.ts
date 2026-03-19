@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase/server"
+import { createRouteLogger } from "@/lib/logger"
+
+const log = createRouteLogger("/api/auth/forgot-password")
 
 export async function POST(req: Request) {
   try {
@@ -33,7 +36,7 @@ export async function POST(req: Request) {
       message: "If an account exists with this email, a reset link has been sent.",
     })
   } catch (err) {
-    console.error("forgot-password error:", err)
+    log.error({ err }, "Forgot password error")
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -179,7 +179,7 @@ export default function PatientLoginPage() {
         className="relative z-10 w-full max-w-md"
       >
         {/* Header card */}
-        <div className="rounded-t-2xl bg-gradient-to-r from-teal-500 via-cyan-600 to-blue-700 p-6 text-center">
+        <div className="rounded-t-2xl bg-gradient-to-r from-teal-500 via-cyan-600 to-cyan-800 p-6 text-center">
           <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm mx-auto mb-3 flex items-center justify-center">
             <Heart className="w-7 h-7 text-white" />
           </div>

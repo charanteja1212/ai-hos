@@ -7,7 +7,12 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: true,
-    include: ["src/**/*.test.{ts,tsx}"],
+    setupFiles: ["./tests/setup.ts"],
+    include: ["tests/**/*.test.ts", "tests/**/*.test.tsx", "src/**/*.test.{ts,tsx}"],
+    coverage: {
+      reporter: ["text", "json", "html"],
+      include: ["src/lib/**/*.ts"],
+    },
     css: false,
   },
   resolve: {

@@ -284,7 +284,7 @@ export default function BookPage() {
   if (authLoading) return (
     <div className="flex items-center justify-center py-20">
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-cyan-700" />
         <p className="text-sm text-muted-foreground font-medium">Loading...</p>
       </div>
     </div>
@@ -304,7 +304,7 @@ export default function BookPage() {
             {/* Connector line */}
             <div className="absolute top-[14px] left-[14px] right-[14px] h-[2px] bg-slate-200 dark:bg-slate-700" />
             <div
-              className="absolute top-[14px] left-[14px] h-[2px] bg-blue-600 transition-all duration-500"
+              className="absolute top-[14px] left-[14px] h-[2px] bg-cyan-700 transition-all duration-500"
               style={{ width: `calc(${(Math.min(currentStepIndex, displaySteps.length - 1) / (displaySteps.length - 1)) * 100}% - 28px)` }}
             />
             {displaySteps.map((s, i) => {
@@ -316,9 +316,9 @@ export default function BookPage() {
                     <div
                       className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300 ${
                         isComplete
-                          ? "bg-blue-600 text-white"
+                          ? "bg-cyan-700 text-white"
                           : isActive
-                          ? "bg-white dark:bg-slate-900 border-2 border-blue-600 text-blue-600"
+                          ? "bg-white dark:bg-slate-900 border-2 border-cyan-700 text-cyan-700"
                           : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
                       }`}
                     >
@@ -329,13 +329,13 @@ export default function BookPage() {
                       )}
                     </div>
                     {isActive && (
-                      <div className="absolute inset-0 rounded-full border-2 border-blue-600 animate-ping opacity-20" />
+                      <div className="absolute inset-0 rounded-full border-2 border-cyan-700 animate-ping opacity-20" />
                     )}
                   </div>
                   <span
                     className={`text-[10px] mt-1.5 font-medium transition-colors duration-300 ${
                       isActive
-                        ? "text-blue-600 dark:text-blue-400"
+                        ? "text-cyan-700 dark:text-cyan-400"
                         : isComplete
                         ? "text-slate-600 dark:text-slate-300"
                         : "text-slate-400 dark:text-slate-500"
@@ -385,8 +385,8 @@ export default function BookPage() {
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="p-4">
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center">
-                <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <div className="w-10 h-10 rounded-lg bg-cyan-50 dark:bg-cyan-950/40 flex items-center justify-center">
+                <User className="w-5 h-5 text-cyan-700 dark:text-cyan-400" />
               </div>
               <div>
                 <h2 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -405,7 +405,7 @@ export default function BookPage() {
                       value={patientName}
                       onChange={(e) => setPatientName(e.target.value)}
                       placeholder="Enter your name"
-                      className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-blue-500 focus:border-blue-500"
+                      className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-cyan-600 focus:border-cyan-600"
                     />
                   </div>
 
@@ -417,7 +417,7 @@ export default function BookPage() {
                         value={patientAge}
                         onChange={(e) => setPatientAge(e.target.value)}
                         placeholder="Age"
-                        className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-blue-500 focus:border-blue-500"
+                        className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-cyan-600 focus:border-cyan-600"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -430,7 +430,7 @@ export default function BookPage() {
                             onClick={() => setPatientGender(g.value)}
                             className={`flex-1 h-12 rounded-full text-sm font-medium transition-colors ${
                               patientGender === g.value
-                                ? "bg-blue-600 text-white"
+                                ? "bg-cyan-700 text-white"
                                 : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
                             }`}
                           >
@@ -450,7 +450,7 @@ export default function BookPage() {
                         value={patientEmail}
                         onChange={(e) => setPatientEmail(e.target.value)}
                         placeholder="Optional"
-                        className="pl-10 h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-blue-500 focus:border-blue-500"
+                        className="pl-10 h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-cyan-600 focus:border-cyan-600"
                       />
                     </div>
                   </div>
@@ -461,7 +461,7 @@ export default function BookPage() {
                 <>
                   <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
                     <div className="flex items-center gap-2 mb-4">
-                      <Users className="w-4 h-4 text-blue-600" />
+                      <Users className="w-4 h-4 text-cyan-700" />
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Patient Information</span>
                     </div>
                   </div>
@@ -476,7 +476,7 @@ export default function BookPage() {
                           onClick={() => setRelationship(r.value)}
                           className={`px-4 h-10 rounded-full text-sm font-medium transition-colors ${
                             relationship === r.value
-                              ? "bg-blue-600 text-white"
+                              ? "bg-cyan-700 text-white"
                               : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
                           }`}
                         >
@@ -492,7 +492,7 @@ export default function BookPage() {
                       value={depName}
                       onChange={(e) => setDepName(e.target.value)}
                       placeholder="Patient's full name"
-                      className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-blue-500 focus:border-blue-500"
+                      className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-cyan-600 focus:border-cyan-600"
                     />
                   </div>
 
@@ -504,7 +504,7 @@ export default function BookPage() {
                         value={depAge}
                         onChange={(e) => setDepAge(e.target.value)}
                         placeholder="Age"
-                        className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-blue-500 focus:border-blue-500"
+                        className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-cyan-600 focus:border-cyan-600"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -517,7 +517,7 @@ export default function BookPage() {
                             onClick={() => setDepGender(g.value)}
                             className={`flex-1 h-12 rounded-full text-sm font-medium transition-colors ${
                               depGender === g.value
-                                ? "bg-blue-600 text-white"
+                                ? "bg-cyan-700 text-white"
                                 : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
                             }`}
                           >
@@ -533,7 +533,7 @@ export default function BookPage() {
               <Button
                 onClick={handleRegister}
                 disabled={loading}
-                className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold border-0"
+                className="w-full h-12 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white font-semibold border-0"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
                 Continue
@@ -549,8 +549,8 @@ export default function BookPage() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               <div className="relative">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                <div className="absolute inset-0 w-8 h-8 rounded-full bg-blue-400/20 animate-ping" />
+                <Loader2 className="w-8 h-8 animate-spin text-cyan-700" />
+                <div className="absolute inset-0 w-8 h-8 rounded-full bg-cyan-400/20 animate-ping" />
               </div>
               <p className="text-sm text-muted-foreground font-medium">Loading departments...</p>
             </div>
@@ -567,10 +567,10 @@ export default function BookPage() {
                     transition={{ delay: idx * 0.07, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => handleSpecialtySelect(spec)}
-                    className="w-full text-left group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-300"
+                    className="w-full text-left group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-cyan-200 dark:hover:border-cyan-800 transition-all duration-300"
                   >
                     {/* Gradient hover overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-50/0 via-blue-50/0 to-blue-50/0 group-hover:from-blue-50/80 group-hover:via-blue-50/40 group-hover:to-transparent dark:group-hover:from-blue-950/30 dark:group-hover:via-blue-950/15 dark:group-hover:to-transparent transition-all duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-50/0 via-cyan-50/0 to-cyan-50/0 group-hover:from-cyan-50/80 group-hover:via-cyan-50/40 group-hover:to-transparent dark:group-hover:from-cyan-950/30 dark:group-hover:via-cyan-950/15 dark:group-hover:to-transparent transition-all duration-500" />
 
                     <div className="relative p-4">
                       {spec.doctor_count === 1 && doc ? (
@@ -579,13 +579,13 @@ export default function BookPage() {
                           <div className="relative">
                             {doc.image_url ? (
                               <div className="relative">
-                                <div className="absolute -inset-1 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl opacity-20 group-hover:opacity-40 blur-sm transition-opacity duration-300" />
+                                <div className="absolute -inset-1 bg-gradient-to-br from-cyan-400 to-indigo-500 rounded-2xl opacity-20 group-hover:opacity-40 blur-sm transition-opacity duration-300" />
                                 <img src={doc.image_url} alt={doc.name} className="relative w-16 h-16 rounded-2xl object-cover border-2 border-white dark:border-slate-800 shadow-md" />
                               </div>
                             ) : (
                               <div className="relative">
-                                <div className="absolute -inset-1 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl opacity-20 blur-sm" />
-                                <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+                                <div className="absolute -inset-1 bg-gradient-to-br from-cyan-400 to-indigo-500 rounded-2xl opacity-20 blur-sm" />
+                                <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-600 to-indigo-600 flex items-center justify-center shadow-md">
                                   <span className="text-white font-bold text-lg">{initials}</span>
                                 </div>
                               </div>
@@ -596,25 +596,25 @@ export default function BookPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-[10px] font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">{spec.specialty}</span>
+                              <span className="text-[10px] font-semibold uppercase tracking-wider text-cyan-700 dark:text-cyan-400">{spec.specialty}</span>
                             </div>
                             <p className="font-semibold text-[15px] text-slate-900 dark:text-white">{doc.name}</p>
                             {doc.designation && (
                               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{doc.designation}</p>
                             )}
                           </div>
-                          <div className="shrink-0 w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors">
-                            <ChevronRight className="w-4 h-4 text-blue-500 group-hover:translate-x-0.5 transition-transform" />
+                          <div className="shrink-0 w-8 h-8 rounded-full bg-cyan-50 dark:bg-cyan-950/40 flex items-center justify-center group-hover:bg-cyan-100 dark:group-hover:bg-cyan-900/40 transition-colors">
+                            <ChevronRight className="w-4 h-4 text-cyan-600 group-hover:translate-x-0.5 transition-transform" />
                           </div>
                         </div>
                       ) : (
                         /* Multi doctor - department card */
                         <div className="flex items-center gap-4">
                           <div className="relative">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-600 to-indigo-600 flex items-center justify-center shadow-md">
                               <Stethoscope className="w-7 h-7 text-white" />
                             </div>
-                            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-blue-600 border-2 border-white dark:border-slate-900 flex items-center justify-center">
+                            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-cyan-700 border-2 border-white dark:border-slate-900 flex items-center justify-center">
                               <span className="text-[9px] font-bold text-white">{spec.doctor_count}</span>
                             </div>
                           </div>
@@ -629,8 +629,8 @@ export default function BookPage() {
                                 d.image_url ? (
                                   <img key={d.doctor_id} src={d.image_url} alt={d.name} className="w-6 h-6 rounded-full object-cover border-2 border-white dark:border-slate-900" style={{ zIndex: 3 - i }} />
                                 ) : (
-                                  <div key={d.doctor_id} className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 border-2 border-white dark:border-slate-900 flex items-center justify-center" style={{ zIndex: 3 - i }}>
-                                    <span className="text-[8px] font-bold text-blue-600 dark:text-blue-400">{d.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+                                  <div key={d.doctor_id} className="w-6 h-6 rounded-full bg-cyan-100 dark:bg-cyan-900 border-2 border-white dark:border-slate-900 flex items-center justify-center" style={{ zIndex: 3 - i }}>
+                                    <span className="text-[8px] font-bold text-cyan-700 dark:text-cyan-400">{d.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
                                   </div>
                                 )
                               ))}
@@ -641,8 +641,8 @@ export default function BookPage() {
                               )}
                             </div>
                           </div>
-                          <div className="shrink-0 w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors">
-                            <ChevronRight className="w-4 h-4 text-blue-500 group-hover:translate-x-0.5 transition-transform" />
+                          <div className="shrink-0 w-8 h-8 rounded-full bg-cyan-50 dark:bg-cyan-950/40 flex items-center justify-center group-hover:bg-cyan-100 dark:group-hover:bg-cyan-900/40 transition-colors">
+                            <ChevronRight className="w-4 h-4 text-cyan-600 group-hover:translate-x-0.5 transition-transform" />
                           </div>
                         </div>
                       )}
@@ -679,7 +679,7 @@ export default function BookPage() {
                   className="w-full text-left group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300"
                 >
                   {/* Animated gradient border on hover */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ padding: "1px" }}>
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-600 via-indigo-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ padding: "1px" }}>
                     <div className="absolute inset-[1px] rounded-[15px] bg-white dark:bg-slate-900" />
                   </div>
 
@@ -689,13 +689,13 @@ export default function BookPage() {
                       <div className="relative shrink-0">
                         {doc.image_url ? (
                           <div className="relative">
-                            <div className="absolute -inset-1.5 bg-gradient-to-br from-blue-400 via-indigo-400 to-purple-400 rounded-2xl opacity-25 group-hover:opacity-50 blur-md transition-all duration-500" />
+                            <div className="absolute -inset-1.5 bg-gradient-to-br from-cyan-400 via-indigo-400 to-purple-400 rounded-2xl opacity-25 group-hover:opacity-50 blur-md transition-all duration-500" />
                             <img src={doc.image_url} alt={doc.name} className="relative w-20 h-20 rounded-2xl object-cover border-2 border-white dark:border-slate-800 shadow-lg" />
                           </div>
                         ) : (
                           <div className="relative">
-                            <div className="absolute -inset-1.5 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl opacity-25 blur-md" />
-                            <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
+                            <div className="absolute -inset-1.5 bg-gradient-to-br from-cyan-400 to-indigo-500 rounded-2xl opacity-25 blur-md" />
+                            <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-600 via-cyan-700 to-indigo-600 flex items-center justify-center shadow-lg">
                               <span className="text-white font-bold text-xl">{initials}</span>
                             </div>
                           </div>
@@ -711,8 +711,8 @@ export default function BookPage() {
                         <p className="font-bold text-base text-slate-900 dark:text-white leading-tight">{doc.name}</p>
                         {doc.designation && (
                           <div className="flex items-center gap-1.5 mt-1.5">
-                            <Sparkles className="w-3 h-3 text-blue-500" />
-                            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">{doc.designation}</span>
+                            <Sparkles className="w-3 h-3 text-cyan-600" />
+                            <span className="text-xs font-medium text-cyan-700 dark:text-cyan-400">{doc.designation}</span>
                           </div>
                         )}
                         <div className="flex items-center gap-1.5 mt-1.5">
@@ -722,7 +722,7 @@ export default function BookPage() {
 
                         {/* Book button */}
                         <div className="mt-3">
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-xs font-semibold group-hover:bg-blue-600 group-hover:text-white dark:group-hover:bg-blue-600 transition-all duration-300">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-400 text-xs font-semibold group-hover:bg-cyan-700 group-hover:text-white dark:group-hover:bg-cyan-700 transition-all duration-300">
                             <CalendarDays className="w-3 h-3" />
                             Book Appointment
                             <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
@@ -743,7 +743,7 @@ export default function BookPage() {
         <div>
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <Loader2 className="w-7 h-7 animate-spin text-blue-600" />
+              <Loader2 className="w-7 h-7 animate-spin text-cyan-700" />
               <p className="text-sm text-muted-foreground">Checking availability...</p>
             </div>
           ) : availableDates.length === 0 ? (
@@ -780,21 +780,21 @@ export default function BookPage() {
                       onClick={() => handleDateSelect(d)}
                       className={`flex-shrink-0 snap-center w-16 py-3 rounded-xl text-center transition-all active:scale-95 ${
                         isSelected
-                          ? "bg-blue-600 text-white shadow-sm"
+                          ? "bg-cyan-700 text-white shadow-sm"
                           : isToday
-                          ? "bg-white dark:bg-slate-900 border-2 border-blue-500 dark:border-blue-500"
+                          ? "bg-white dark:bg-slate-900 border-2 border-cyan-600 dark:border-cyan-600"
                           : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
                       }`}
                     >
-                      <p className={`text-[10px] font-medium uppercase tracking-wide ${isSelected ? "text-blue-100" : isToday ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"}`}>
+                      <p className={`text-[10px] font-medium uppercase tracking-wide ${isSelected ? "text-cyan-100" : isToday ? "text-cyan-700 dark:text-cyan-400" : "text-muted-foreground"}`}>
                         {isToday ? "Today" : dayName}
                       </p>
                       <p className={`text-xl font-semibold my-0.5 ${isSelected ? "text-white" : "text-slate-900 dark:text-white"}`}>{dayNum}</p>
-                      <p className={`text-[10px] font-medium ${isSelected ? "text-blue-100" : "text-muted-foreground"}`}>{month}</p>
+                      <p className={`text-[10px] font-medium ${isSelected ? "text-cyan-100" : "text-muted-foreground"}`}>{month}</p>
                       <div className={`text-[9px] font-semibold mt-1.5 mx-auto w-fit px-1.5 py-0.5 rounded-full ${
                         isSelected
                           ? "bg-white/20 text-white"
-                          : "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
+                          : "bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-400"
                       }`}>
                         {d.available_count}
                       </div>
@@ -855,7 +855,7 @@ export default function BookPage() {
               <Button
                 onClick={handleConfirm}
                 disabled={loading}
-                className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold border-0"
+                className="w-full h-12 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white font-semibold border-0"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle2 className="w-5 h-5 mr-2" />}
                 Confirm & Book
@@ -906,7 +906,7 @@ function ErrorState({ message }: { message: string }) {
 function ConfirmRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-center gap-3 p-3">
-      <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+      <div className="w-8 h-8 rounded-lg bg-cyan-50 dark:bg-cyan-950/30 flex items-center justify-center text-cyan-700 dark:text-cyan-400 shrink-0">
         {icon}
       </div>
       <div className="flex-1 min-w-0">
@@ -949,8 +949,8 @@ function SlotGroup({ label, icon, slots, selected, onSelect }: {
               onClick={() => onSelect(slot)}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors active:scale-95 ${
                 isSelected
-                  ? "bg-blue-600 text-white"
-                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:border-blue-300 dark:hover:border-blue-700"
+                  ? "bg-cyan-700 text-white"
+                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:border-cyan-300 dark:hover:border-cyan-800"
               }`}
             >
               {slot.time}
@@ -1056,13 +1056,13 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
           isPaid
             ? "bg-green-100 dark:bg-green-950/40"
             : paymentStatus === "checking"
-            ? "bg-blue-100 dark:bg-blue-950/40"
+            ? "bg-cyan-100 dark:bg-cyan-950/40"
             : "bg-slate-100 dark:bg-slate-800"
         }`}>
           {isPaid ? (
             <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
           ) : paymentStatus === "checking" ? (
-            <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
+            <Loader2 className="w-8 h-8 text-cyan-700 dark:text-cyan-400 animate-spin" />
           ) : (
             <Clock className="w-8 h-8 text-slate-400" />
           )}
@@ -1110,7 +1110,7 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
           onClick={handlePayClick}
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-center leading-[3rem] transition-colors mb-4"
+          className="block w-full h-12 bg-cyan-700 hover:bg-cyan-800 text-white rounded-xl font-semibold text-center leading-[3rem] transition-colors mb-4"
         >
           Pay Now {"\u2014"} {"\u20B9"}{bookingResult.consultation_fee || "200"}
         </a>
@@ -1122,7 +1122,7 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
           href={bookingResult.payment_link}
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-center leading-[3rem] transition-colors mb-4"
+          className="block w-full h-12 bg-cyan-700 hover:bg-cyan-800 text-white rounded-xl font-semibold text-center leading-[3rem] transition-colors mb-4"
         >
           Open Payment Page
         </a>
@@ -1131,7 +1131,7 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
       {/* Checking Status Indicator */}
       {paymentStatus === "checking" && (
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-1 mb-3">
-          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+          <Loader2 className="w-4 h-4 animate-spin text-cyan-700" />
           <span>Checking payment status...</span>
         </div>
       )}
@@ -1145,9 +1145,9 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
 
       {/* Payment Instructions */}
       {paymentStatus === "checking" && (
-        <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-800 p-3 text-xs space-y-1">
-          <p className="font-semibold text-blue-700 dark:text-blue-300">After paying, you will be redirected back automatically.</p>
-          <p className="text-blue-600/80 dark:text-blue-400/80">Your OP Pass will be sent to WhatsApp.</p>
+        <div className="bg-cyan-50 dark:bg-cyan-950/30 rounded-xl border border-cyan-200 dark:border-cyan-800 p-3 text-xs space-y-1">
+          <p className="font-semibold text-cyan-800 dark:text-cyan-300">After paying, you will be redirected back automatically.</p>
+          <p className="text-cyan-700/80 dark:text-cyan-400/80">Your OP Pass will be sent to WhatsApp.</p>
         </div>
       )}
 

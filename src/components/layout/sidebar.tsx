@@ -65,6 +65,7 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
 
   return (
     <aside
+      aria-label="Main navigation"
       className={cn(
         "h-screen flex flex-col shrink-0 transition-[width] duration-200 ease-in-out",
         "bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800",
@@ -75,7 +76,7 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
       <div className={cn("shrink-0", collapsed ? "px-2 pt-3" : "px-3 pt-3")}>
         <div
           className={cn(
-            "rounded-2xl bg-blue-600 overflow-hidden",
+            "rounded-2xl bg-cyan-700 overflow-hidden",
             collapsed ? "p-2.5" : "p-4"
           )}
         >
@@ -104,7 +105,7 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
       <BranchSwitcher role={role} clientId={clientId} collapsed={collapsed} />
 
       {/* ── Navigation ── */}
-      <div className="flex-1 overflow-y-auto sidebar-scroll py-3 px-3">
+      <nav aria-label="Sidebar navigation" className="flex-1 overflow-y-auto sidebar-scroll py-3 px-3">
         {navConfig.sections.map((section, sIdx) => (
           <SidebarSectionBlock
             key={section.id}
@@ -117,7 +118,7 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
             isFirst={sIdx === 0}
           />
         ))}
-      </div>
+      </nav>
 
       {/* ── User ── */}
       {userName && (
@@ -128,7 +129,7 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
               collapsed && "justify-center"
             )}
           >
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-[11px] font-bold text-white shrink-0">
+            <div className="w-8 h-8 rounded-full bg-cyan-700 flex items-center justify-center text-[11px] font-bold text-white shrink-0">
               {userName
                 .split(" ")
                 .map((n) => n[0])
@@ -159,7 +160,8 @@ export function Sidebar({ role, hospitalName, userName, clientId = "", logoUrl }
       <div className="px-3 pb-3 shrink-0">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center h-8 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="w-full flex items-center justify-center h-8 rounded-xl text-gray-400 hover:text-cyan-700 hover:bg-cyan-50 dark:hover:bg-cyan-950/20 transition-colors"
         >
           {collapsed ? (
             <ChevronRight className="w-4 h-4" />
@@ -196,6 +198,8 @@ function SidebarSectionBlock({
       {!collapsed ? (
         <button
           onClick={onToggleSection}
+          aria-expanded={!sectionCollapsed}
+          aria-label={`${sectionCollapsed ? "Expand" : "Collapse"} ${section.label} section`}
           className="w-full flex items-center justify-between px-3 py-1.5 group cursor-pointer"
         >
           <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 select-none">
@@ -213,7 +217,7 @@ function SidebarSectionBlock({
       )}
 
       {!sectionCollapsed && (
-        <nav className="space-y-0.5 mt-1">
+        <div role="list" className="space-y-0.5 mt-1">
           {section.items.map((item) => (
             <SidebarNavLink
               key={item.href}
@@ -222,7 +226,7 @@ function SidebarSectionBlock({
               active={isActive(item.href)}
             />
           ))}
-        </nav>
+        </div>
       )}
     </div>
   )
@@ -243,12 +247,14 @@ function SidebarNavLink({
   const content = (
     <Link
       href={item.href}
+      aria-current={active ? "page" : undefined}
+      aria-label={collapsed ? item.label : undefined}
       className={cn(
         "relative flex items-center gap-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150",
         collapsed ? "justify-center px-2" : "px-3",
         active
-          ? "bg-blue-600 text-white font-semibold shadow-sm shadow-blue-600/20"
-          : "text-gray-600 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-950/20"
+          ? "bg-cyan-700 text-white font-semibold shadow-sm shadow-cyan-700/20"
+          : "text-gray-600 dark:text-gray-400 hover:text-cyan-700 hover:bg-cyan-50 dark:hover:text-cyan-400 dark:hover:bg-cyan-950/20"
       )}
     >
       <item.icon

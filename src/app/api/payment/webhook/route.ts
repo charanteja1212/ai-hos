@@ -9,6 +9,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { logAudit } from '@/lib/audit';
+import { createRouteLogger, createTenantLogger } from '@/lib/logger';
+
+const log = createRouteLogger('payment/webhook');
 
 /* ── in-memory dedup (survives across requests within same container) ── */
 const processedPayments = new Set<string>();
@@ -28,7 +31,7 @@ async function sbGet(path: string) {
   const r = await fetch(SB_URL() + path, { headers: sbHeaders(), signal: AbortSignal.timeout(10000) });
   if (!r.ok) {
     const txt = await r.text().catch(() => '');
-    console.error('[webhook][sbGet] FAIL', r.status, path, txt.slice(0, 200));
+    log.error({ status: r.status, path, body: txt.slice(0, 200) }, 'sbGet failed');
     return [];
   }
   return r.json();
@@ -41,7 +44,7 @@ async function sbPatch(path: string, body: object) {
   });
   if (!r.ok) {
     const txt = await r.text().catch(() => '');
-    console.error('[webhook][sbPatch] FAIL', r.status, path, txt.slice(0, 200));
+    log.error({ status: r.status, path, body: txt.slice(0, 200) }, 'sbPatch failed');
   }
 }
 
@@ -52,7 +55,7 @@ async function sbPost(path: string, body: object) {
   });
   if (!r.ok) {
     const txt = await r.text().catch(() => '');
-    console.error('[webhook][sbPost] FAIL', r.status, path, txt.slice(0, 200));
+    log.error({ status: r.status, path, body: txt.slice(0, 200) }, 'sbPost failed');
   }
 }
 
@@ -60,7 +63,7 @@ async function sbDelete(path: string) {
   const r = await fetch(SB_URL() + path, { method: 'DELETE', headers: sbHeaders(), signal: AbortSignal.timeout(10000) });
   if (!r.ok) {
     const txt = await r.text().catch(() => '');
-    console.error('[webhook][sbDelete] FAIL', r.status, path, txt.slice(0, 200));
+    log.error({ status: r.status, path, body: txt.slice(0, 200) }, 'sbDelete failed');
   }
 }
 
@@ -136,63 +139,63 @@ async function renderCard(html: string): Promise<string | null> {
 /* ── main handler ── */
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
-  console.log('[webhook] POST received');
+  log.info('POST received');
 
   // ── PHASE 1: Signature verification ──
   const secret = WEBHOOK_SECRET();
   if (!secret) {
-    console.error('[webhook][PHASE 1] FAIL — RAZORPAY_WEBHOOK_SECRET is not configured');
+    log.error('PHASE 1 FAIL — RAZORPAY_WEBHOOK_SECRET is not configured');
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
   }
   const sig = req.headers.get('x-razorpay-signature') || '';
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
   if (sig !== expected) {
-    console.error('[webhook][PHASE 1] FAIL — Signature mismatch');
+    log.error('PHASE 1 FAIL — Signature mismatch');
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
-  console.log('[webhook][PHASE 1] OK — Signature verified');
+  log.info('PHASE 1 OK — Signature verified');
 
   // ── PHASE 2: Parse event ──
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let event: any;
   try { event = JSON.parse(rawBody); } catch (e) {
-    console.error('[webhook][PHASE 2] FAIL — Invalid JSON:', e);
+    log.error({ err: e }, 'PHASE 2 FAIL — Invalid JSON');
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
   const eventType = event.event || '';
   if (eventType !== 'payment_link.paid') {
-    console.log('[webhook][PHASE 2] SKIP — Event type:', eventType, '(not payment_link.paid)');
+    log.info({ eventType }, 'PHASE 2 SKIP — not payment_link.paid');
     return NextResponse.json({ status: 'ignored' });
   }
 
   const paymentLinkId = event.payload?.payment_link?.entity?.id || '';
   const paymentId = event.payload?.payment?.entity?.id || '';
-  console.log('[webhook][PHASE 2] OK — payment_link.paid | link:', paymentLinkId, '| payment:', paymentId);
+  log.info({ paymentLinkId, paymentId }, 'PHASE 2 OK — payment_link.paid');
 
   if (!paymentLinkId || !paymentId) {
-    console.error('[webhook][PHASE 2] FAIL — Missing IDs | linkId:', paymentLinkId, '| paymentId:', paymentId);
+    log.error({ paymentLinkId, paymentId }, 'PHASE 2 FAIL — Missing IDs');
     return NextResponse.json({ error: 'Missing IDs' }, { status: 400 });
   }
 
   // ── PHASE 3: Dedup check (memory) ──
   if (processedPayments.has(paymentId)) {
-    console.log('[webhook][PHASE 3] SKIP — Already processed (memory):', paymentId);
+    log.info({ paymentId }, 'PHASE 3 SKIP — Already processed (memory)');
     return NextResponse.json({ status: 'already_processed' });
   }
-  console.log('[webhook][PHASE 3] OK — Not in memory dedup set');
+  log.info('PHASE 3 OK — Not in memory dedup set');
 
   // ── PHASE 4: Dedup check (DB) ──
   try {
     const existing = await sbGet('/appointments?razorpay_payment_id=eq.' + encodeURIComponent(paymentId) + '&status=eq.confirmed&select=booking_id');
     if (Array.isArray(existing) && existing.length > 0) {
       processedPayments.add(paymentId);
-      console.log('[webhook][PHASE 4] SKIP — Already processed (DB):', existing[0].booking_id);
+      log.info({ bookingId: existing[0].booking_id }, 'PHASE 4 SKIP — Already processed (DB)');
       return NextResponse.json({ status: 'already_processed' });
     }
-    console.log('[webhook][PHASE 4] OK — Not in DB (fresh payment)');
+    log.info('PHASE 4 OK — Not in DB (fresh payment)');
   } catch (e) {
-    console.error('[webhook][PHASE 4] WARN — DB dedup check failed:', e);
+    log.warn({ err: e }, 'PHASE 4 — DB dedup check failed');
   }
 
   // ── PHASE 5: Extract data from webhook payload ──
@@ -200,9 +203,7 @@ export async function POST(req: NextRequest) {
     const link = event.payload?.payment_link?.entity || {};
     const notes = link.notes || {};
 
-    console.log('[webhook][PHASE 5] Raw link entity keys:', Object.keys(link));
-    console.log('[webhook][PHASE 5] Raw notes:', JSON.stringify(notes));
-    console.log('[webhook][PHASE 5] Link amount:', link.amount, '| Link status:', link.status);
+    log.info({ linkKeys: Object.keys(link), notes, linkAmount: link.amount, linkStatus: link.status }, 'PHASE 5 — Raw data');
 
     const type = notes.type || 'appointment';
     const bookingId = notes.reference_id || '';
@@ -215,14 +216,14 @@ export async function POST(req: NextRequest) {
     const apptTime = notes.appointment_time || '';
     const amount = link.amount ? link.amount / 100 : 0;
 
-    console.log('[webhook][PHASE 5] OK — Extracted:', {
-      type, bookingId, tenantId, patientName, patientPhone, doctorName, specialty, apptDate, apptTime, amount,
-    });
+    log.info({ type, bookingId, tenantId, patientName, patientPhone, doctorName, specialty, apptDate, apptTime, amount }, 'PHASE 5 OK — Extracted');
 
     if (!bookingId) {
-      console.error('[webhook][PHASE 5] FAIL — No booking ID in notes! Cannot proceed.');
+      log.error('PHASE 5 FAIL — No booking ID in notes');
       return NextResponse.json({ error: 'No booking ID in payment notes' }, { status: 400 });
     }
+
+    const tlog = createTenantLogger(tenantId, { route: 'payment/webhook', bookingId, paymentId });
 
     // ── PHASE 6: Check existing OP pass ──
     if (type === 'appointment' && bookingId) {
@@ -230,12 +231,12 @@ export async function POST(req: NextRequest) {
         const existingPass = await sbGet('/op_passes?booking_id=eq.' + encodeURIComponent(bookingId) + '&status=eq.ACTIVE&select=op_pass_id');
         if (Array.isArray(existingPass) && existingPass.length > 0) {
           processedPayments.add(paymentId);
-          console.log('[webhook][PHASE 6] SKIP — OP pass already exists:', existingPass[0].op_pass_id, 'for booking:', bookingId);
+          tlog.info({ opPassId: existingPass[0].op_pass_id }, 'PHASE 6 SKIP — OP pass already exists');
           return NextResponse.json({ status: 'already_processed' });
         }
-        console.log('[webhook][PHASE 6] OK — No existing OP pass for booking:', bookingId);
+        tlog.info('PHASE 6 OK — No existing OP pass');
       } catch (e) {
-        console.error('[webhook][PHASE 6] WARN — OP pass check failed:', e);
+        tlog.warn({ err: e }, 'PHASE 6 — OP pass check failed');
       }
     }
 
@@ -245,10 +246,10 @@ export async function POST(req: NextRequest) {
       const apptCheck = await sbGet('/appointments?booking_id=eq.' + encodeURIComponent(bookingId) + '&select=booking_id');
       if (!Array.isArray(apptCheck) || apptCheck.length === 0) {
         processedPayments.add(paymentId);
-        console.error('[webhook][PHASE 7] FAIL — Appointment not found in DB:', bookingId);
+        tlog.error('PHASE 7 FAIL — Appointment not found in DB');
         return NextResponse.json({ status: 'appointment_not_found' });
       }
-      console.log('[webhook][PHASE 7] OK — Appointment exists:', bookingId);
+      tlog.info('PHASE 7 OK — Appointment exists');
 
       // ── PHASE 8: Generate OP Pass data ──
       const ist = nowIST();
@@ -257,7 +258,7 @@ export async function POST(req: NextRequest) {
       const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.ainewworld.in'}/api/verify?id=` + encodeURIComponent(opPassId);
       const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(verifyUrl);
       const expiryDisplay = new Date(expiryDate + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
-      console.log('[webhook][PHASE 8] OK — Generated OP Pass:', { opPassId, issueDate: ist.date, expiryDate, expiryDisplay });
+      tlog.info({ opPassId, issueDate: ist.date, expiryDate, expiryDisplay }, 'PHASE 8 OK — Generated OP Pass');
 
       // ── PHASE 9: Get appointment details ──
       let bookedBy = patientPhone;
@@ -270,9 +271,9 @@ export async function POST(req: NextRequest) {
           depId = rows[0].dependent_id || null;
           bookedBy = (rows[0].booked_by_whatsapp_number || patientPhone).replace(/\D/g, '');
         }
-        console.log('[webhook][PHASE 9] OK — Appointment details:', { pType, depId, bookedBy });
+        tlog.info({ pType, depId, bookedBy }, 'PHASE 9 OK — Appointment details');
       } catch (e) {
-        console.error('[webhook][PHASE 9] WARN — Failed to get appointment details:', e);
+        tlog.warn({ err: e }, 'PHASE 9 — Failed to get appointment details');
       }
       if (!bookedBy) bookedBy = patientPhone;
 
@@ -286,11 +287,11 @@ export async function POST(req: NextRequest) {
           status: 'ACTIVE', qr_code: verifyUrl,
           booked_by_whatsapp_number: bookedBy, tenant_id: tenantId,
         };
-        console.log('[webhook][PHASE 10] Inserting OP pass:', JSON.stringify(opPassData));
+        tlog.info({ opPassData }, 'PHASE 10 — Inserting OP pass');
         await sbPost('/op_passes', opPassData);
-        console.log('[webhook][PHASE 10] OK — OP pass inserted:', opPassId);
+        tlog.info({ opPassId }, 'PHASE 10 OK — OP pass inserted');
       } catch (e) {
-        console.error('[webhook][PHASE 10] FAIL — OP pass insert error:', e);
+        tlog.error({ err: e }, 'PHASE 10 FAIL — OP pass insert error');
       }
 
       // ── PHASE 11: Update appointment status ──
@@ -299,7 +300,7 @@ export async function POST(req: NextRequest) {
           status: 'confirmed', payment_status: 'paid',
           payment_id: paymentId, razorpay_payment_id: paymentId, op_pass_id: opPassId,
         });
-        console.log('[webhook][PHASE 11] OK — Appointment updated to confirmed/paid');
+        tlog.info('PHASE 11 OK — Appointment updated to confirmed/paid');
         logAudit({
           action: "status_change", entityType: "appointment", entityId: bookingId,
           actorEmail: patientPhone || "payment_webhook", actorRole: "system",
@@ -307,15 +308,15 @@ export async function POST(req: NextRequest) {
           details: { payment_status: "paid", payment_id: paymentId, amount },
         });
       } catch (e) {
-        console.error('[webhook][PHASE 11] FAIL — Appointment update error:', e);
+        tlog.error({ err: e }, 'PHASE 11 FAIL — Appointment update error');
       }
 
       // ── PHASE 12: Release slot lock ──
       try {
         await sbDelete('/slot_locks?booking_id=eq.' + encodeURIComponent(bookingId));
-        console.log('[webhook][PHASE 12] OK — Slot lock released');
+        tlog.info('PHASE 12 OK — Slot lock released');
       } catch (e) {
-        console.error('[webhook][PHASE 12] WARN — Slot lock release failed:', e);
+        tlog.warn({ err: e }, 'PHASE 12 — Slot lock release failed');
       }
 
       // ── PHASE 13: Get tenant WA credentials ──
@@ -329,9 +330,9 @@ export async function POST(req: NextRequest) {
           waUrl = t[0].wa_api_url || '';
           waToken = t[0].wa_token || '';
         }
-        console.log('[webhook][PHASE 13] OK — Tenant:', { hospitalName, hasWaUrl: !!waUrl, hasWaToken: !!waToken });
+        tlog.info({ hospitalName, hasWaUrl: !!waUrl, hasWaToken: !!waToken }, 'PHASE 13 OK — Tenant fetched');
       } catch (e) {
-        console.error('[webhook][PHASE 13] WARN — Tenant fetch failed:', e);
+        tlog.warn({ err: e }, 'PHASE 13 — Tenant fetch failed');
       }
 
       // ── PHASE 14: Generate card image ──
@@ -343,7 +344,7 @@ export async function POST(req: NextRequest) {
       });
       const cardUrl = await renderCard(cardHtml);
       const imageUrl = cardUrl || qrUrl;
-      console.log('[webhook][PHASE 14] OK — Card image:', cardUrl ? 'html2img success' : 'fallback to QR url');
+      tlog.info({ cardRendered: !!cardUrl }, 'PHASE 14 OK — Card image');
 
       const caption = cardUrl
         ? '*' + hospitalName + '*\nAppointment Confirmed\n\n*Amount Paid:* \u20B9' + amount + '\n*Booking ID:* ' + bookingId + '\n*Valid Until:* ' + expiryDisplay + '\n\n_Present this digital pass at reception._'
@@ -351,28 +352,28 @@ export async function POST(req: NextRequest) {
 
       // ── PHASE 15: Send WhatsApp notifications ──
       if (patientPhone) {
-        console.log('[webhook][PHASE 15] Sending WA card to patient:', patientPhone);
+        tlog.info({ patientPhone }, 'PHASE 15 — Sending WA card to patient');
         await sendWA(waUrl, waToken, patientPhone, { type: 'image', image: { link: imageUrl, caption } });
         await new Promise(r => setTimeout(r, 3000));
         await sendWA(waUrl, waToken, patientPhone, {
           type: 'text', text: { body: 'Thank you for choosing *' + hospitalName + '* \u2705\n\nType *menu* anytime to book another appointment, reschedule, or manage your bookings.' },
         });
-        console.log('[webhook][PHASE 15] OK — WA messages sent to patient');
+        tlog.info('PHASE 15 OK — WA messages sent to patient');
       } else {
-        console.error('[webhook][PHASE 15] SKIP — No patient phone number');
+        tlog.warn('PHASE 15 SKIP — No patient phone number');
       }
 
       // Send to booker if different person
       const bookerClean = bookedBy.replace(/\D/g, '');
       if (bookerClean && bookerClean !== patientPhone) {
-        console.log('[webhook][PHASE 15b] Sending WA card to booker:', bookerClean);
+        tlog.info({ bookerPhone: bookerClean }, 'PHASE 15b — Sending WA card to booker');
         await sendWA(waUrl, waToken, bookerClean, {
           type: 'image', image: { link: imageUrl, caption: '*' + hospitalName + '*\nBooking Confirmed for ' + patientName + '\n\n*Doctor:* Dr. ' + drName + '\n*Date:* ' + apptDate + '\n*Time:* ' + apptTime + '\n*Booking ID:* ' + bookingId + '\n\n_Present this pass at reception._' },
         });
-        console.log('[webhook][PHASE 15b] OK — WA card sent to booker');
+        tlog.info('PHASE 15b OK — WA card sent to booker');
       }
 
-      console.log('[webhook] ===== SUCCESS ===== booking:', bookingId, '| opPass:', opPassId);
+      tlog.info({ opPassId }, 'SUCCESS — appointment payment processed');
     }
 
     /* ── PRESCRIPTION ── */
@@ -381,14 +382,14 @@ export async function POST(req: NextRequest) {
         await sbPatch('/prescriptions?prescription_id=eq.' + encodeURIComponent(bookingId), {
           payment_status: 'paid', payment_id: paymentId, payment_link: paymentLinkId,
         });
-        console.log('[webhook] Prescription paid:', bookingId);
+        tlog.info('Prescription paid');
         logAudit({
           action: "status_change", entityType: "prescription", entityId: bookingId,
           actorEmail: "payment_webhook", actorRole: "system",
           details: { payment_status: "paid", payment_id: paymentId },
         });
       } catch (e) {
-        console.error('[webhook] FAIL — Prescription update error:', e);
+        tlog.error({ err: e }, 'Prescription update error');
       }
     }
 
@@ -396,8 +397,7 @@ export async function POST(req: NextRequest) {
     processedPayments.add(paymentId);
     return NextResponse.json({ status: 'ok' });
   } catch (err: unknown) {
-    console.error('[webhook] FATAL ERROR:', err instanceof Error ? err.message : err);
-    console.error('[webhook] Stack:', err instanceof Error ? err.stack : 'no stack');
+    log.error({ err }, 'FATAL ERROR');
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
   }
 }

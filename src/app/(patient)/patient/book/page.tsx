@@ -299,8 +299,8 @@ export default function PatientBookPage() {
                 >
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                        <Stethoscope className="w-5 h-5 text-blue-600" />
+                      <div className="w-10 h-10 rounded-xl bg-cyan-600/10 flex items-center justify-center">
+                        <Stethoscope className="w-5 h-5 text-cyan-700" />
                       </div>
                       <p className="text-sm font-medium">{spec}</p>
                     </div>

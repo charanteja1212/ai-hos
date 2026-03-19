@@ -44,7 +44,7 @@ const TIER_ICONS: Record<string, React.ElementType> = {
 
 const TIER_COLORS: Record<string, string> = {
   basic: "bg-green-500/10 text-green-600 border-green-200",
-  medium: "bg-blue-500/10 text-blue-600 border-blue-200",
+  medium: "bg-cyan-600/10 text-cyan-700 border-cyan-200",
   enterprise: "bg-purple-500/10 text-purple-600 border-purple-200",
 }
 
@@ -120,7 +120,7 @@ export default function SubscriptionPage() {
 
   const usageItems = [
     { label: "Doctors", icon: Stethoscope, current: usage?.doctors || 0, max: effectiveLimits.max_doctors, color: "text-green-600" },
-    { label: "Branches", icon: GitBranch, current: usage?.branches || 0, max: effectiveLimits.max_branches, color: "text-blue-600" },
+    { label: "Branches", icon: GitBranch, current: usage?.branches || 0, max: effectiveLimits.max_branches, color: "text-cyan-700" },
     { label: "Staff", icon: Users, current: usage?.staff || 0, max: effectiveLimits.max_staff, color: "text-purple-600" },
     { label: "Today's Appointments", icon: CalendarDays, current: usage?.todayAppointments || 0, max: effectiveLimits.max_appointments_per_day, color: "text-amber-600" },
   ]

@@ -347,7 +347,7 @@ export default function DoctorAnalyticsPage() {
             <Card className="glass-card">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-blue-500" />
+                  <TrendingUp className="w-4 h-4 text-cyan-600" />
                   Daily Consultation Trend
                 </CardTitle>
               </CardHeader>
@@ -496,7 +496,7 @@ export default function DoctorAnalyticsPage() {
             <Card className="glass-card">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-blue-500" />
+                  <MessageSquare className="w-4 h-4 text-cyan-600" />
                   Recent Reviews
                 </CardTitle>
               </CardHeader>

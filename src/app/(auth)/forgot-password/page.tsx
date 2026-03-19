@@ -67,7 +67,7 @@ export default function ForgotPasswordPage() {
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             className="inline-flex relative"
           >
-            <div className="w-16 h-16 rounded-[18px] bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-blue-500/20">
+            <div className="w-16 h-16 rounded-[18px] bg-gradient-to-br from-cyan-600 via-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-cyan-600/20">
               <Heart className="w-8 h-8 text-white" />
             </div>
             <motion.div
@@ -149,7 +149,7 @@ export default function ForgotPasswordPage() {
                 <Button
                   type="submit"
                   disabled={loading || !email}
-                  className="w-full h-12 rounded-xl font-semibold text-white border-0 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-700 hover:opacity-90 transition-opacity disabled:opacity-40"
+                  className="w-full h-12 rounded-xl font-semibold text-white border-0 bg-gradient-to-r from-cyan-600 via-cyan-700 to-indigo-700 hover:opacity-90 transition-opacity disabled:opacity-40"
                 >
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />

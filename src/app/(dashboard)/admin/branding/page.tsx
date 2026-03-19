@@ -214,7 +214,7 @@ function BrandingContent() {
         <Card className="card-hover rounded-2xl">
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white"><Eye className="w-3.5 h-3.5" /></div>
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-cyan-700 flex items-center justify-center text-white"><Eye className="w-3.5 h-3.5" /></div>
               Live Preview
             </CardTitle>
           </CardHeader>

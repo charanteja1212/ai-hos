@@ -33,7 +33,7 @@ import type { SessionUser } from "@/types/auth"
 import type { LabOrder } from "@/types/database"
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  ordered: { label: "Ordered", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300", icon: Clock },
+  ordered: { label: "Ordered", color: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300", icon: Clock },
   sample_collected: { label: "Collected", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300", icon: Beaker },
   processing: { label: "Processing", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300", icon: TestTube },
   completed: { label: "Completed", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300", icon: CheckCircle2 },

@@ -8,6 +8,9 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { scheduleReminders, cancelReminders } from "@/lib/queue/queues"
 import { logAudit } from "@/lib/audit"
+import { logger } from "@/lib/logger"
+
+const log = logger.child({ module: "booking" })
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -58,7 +61,7 @@ interface PatientData {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Get IST date string (YYYY-MM-DD) */
-function getISTDate(offsetDays = 0): string {
+export function getISTDate(offsetDays = 0): string {
   const now = new Date()
   // IST = UTC + 5:30
   const ist = new Date(now.getTime() + (5.5 * 60 * 60 * 1000) + (offsetDays * 24 * 60 * 60 * 1000))
@@ -66,39 +69,39 @@ function getISTDate(offsetDays = 0): string {
 }
 
 /** Get IST hours + minutes as "HH:MM" */
-function getISTTime(): string {
+export function getISTTime(): string {
   const now = new Date()
   const ist = new Date(now.getTime() + (5.5 * 60 * 60 * 1000))
   return ist.toISOString().split("T")[1].substring(0, 5)
 }
 
 /** Parse "HH:MM" to minutes since midnight */
-function timeToMinutes(time: string): number {
+export function timeToMinutes(time: string): number {
   const [h, m] = time.split(":").map(Number)
   return h * 60 + m
 }
 
 /** Minutes since midnight to "HH:MM" */
-function minutesToTime(minutes: number): string {
+export function minutesToTime(minutes: number): string {
   const h = Math.floor(minutes / 60)
   const m = minutes % 60
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`
 }
 
 /** Day of week number for schedule lookup (0=Sun, 1=Mon, ..., 6=Sat) */
-function getDayOfWeek(dateStr: string): number {
+export function getDayOfWeek(dateStr: string): number {
   return new Date(dateStr + "T00:00:00").getDay()
 }
 
 /** Day of week name for display */
-function getDayName(dateStr: string): string {
+export function getDayName(dateStr: string): string {
   const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
   return days[new Date(dateStr + "T00:00:00").getDay()]
 }
 
 /** Normalize any time string to "HH:MM" 24-hour format.
  *  Handles: "HH:MM:SS", "HH:MM", "H:MM AM/PM", "HH:MM AM/PM" */
-function trimTime(t: string): string {
+export function trimTime(t: string): string {
   if (!t) return t
   const ampm = t.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)$/i)
   if (ampm) {
@@ -126,7 +129,7 @@ export async function listSpecialties(tenantId: string) {
     .eq("status", "active")
 
   if (error) {
-    console.error("[booking] listSpecialties error:", error.message)
+    log.error({ err: error.message }, "listSpecialties failed")
     return { error: "Failed to fetch specialties" }
   }
 
@@ -311,7 +314,7 @@ export async function bookAppointment(params: BookingParams) {
     if (lockError.code === "23505") {
       return { error: "This time slot is no longer available. Please choose another." }
     }
-    console.error("[booking] Lock error:", lockError.message)
+    log.error({ err: lockError.message, doctorId: params.doctor_id, date: params.date, time: params.time }, "Slot lock failed")
     return { error: "Failed to reserve slot" }
   }
 
@@ -396,7 +399,7 @@ export async function bookAppointment(params: BookingParams) {
     if (insertError.code === "23505") {
       return { error: "Double booking prevented. This slot is taken." }
     }
-    console.error("[booking] Insert error:", insertError.message)
+    log.error({ err: insertError.message, bookingId }, "Appointment insert failed")
     return { error: "Failed to create appointment" }
   }
 
@@ -421,7 +424,7 @@ export async function bookAppointment(params: BookingParams) {
     time: params.time,
     tenant_id: params.tenant_id,
     hospital_name: tenant?.hospital_name || "Hospital",
-  }).catch((err) => console.error("[booking] Failed to schedule reminders:", err))
+  }).catch((err) => log.error({ err }, "Failed to schedule reminders"))
 
   // Audit log
   logAudit({
@@ -474,7 +477,7 @@ export async function cancelAppointment(params: CancelParams) {
     .eq("booking_id", params.booking_id)
 
   if (updateError) {
-    console.error("[booking] Cancel error:", updateError.message)
+    log.error({ err: updateError.message, bookingId: params.booking_id }, "Cancel appointment failed")
     return { error: "Failed to cancel appointment" }
   }
 
@@ -594,7 +597,7 @@ export async function savePatient(data: PatientData) {
   }
 
   if (error) {
-    console.error("[booking] savePatient error:", error.message)
+    log.error({ err: error.message, phone: data.phone }, "savePatient failed")
     return { error: `Failed to save patient: ${error.message}` }
   }
 
@@ -622,7 +625,7 @@ export async function listAppointments(phone: string, tenantId: string) {
     .limit(20)
 
   if (error) {
-    console.error("[booking] listAppointments error:", error.message)
+    log.error({ err: error.message, phone }, "listAppointments failed")
     return { error: "Failed to fetch appointments" }
   }
 

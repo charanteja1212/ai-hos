@@ -17,14 +17,14 @@ export interface DoctorPerf {
 }
 
 const SPECIALTY_COLORS: Record<string, string> = {
-  "General Medicine": "from-blue-500 to-cyan-500",
+  "General Medicine": "from-cyan-600 to-cyan-500",
   "Pediatrics": "from-green-500 to-emerald-500",
   "Cardiology": "from-red-500 to-rose-500",
   "Orthopedics": "from-amber-500 to-orange-500",
   "Dermatology": "from-purple-500 to-violet-500",
   "ENT": "from-teal-500 to-cyan-500",
   "Gynecology": "from-pink-500 to-rose-500",
-  "Neurology": "from-indigo-500 to-blue-500",
+  "Neurology": "from-indigo-500 to-cyan-600",
 }
 
 function getGradient(specialty: string): string {

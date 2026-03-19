@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
+import { createRouteLogger } from "@/lib/logger"
+
+const log = createRouteLogger("/api/queue/notify")
 
 const WA_PHONE_NUMBER_ID = process.env.WA_PHONE_NUMBER_ID || "991831654013001"
 const WA_ACCESS_TOKEN = process.env.WA_ACCESS_TOKEN || ""
@@ -84,7 +87,7 @@ export async function POST(req: Request) {
     ].join("\n")
 
     if (!WA_ACCESS_TOKEN) {
-      console.warn("WhatsApp access token not configured, skipping notification")
+      log.warn("WhatsApp access token not configured, skipping notification")
       return NextResponse.json({ success: true, skipped: true })
     }
 
@@ -104,13 +107,13 @@ export async function POST(req: Request) {
 
     if (!waResponse.ok) {
       const err = await waResponse.text()
-      console.error("WhatsApp send failed:", err)
+      log.error({ err }, "WhatsApp send failed")
       return NextResponse.json({ success: false, error: "WhatsApp delivery failed" }, { status: 502 })
     }
 
     return NextResponse.json({ success: true })
   } catch (err) {
-    console.error("Queue notify error:", err)
+    log.error({ err }, "Queue notify error")
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

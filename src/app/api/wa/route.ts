@@ -5,7 +5,11 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { waActionSchema } from "@/lib/validations/api-schemas";
 import { verifyWaToken } from "@/lib/whatsapp/wa-token";
+import { createRouteLogger } from "@/lib/logger";
+
+const log = createRouteLogger("wa");
 import {
   lookupPatient,
   savePatient,
@@ -21,11 +25,17 @@ import {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { token, action, ...params } = body;
 
-    if (!token || !action) {
-      return NextResponse.json({ error: "Missing token or action" }, { status: 400 });
+    // Validate request shape (token + known action)
+    const validation = waActionSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid request", details: validation.error.issues },
+        { status: 400 }
+      );
     }
+
+    const { token, action, ...params } = body;
 
     // Verify token
     const auth = await verifyWaToken(token);
@@ -121,7 +131,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("[api/wa] Error:", error);
+    log.error({ err: error }, "Unhandled error");
     return NextResponse.json(
       { error: "Something went wrong. Please try again." },
       { status: 500 }

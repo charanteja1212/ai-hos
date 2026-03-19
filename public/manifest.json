@@ -1,11 +1,11 @@
 {
-  "name": "AI-HOS | Hospital Operating System",
+  "name": "AI-HOS Hospital Operating System",
   "short_name": "AI-HOS",
-  "description": "AI-powered Hospital Operating System - Manage appointments, patients, billing & more",
-  "start_url": "/login",
+  "description": "AI-powered Hospital Operating System",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#F2F2F7",
-  "theme_color": "#007AFF",
+  "background_color": "#0f172a",
+  "theme_color": "#0891B2",
   "orientation": "any",
   "categories": ["medical", "health", "business"],
   "icons": [

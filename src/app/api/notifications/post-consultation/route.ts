@@ -3,6 +3,9 @@ import { auth } from "@/lib/auth"
 import { createServerClient } from "@/lib/supabase/server"
 import { sendText, getTenantWhatsAppConfig } from "@/lib/whatsapp/sender"
 import { createServerNotifications } from "@/lib/notifications-server"
+import { createRouteLogger } from "@/lib/logger"
+
+const log = createRouteLogger("/api/notifications/post-consultation")
 
 /**
  * POST /api/notifications/post-consultation
@@ -11,7 +14,7 @@ import { createServerNotifications } from "@/lib/notifications-server"
  * Sends WhatsApp notification to patient after consultation + schedules follow-up reminder.
  */
 export async function POST(req: NextRequest) {
-  console.log("[post-consult] API called")
+  log.info("API called")
 
   // Auth check — block unauthenticated requests
   try {
@@ -37,14 +40,14 @@ export async function POST(req: NextRequest) {
     tenant_id,
   } = body
 
-  console.log("[post-consult] Payload:", {
+  log.info({
     prescription_id, booking_id, patient_phone, patient_name,
     doctor_name, diagnosis, itemCount: items?.length, labCount: lab_tests?.length,
     follow_up_date, tenant_id,
-  })
+  }, "Payload received")
 
   if (!patient_phone || !tenant_id) {
-    console.error("[post-consult] FAIL — Missing required fields:", { patient_phone, tenant_id })
+    log.error({ patient_phone, tenant_id }, "Missing required fields")
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
   }
 
@@ -94,12 +97,11 @@ export async function POST(req: NextRequest) {
   message += `\n\nRegards,\n${hospitalName}`
 
   // 3. Send WhatsApp notification with per-tenant config
-  console.log("[post-consult] Message built, length:", message.length)
-  console.log("[post-consult] Message preview:", message.substring(0, 200))
+  log.info({ messageLength: message.length, preview: message.substring(0, 200) }, "Message built")
   const waConfig = await getTenantWhatsAppConfig(tenant_id, supabase)
-  console.log("[post-consult] WA config:", { hasPhoneId: !!waConfig?.phoneNumberId, hasToken: !!waConfig?.accessToken })
+  log.info({ hasPhoneId: !!waConfig?.phoneNumberId, hasToken: !!waConfig?.accessToken }, "WA config loaded")
   const result = await sendText(patient_phone, message, waConfig)
-  console.log("[post-consult] WA send result:", result)
+  log.info({ result }, "WA send result")
 
   // 3.5 In-app notifications for pharmacy + reception
   const notifications = [
@@ -190,7 +192,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  console.log("[post-consult] ===== DONE ===== wa_sent:", result.success, "booking:", booking_id)
+  log.info({ waSent: result.success, bookingId: booking_id }, "Done")
   return NextResponse.json({
     success: result.success,
     whatsapp_sent: result.success,

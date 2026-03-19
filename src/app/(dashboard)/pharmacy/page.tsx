@@ -213,7 +213,7 @@ export default function PharmacyPage() {
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="flex items-center gap-3 flex-wrap">
         {[
           { label: "Pending", val: pending.length, icon: Clock, accent: "bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400" },
-          { label: "Preparing", val: preparing.length, icon: Package, accent: "bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400" },
+          { label: "Preparing", val: preparing.length, icon: Package, accent: "bg-cyan-100 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-400" },
           { label: "Ready", val: ready.length, icon: CheckCircle2, accent: "bg-green-100 text-green-600 dark:bg-green-950/40 dark:text-green-400" },
           { label: "Total", val: allOrders.length, icon: ShoppingBag, accent: "bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400" },
         ].map((s) => (
@@ -273,10 +273,10 @@ export default function PharmacyPage() {
           <KanbanColumn
             title="Preparing"
             count={preparing.length}
-            dotColor="bg-blue-500 animate-pulse"
-            headerBg="bg-blue-50 dark:bg-blue-900/10"
-            countBg="bg-blue-100 dark:bg-blue-900/30"
-            countText="text-blue-700 dark:text-blue-300"
+            dotColor="bg-cyan-600 animate-pulse"
+            headerBg="bg-cyan-50 dark:bg-cyan-900/10"
+            countBg="bg-cyan-100 dark:bg-cyan-900/30"
+            countText="text-cyan-800 dark:text-cyan-300"
             emptyIcon={<Package className="w-8 h-8" />}
             emptyTitle="Nothing being prepared"
             emptyDescription="Start preparing from pending"

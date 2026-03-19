@@ -33,18 +33,18 @@ interface AdmissionDetailProps {
 const STATUS_COLORS: Record<string, string> = {
   admitted: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
   discharged: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
-  transferred: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  transferred: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300",
 }
 
 const NOTE_TYPE_COLORS: Record<string, string> = {
   vitals: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
-  observation: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  observation: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300",
   medication: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
   general: "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300",
 }
 
 const CHARGE_COLORS: Record<string, string> = {
-  bed: "bg-blue-100 text-blue-700",
+  bed: "bg-cyan-100 text-cyan-800",
   medicine: "bg-purple-100 text-purple-700",
   procedure: "bg-orange-100 text-orange-700",
   consumable: "bg-teal-100 text-teal-700",

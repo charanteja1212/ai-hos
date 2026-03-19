@@ -4,6 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { createRouteLogger } from '@/lib/logger';
+
+const log = createRouteLogger('/api/payment/status');
 
 const SB_URL = () => process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1';
 const SB_KEY = () => process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -26,7 +29,7 @@ export async function GET(req: NextRequest) {
 
     if (!res.ok) {
       const errBody = await res.text().catch(() => '');
-      console.error('[payment/status] Supabase error:', res.status, errBody.substring(0, 300));
+      log.error({ statusCode: res.status, detail: errBody.substring(0, 300) }, 'Supabase error');
       return NextResponse.json({ error: 'DB error', detail: errBody.substring(0, 200) }, { status: 500 });
     }
 

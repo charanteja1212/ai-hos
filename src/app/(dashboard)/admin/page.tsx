@@ -472,7 +472,7 @@ export default function AdminPage() {
           {/* Aggregate KPI pills */}
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="flex items-center gap-3 flex-wrap">
             {[
-              { label: "Patients", val: crossData.totals.patients, icon: Users, accent: "bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400" },
+              { label: "Patients", val: crossData.totals.patients, icon: Users, accent: "bg-cyan-100 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-400" },
               { label: "Doctors", val: crossData.totals.doctors, icon: Stethoscope, accent: "bg-green-100 text-green-600 dark:bg-green-950/40 dark:text-green-400" },
               { label: "Appointments", val: crossData.totals.appointments, icon: CalendarDays, accent: "bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400" },
               { label: "Revenue", val: formatCurrency(crossData.totals.revenue), icon: IndianRupee, accent: "bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400" },
@@ -518,8 +518,8 @@ export default function AdminPage() {
           </h1>
           <p className="text-sm text-gray-400 mt-0.5 flex items-center gap-2">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-600" />
             </span>
             {datePreset === "today" ? `Performance overview \u2014 ${formatDate(today)}` : `${formatDate(dateFrom)} \u2014 ${formatDate(dateTo)}`}
           </p>
@@ -543,7 +543,7 @@ export default function AdminPage() {
       {/* ══════ INLINE STATS BAR ══════ */}
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="flex items-center gap-3 flex-wrap">
         {[
-          { label: "Patients", val: data.totalPatients, icon: Users, accent: "bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400", sub: undefined as string | undefined },
+          { label: "Patients", val: data.totalPatients, icon: Users, accent: "bg-cyan-100 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-400", sub: undefined as string | undefined },
           { label: "Doctors", val: data.totalDoctors, icon: Stethoscope, accent: "bg-green-100 text-green-600 dark:bg-green-950/40 dark:text-green-400", sub: undefined as string | undefined },
           { label: datePreset === "today" ? "Revenue" : "Revenue", val: formatCurrency(data.todayRevenue), icon: IndianRupee, accent: "bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400", sub: datePreset === "today" && revTrend !== 0 ? `${revTrend > 0 ? "+" : ""}${revTrend}%` : undefined },
           { label: "Appointments", val: data.todayAppointments, icon: CalendarDays, accent: "bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400", sub: datePreset === "today" && apptTrend !== 0 ? `${apptTrend > 0 ? "+" : ""}${apptTrend}%` : undefined },
@@ -757,7 +757,7 @@ export default function AdminPage() {
           { icon: Clock, label: "Confirmed", value: data.todayPending, bg: "bg-amber-100 dark:bg-amber-900/30", iconColor: "text-amber-600 dark:text-amber-400" },
           { icon: XCircle, label: "Cancelled", value: data.todayCancelled, bg: "bg-red-100 dark:bg-red-900/30", iconColor: "text-red-600 dark:text-red-400" },
           { icon: BedDouble, label: "Admissions", value: data.activeAdmissions, bg: "bg-orange-100 dark:bg-orange-900/30", iconColor: "text-orange-600 dark:text-orange-400" },
-          { icon: Pill, label: "Pharmacy", value: data.pendingPharmacy, bg: "bg-blue-100 dark:bg-blue-900/30", iconColor: "text-blue-600 dark:text-blue-400" },
+          { icon: Pill, label: "Pharmacy", value: data.pendingPharmacy, bg: "bg-cyan-100 dark:bg-cyan-900/30", iconColor: "text-cyan-700 dark:text-cyan-400" },
           { icon: TestTube, label: "Lab Orders", value: data.pendingLab, bg: "bg-purple-100 dark:bg-purple-900/30", iconColor: "text-purple-600 dark:text-purple-400" },
         ].map((item, idx) => {
           const Icon = item.icon

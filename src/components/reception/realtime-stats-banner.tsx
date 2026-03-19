@@ -59,7 +59,7 @@ export function RealtimeStatsBanner({ total, waiting, inConsultation, completed,
             key={inConsultation}
             initial={{ scale: 1.2 }}
             animate={{ scale: 1 }}
-            className="text-sm font-bold text-blue-400"
+            className="text-sm font-bold text-cyan-400"
           >
             {inConsultation}
           </motion.span>

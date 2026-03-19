@@ -127,7 +127,7 @@ export default function PatientDashboard() {
   }
 
   const statCards = [
-    { label: "Total Visits", value: stats.totalVisits, icon: CalendarDays, color: "text-blue-500", bg: "bg-blue-500/10" },
+    { label: "Total Visits", value: stats.totalVisits, icon: CalendarDays, color: "text-cyan-600", bg: "bg-cyan-600/10" },
     { label: "Upcoming", value: stats.upcomingCount, icon: Clock, color: "text-green-500", bg: "bg-green-500/10" },
     { label: "Prescriptions", value: stats.recentPrescriptions.length, icon: FileText, color: "text-purple-500", bg: "bg-purple-500/10" },
     { label: "Pending Bills", value: stats.unpaidBills, icon: Receipt, color: "text-amber-500", bg: "bg-amber-500/10" },
@@ -147,7 +147,7 @@ export default function PatientDashboard() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl bg-gradient-to-r from-teal-500 via-cyan-600 to-blue-700 p-5 sm:p-6 text-white"
+        className="rounded-2xl bg-gradient-to-r from-teal-500 via-cyan-600 to-cyan-800 p-5 sm:p-6 text-white"
       >
         <p className="text-sm text-white/70">{getGreeting()}</p>
         <h1 className="text-xl sm:text-2xl font-bold mt-0.5">{user?.name}</h1>

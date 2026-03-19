@@ -74,7 +74,7 @@ import { calculateInvoiceTotals, type TenantTaxConfig } from "@/lib/billing/tax"
 
 // Badge color maps
 const TYPE_BADGE: Record<string, string> = {
-  consultation: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  consultation: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300",
   pharmacy: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
   lab: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
   admission: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",

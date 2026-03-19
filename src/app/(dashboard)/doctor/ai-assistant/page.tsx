@@ -47,8 +47,8 @@ const quickActions = [
     title: "Treatment Guidelines",
     description: "Evidence-based protocols",
     icon: FileText,
-    color: "text-blue-500",
-    bg: "bg-blue-50 dark:bg-blue-900/20",
+    color: "text-cyan-600",
+    bg: "bg-cyan-50 dark:bg-cyan-900/20",
     prompt: "What are the current treatment guidelines and protocol for: ",
   },
   {

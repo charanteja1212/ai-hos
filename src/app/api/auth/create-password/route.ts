@@ -3,6 +3,9 @@ import { auth } from "@/lib/auth"
 import { createServerClient } from "@/lib/supabase/server"
 import { logAudit } from "@/lib/audit"
 import type { SessionUser } from "@/types/auth"
+import { createRouteLogger } from "@/lib/logger"
+
+const log = createRouteLogger("/api/auth/create-password")
 
 export async function POST(req: Request) {
   try {
@@ -112,7 +115,7 @@ export async function POST(req: Request) {
           { status: 409 }
         )
       }
-      console.error("Supabase auth error:", authError)
+      log.error({ err: authError }, "Supabase auth error")
       return NextResponse.json(
         { error: "Failed to create auth user" },
         { status: 500 }
@@ -133,7 +136,7 @@ export async function POST(req: Request) {
     if (insertError) {
       // Rollback: delete the Supabase Auth user we just created
       await supabase.auth.admin.deleteUser(authUser.user.id)
-      console.error("Insert error:", insertError)
+      log.error({ err: insertError }, "Insert credentials error")
       return NextResponse.json(
         { error: "Failed to save credentials" },
         { status: 500 }
@@ -148,7 +151,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true })
   } catch (err) {
-    console.error("create-password error:", err)
+    log.error({ err }, "Create password error")
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

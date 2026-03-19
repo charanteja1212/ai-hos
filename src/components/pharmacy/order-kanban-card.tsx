@@ -29,7 +29,7 @@ const nextStatusMap: Record<string, { status: string; label: string; icon: React
 
 const borderColors: Record<string, string> = {
   pending: "border-l-amber-500",
-  preparing: "border-l-blue-500",
+  preparing: "border-l-cyan-600",
   ready: "border-l-green-500",
   dispensed: "border-l-gray-400",
 }

@@ -11,6 +11,9 @@ import {
 } from "@/lib/booking/service"
 import { sendBookingConfirmation, sendCancellationConfirmation, getTenantWhatsAppConfig } from "@/lib/whatsapp/sender"
 import { createServerClient } from "@/lib/supabase/server"
+import { createRouteLogger } from "@/lib/logger"
+
+const log = createRouteLogger("booking")
 
 export async function POST(req: NextRequest) {
   try {
@@ -110,7 +113,7 @@ export async function POST(req: NextRequest) {
             time: params.time,
             bookingId: result.booking_id,
             hospitalName: user.hospitalName || "Hospital",
-          }, waConfig).catch((err) => console.error("[booking] WhatsApp confirmation failed:", err))
+          }, waConfig).catch((err) => log.error({ err }, "WhatsApp confirmation failed"))
         })
       }
 
@@ -133,7 +136,7 @@ export async function POST(req: NextRequest) {
             patientName: result.cancelled_booking!.patient_name || "",
             bookingId: params.booking_id,
             hospitalName: user.hospitalName || "Hospital",
-          }, waConfig).catch((err) => console.error("[booking] WhatsApp cancel notice failed:", err))
+          }, waConfig).catch((err) => log.error({ err }, "WhatsApp cancel notice failed"))
         })
       }
 
@@ -168,7 +171,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 })
   } catch (error) {
-    console.error("Booking API error:", error)
+    log.error({ err: error }, "Booking API error")
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

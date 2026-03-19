@@ -77,33 +77,33 @@ function getWardBadgeColor(ward: string) {
   const w = ward?.toLowerCase() || ""
   if (w.includes("icu")) return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
   if (w.includes("private")) return "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-  if (w.includes("semi")) return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+  if (w.includes("semi")) return "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300"
   if (w.includes("maternity")) return "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300"
   if (w.includes("pediatric")) return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
   if (w.includes("surgical")) return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
-  return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+  return "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300"
 }
 
 function getWardAccent(ward: string) {
   const w = ward?.toLowerCase() || ""
   if (w.includes("icu")) return "from-red-500 to-rose-600"
   if (w.includes("private")) return "from-purple-500 to-indigo-600"
-  if (w.includes("semi")) return "from-blue-500 to-cyan-600"
+  if (w.includes("semi")) return "from-cyan-600 to-cyan-600"
   if (w.includes("maternity")) return "from-pink-500 to-rose-500"
   if (w.includes("pediatric")) return "from-emerald-500 to-teal-600"
   if (w.includes("surgical")) return "from-amber-500 to-orange-600"
-  return "from-blue-500 to-indigo-600"
+  return "from-cyan-600 to-indigo-600"
 }
 
 function getWardAvatarColor(ward: string) {
   const w = ward?.toLowerCase() || ""
   if (w.includes("icu")) return "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 ring-red-200/50"
   if (w.includes("private")) return "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 ring-purple-200/50"
-  if (w.includes("semi")) return "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 ring-blue-200/50"
+  if (w.includes("semi")) return "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300 ring-cyan-200/50"
   if (w.includes("maternity")) return "bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300 ring-pink-200/50"
   if (w.includes("pediatric")) return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 ring-emerald-200/50"
   if (w.includes("surgical")) return "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 ring-amber-200/50"
-  return "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 ring-blue-200/50"
+  return "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300 ring-cyan-200/50"
 }
 
 // ─── Ward Breakdown Bar ───
@@ -123,7 +123,7 @@ function WardBreakdownBar({ admissions }: { admissions: Admission[] }) {
     const wl = w.toLowerCase()
     if (wl.includes("icu")) wardColors[w] = "bg-red-500"
     else if (wl.includes("private")) wardColors[w] = "bg-purple-500"
-    else if (wl.includes("semi")) wardColors[w] = "bg-blue-500"
+    else if (wl.includes("semi")) wardColors[w] = "bg-cyan-600"
     else if (wl.includes("maternity")) wardColors[w] = "bg-pink-500"
     else if (wl.includes("pediatric")) wardColors[w] = "bg-emerald-500"
     else if (wl.includes("surgical")) wardColors[w] = "bg-amber-500"
@@ -273,7 +273,7 @@ function PatientCard({
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => onAction("transfer")}>
-                        <ArrowRightLeft className="w-4 h-4 mr-2 text-blue-500" /> Transfer
+                        <ArrowRightLeft className="w-4 h-4 mr-2 text-cyan-600" /> Transfer
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onAction("discharge")}>
                         <LogOut className="w-4 h-4 mr-2 text-green-500" /> Discharge
@@ -315,7 +315,7 @@ function PatientCard({
               days >= 7
                 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
                 : days >= 3
-                ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+                ? "bg-cyan-50 text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-400"
                 : ""
             )}>
               <Clock className="w-2.5 h-2.5 mr-0.5" />
@@ -337,7 +337,7 @@ function PatientCard({
 }
 
 const statColorClasses: Record<string, string> = {
-  blue: "text-blue-500",
+  blue: "text-cyan-600",
   green: "text-green-500",
   orange: "text-orange-500",
   purple: "text-purple-500",
@@ -451,7 +451,7 @@ export default function AdmissionsPage() {
                 { icon: <BedDouble className="w-4 h-4" />, label: "Admitted", value: admittedCount, sub: "currently in-hospital", color: "orange", gradient: "from-orange-500/15 to-amber-500/5" },
                 { icon: <TrendingUp className="w-4 h-4" />, label: "Avg Stay", value: avgStay > 0 ? `${avgStay}d` : "\u2014", sub: "days per patient", color: "purple", gradient: "from-purple-500/15 to-violet-500/5" },
                 { icon: <CheckCircle2 className="w-4 h-4" />, label: "Discharged", value: dischargedToday, sub: "today", color: "green", gradient: "from-green-500/15 to-emerald-500/5" },
-                { icon: <ArrowRightLeft className="w-4 h-4" />, label: "Transfers", value: transfersToday, sub: "today", color: "blue", gradient: "from-blue-500/15 to-cyan-500/5" },
+                { icon: <ArrowRightLeft className="w-4 h-4" />, label: "Transfers", value: transfersToday, sub: "today", color: "blue", gradient: "from-cyan-600/15 to-cyan-500/5" },
               ].map((stat, i) => (
                 <motion.div
                   key={stat.label}

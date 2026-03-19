@@ -5,6 +5,9 @@ import { createServerClient } from "@/lib/supabase/server"
 import { requireFeature } from "@/lib/platform/check-feature"
 import { getJitsiUrl } from "@/lib/telemedicine"
 import { sendText, getTenantWhatsAppConfig } from "@/lib/whatsapp/sender"
+import { createRouteLogger } from "@/lib/logger"
+
+const log = createRouteLogger("/api/telemedicine/send-link")
 
 export async function POST(req: NextRequest) {
   try {
@@ -76,7 +79,7 @@ export async function POST(req: NextRequest) {
       { status: 502 }
     )
   } catch (error) {
-    console.error("[telemedicine] Send link error:", error)
+    log.error({ err: error }, "Send link error")
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

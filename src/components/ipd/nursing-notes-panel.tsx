@@ -41,7 +41,7 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
 
 const TYPE_COLORS: Record<string, string> = {
   vitals: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
-  observation: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  observation: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300",
   medication: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
   general: "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300",
 }
@@ -301,7 +301,7 @@ export function NursingNotesPanel({ admission, open, onClose, onUpdated, userNam
                         </div>
                       )}
                       {n.vitals.spo2 && (
-                        <div className="text-center p-1 rounded bg-blue-50 dark:bg-blue-950/20">
+                        <div className="text-center p-1 rounded bg-cyan-50 dark:bg-cyan-950/20">
                           <p className="text-[9px] text-muted-foreground">SpO2</p>
                           <p className="text-xs font-bold">{n.vitals.spo2}%</p>
                         </div>

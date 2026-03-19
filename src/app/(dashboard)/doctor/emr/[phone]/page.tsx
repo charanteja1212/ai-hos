@@ -395,17 +395,17 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
 
       {/* Person Selector — when multiple people share the same phone */}
       {hasMultiplePeople && (
-        <div className="flex items-center gap-2 p-2 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-          <Users className="w-4 h-4 text-blue-500 shrink-0" />
-          <span className="text-xs font-medium text-blue-700 dark:text-blue-300 mr-1">Viewing:</span>
+        <div className="flex items-center gap-2 p-2 rounded-xl bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-800">
+          <Users className="w-4 h-4 text-cyan-600 shrink-0" />
+          <span className="text-xs font-medium text-cyan-800 dark:text-cyan-300 mr-1">Viewing:</span>
           {personNames.map((p) => (
             <button
               key={p.name}
               onClick={() => setSelectedPerson(p.name)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 selectedPerson === p.name
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-slate-200 dark:border-slate-700"
+                  ? "bg-cyan-700 text-white shadow-sm"
+                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 border border-slate-200 dark:border-slate-700"
               }`}
             >
               {p.name} ({p.count})
@@ -629,7 +629,7 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
                       <span className="text-xs text-muted-foreground">{note.created_at ? formatDate(note.created_at.split("T")[0]) : "—"}</span>
                     </div>
                     {note.chief_complaint && <div><span className="text-xs font-semibold text-muted-foreground">CC:</span> <span className="text-sm">{note.chief_complaint}</span></div>}
-                    {note.subjective && <div><span className="text-xs font-semibold text-blue-600">S:</span> <span className="text-sm">{note.subjective}</span></div>}
+                    {note.subjective && <div><span className="text-xs font-semibold text-cyan-700">S:</span> <span className="text-sm">{note.subjective}</span></div>}
                     {note.objective && <div><span className="text-xs font-semibold text-green-600">O:</span> <span className="text-sm">{note.objective}</span></div>}
                     {note.assessment && <div><span className="text-xs font-semibold text-amber-600">A:</span> <span className="text-sm">{note.assessment}</span></div>}
                     {note.plan && <div><span className="text-xs font-semibold text-purple-600">P:</span> <span className="text-sm">{note.plan}</span></div>}
@@ -1025,7 +1025,7 @@ export default function EMRPage({ params }: { params: Promise<{ phone: string }>
               </div>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground font-semibold text-blue-600">S — Subjective</label>
+              <label className="text-xs text-muted-foreground font-semibold text-cyan-700">S — Subjective</label>
               <Textarea placeholder="Patient's symptoms, complaints, history..." value={newNote.subjective || ""} onChange={(e) => setNewNote({ ...newNote, subjective: e.target.value })} rows={2} />
             </div>
             <div>
