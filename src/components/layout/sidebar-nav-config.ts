@@ -27,6 +27,10 @@ import {
   HeartPulse,
   Heart,
   Video,
+  Brain,
+  SearchX,
+  Cpu,
+  Bot,
 } from "lucide-react"
 import type { UserRole } from "@/types/auth"
 import type { TierFeatures } from "@/lib/platform/features"
@@ -127,7 +131,16 @@ const branchAdminNav: RoleNavConfig = {
       label: "FINANCE",
       items: [
         { label: "Billing", href: "/admin/billing", icon: IndianRupee },
+        { label: "Revenue Leaks", href: "/admin/revenue-leaks", icon: SearchX, requiredFeature: "revenue_leak_detector" },
         { label: "Subscription", href: "/admin/subscription", icon: CreditCard },
+      ],
+    },
+    {
+      id: "ai_tools",
+      label: "AI & IOT",
+      items: [
+        { label: "No-Show Prediction", href: "/admin/predictions", icon: Brain, requiredFeature: "predictive_noshow" },
+        { label: "IoT Gateway", href: "/admin/iot", icon: Cpu, requiredFeature: "iot_gateway" },
       ],
     },
     {
@@ -191,6 +204,13 @@ const doctorNav: RoleNavConfig = {
       label: "TELEHEALTH",
       items: [
         { label: "Video Consult", href: "/doctor/consult?mode=video", icon: Video, requiredFeature: "telemedicine" },
+      ],
+    },
+    {
+      id: "ai",
+      label: "AI TOOLS",
+      items: [
+        { label: "AI Assistant", href: "/doctor/ai-assistant", icon: Bot, requiredFeature: "ai_agents" },
       ],
     },
     {
