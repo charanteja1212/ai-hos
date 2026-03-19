@@ -1,11 +1,11 @@
-const CACHE_NAME = "ai-hos-v2"
+const CACHE_NAME = "ai-hos-v3"
 const STATIC_ASSETS = [
   "/icons/icon.svg",
   "/icons/icon-192.png",
   "/manifest.json",
 ]
 
-// Install: cache only small static assets (don't block on pages)
+// Install: cache only small static assets, activate immediately
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
@@ -13,7 +13,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting()
 })
 
-// Activate: clean old caches
+// Activate: clean ALL old caches immediately
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -34,11 +34,16 @@ self.addEventListener("fetch", (event) => {
   // API routes + auth: always network (never cache)
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/login")) return
 
-  // Static assets (_next/static, icons, fonts): cache-first
+  // ─── CRITICAL: Never cache _next/static/chunks (JS bundles) ───
+  // These have hashed filenames and are cached by the browser via immutable headers.
+  // SW caching them causes stale chunk errors after deploys.
+  if (url.pathname.startsWith("/_next/static/chunks/")) return
+  if (url.pathname.startsWith("/_next/static/css/")) return
+
+  // Only cache truly static assets: icons, images, fonts (NOT JS chunks)
   if (
-    url.pathname.startsWith("/_next/static/") ||
     url.pathname.startsWith("/icons/") ||
-    url.pathname.match(/\.(svg|png|jpg|jpeg|webp|woff2?|css|js)$/)
+    url.pathname.match(/\.(svg|png|jpg|jpeg|webp|woff2?)$/)
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {
@@ -55,22 +60,17 @@ self.addEventListener("fetch", (event) => {
     return
   }
 
-  // Pages: stale-while-revalidate (show cache instantly, update in background)
+  // Pages: network-first (always try fresh, fall back to cache for offline)
   event.respondWith(
-    caches.match(request).then((cached) => {
-      const fetchPromise = fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const clone = response.clone()
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
-          }
-          return response
-        })
-        .catch(() => cached)
-
-      // Return cached immediately if available, otherwise wait for network
-      return cached || fetchPromise
-    })
+    fetch(request)
+      .then((response) => {
+        if (response.ok) {
+          const clone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
+        }
+        return response
+      })
+      .catch(() => caches.match(request).then((cached) => cached || new Response("Offline", { status: 503 })))
   )
 })
 

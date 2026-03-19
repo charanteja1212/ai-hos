@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { RegisterSW } from "@/components/pwa/register-sw"
 import { InstallPrompt } from "@/components/pwa/install-prompt"
+import { ChunkErrorHandler } from "@/components/pwa/chunk-error-handler"
 import { LanguageProvider } from "@/components/providers/language-context"
 import "./globals.css"
 
@@ -66,6 +67,7 @@ export default function RootLayout({
           <Toaster richColors position="top-right" />
           <RegisterSW />
           <InstallPrompt />
+          <ChunkErrorHandler />
         </ThemeProvider>
       </body>
     </html>
