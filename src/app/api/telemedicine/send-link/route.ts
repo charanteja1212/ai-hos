@@ -6,6 +6,8 @@ import { requireFeature } from "@/lib/platform/check-feature"
 import { getJitsiUrl } from "@/lib/telemedicine"
 import { sendText, getTenantWhatsAppConfig } from "@/lib/whatsapp/sender"
 import { createRouteLogger } from "@/lib/logger"
+import { telemedicineSendLinkBodySchema } from "@/lib/validations/api-schemas"
+import { isRateLimited } from "@/lib/rate-limit"
 
 const log = createRouteLogger("/api/telemedicine/send-link")
 
@@ -24,22 +26,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
+    // Rate limit: 10 links per 5 minutes per user
+    if (await isRateLimited(`telemedicine:${user.email}`, 10, 300000)) {
+      return NextResponse.json({ error: "Too many requests. Please wait." }, { status: 429 })
+    }
+
     // Feature gate: check telemedicine feature
     const featureBlock = await requireFeature(user.clientId, "telemedicine")
     if (featureBlock) return featureBlock
 
     const body = await req.json()
-    const { patientPhone, roomName, doctorName, patientName, tenantId } = body
-
-    // Validate required fields
-    const errors: string[] = []
-    if (!patientPhone) errors.push("patientPhone is required")
-    if (!roomName) errors.push("roomName is required")
-    if (!doctorName) errors.push("doctorName is required")
-    if (!patientName) errors.push("patientName is required")
-    if (errors.length > 0) {
-      return NextResponse.json({ error: "Validation failed", details: errors }, { status: 400 })
+    const validation = telemedicineSendLinkBodySchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: validation.error.issues },
+        { status: 400 }
+      )
     }
+    const { patientPhone, roomName, doctorName, patientName, tenantId } = validation.data
 
     // Use tenant from session unless super/client admin overrides
     let effectiveTenantId: string

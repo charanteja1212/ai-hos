@@ -3,6 +3,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { apiGuard, isGuardError } from "@/lib/auth/api-guard"
 import { logAudit } from "@/lib/audit"
 import { createRouteLogger } from "@/lib/logger"
+import { platformPostBodySchema, platformScopeSchema } from "@/lib/validations/api-schemas"
 
 const log = createRouteLogger("/api/platform")
 
@@ -12,7 +13,12 @@ export async function GET(req: Request) {
   if (isGuardError(guard)) return guard
 
   const { searchParams } = new URL(req.url)
-  const scope = searchParams.get("scope") || "dashboard"
+  const rawScope = searchParams.get("scope") || "dashboard"
+  const scopeValidation = platformScopeSchema.safeParse(rawScope)
+  if (!scopeValidation.success) {
+    return NextResponse.json({ error: "Invalid scope" }, { status: 400 })
+  }
+  const scope = scopeValidation.data
   const supabase = createServerClient()
 
   if (scope === "dashboard") {
@@ -112,6 +118,13 @@ export async function POST(req: Request) {
   if (isGuardError(guard)) return guard
 
   const body = await req.json()
+  const actionValidation = platformPostBodySchema.safeParse(body)
+  if (!actionValidation.success) {
+    return NextResponse.json(
+      { error: "Invalid request", details: actionValidation.error.issues },
+      { status: 400 }
+    )
+  }
   const { action, ...payload } = body
   const supabase = createServerClient()
 

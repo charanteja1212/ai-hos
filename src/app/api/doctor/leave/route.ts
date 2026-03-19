@@ -7,6 +7,7 @@ import { logAudit } from "@/lib/audit"
 import { cancelReminders } from "@/lib/queue/queues"
 import { generateWaToken } from "@/lib/whatsapp/wa-token"
 import { createRouteLogger } from "@/lib/logger"
+import { doctorLeaveBodySchema } from "@/lib/validations/api-schemas"
 
 const log = createRouteLogger("/api/doctor/leave")
 
@@ -25,43 +26,39 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { doctor_id, tenant_id: bodyTenantId, date, type, reason, start_time, end_time } = body
-
-    if (!doctor_id || !date || !type) {
-      return NextResponse.json({ error: "doctor_id, date, and type are required" }, { status: 400 })
+    const validation = doctorLeaveBodySchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: validation.error.issues },
+        { status: 400 }
+      )
     }
+    const { doctor_id, date, type, reason, start_time, end_time } = validation.data
 
     const tenant_id = user.role === "SUPER_ADMIN" || user.role === "CLIENT_ADMIN"
-      ? bodyTenantId || user.tenantId
+      ? validation.data.tenant_id || user.tenantId
       : user.tenantId
 
     const supabase = createServerClient()
 
-    // 1. Save the date override
+    // 1-3. Atomically: save override + cancel affected appointments
     const overrideId = `OVR_${doctor_id}_${date.replace(/-/g, "")}_${Date.now()}`
-    const overrideRecord: Record<string, unknown> = {
-      override_id: overrideId,
-      doctor_id,
-      tenant_id,
-      override_date: date,
-      reason: reason || (type === "leave" ? "Personal" : "Custom hours"),
-    }
 
-    if (type === "custom_hours") {
-      overrideRecord.start_time = start_time
-      overrideRecord.end_time = end_time
-      overrideRecord.is_available = true
-    } else {
-      overrideRecord.is_available = false
-    }
+    const { data: rpcResult, error: rpcError } = await supabase.rpc("fn_doctor_leave_cancel", {
+      p_override_id: overrideId,
+      p_doctor_id: doctor_id,
+      p_tenant_id: tenant_id,
+      p_date: date,
+      p_type: type,
+      p_reason: reason || null,
+      p_start_time: start_time || null,
+      p_end_time: end_time || null,
+    })
 
-    const { error: overrideError } = await supabase
-      .from("date_overrides")
-      .insert(overrideRecord)
-
-    if (overrideError) {
-      log.error({ err: overrideError }, "Override insert error")
-      return NextResponse.json({ error: "Failed to save leave" }, { status: 500 })
+    if (rpcError || (rpcResult && !rpcResult.success)) {
+      const errorMsg = rpcResult?.error || rpcError?.message || "Failed to save leave"
+      log.error({ err: errorMsg }, "Doctor leave RPC error")
+      return NextResponse.json({ error: errorMsg }, { status: 500 })
     }
 
     logAudit({
@@ -70,35 +67,10 @@ export async function POST(req: NextRequest) {
       details: { doctor_id, date, type, reason },
     })
 
-    // 2. Fetch affected confirmed appointments
-    let appointmentQuery = supabase
-      .from("appointments")
-      .select("booking_id, patient_phone, patient_name, doctor_name, specialty, date, time, status")
-      .eq("doctor_id", doctor_id)
-      .eq("date", date)
-      .eq("tenant_id", tenant_id)
-      .eq("status", "confirmed")
+    const cancelledIds: string[] = rpcResult?.cancelled_ids || []
+    const cancelledCount: number = rpcResult?.cancelled_count || 0
 
-    // For custom hours, only get appointments outside the new hours
-    if (type === "custom_hours" && start_time && end_time) {
-      appointmentQuery = appointmentQuery.or(`time.lt.${start_time},time.gte.${end_time}`)
-    }
-
-    const { data: affectedAppointments, error: fetchError } = await appointmentQuery
-
-    if (fetchError) {
-      log.error({ err: fetchError }, "Fetch appointments error")
-      // Override saved but couldn't fetch appointments
-      return NextResponse.json({
-        success: true,
-        override_saved: true,
-        cancelled_count: 0,
-        notified_count: 0,
-        error_detail: "Leave saved but failed to fetch affected appointments",
-      })
-    }
-
-    if (!affectedAppointments || affectedAppointments.length === 0) {
+    if (cancelledCount === 0) {
       return NextResponse.json({
         success: true,
         override_saved: true,
@@ -108,19 +80,23 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // 3. Cancel all affected appointments
-    const bookingIds = affectedAppointments.map((a) => a.booking_id)
-    const { error: cancelError } = await supabase
+    // Fetch affected appointment details for notifications (read-only, outside transaction)
+    const { data: affectedAppointments } = await supabase
       .from("appointments")
-      .update({ status: "cancelled" })
-      .in("booking_id", bookingIds)
-      .eq("tenant_id", tenant_id)
+      .select("booking_id, patient_phone, patient_name, doctor_name, specialty, date, time, status")
+      .in("booking_id", cancelledIds)
 
-    if (cancelError) {
-      log.error({ err: cancelError }, "Cancel error")
+    if (!affectedAppointments || affectedAppointments.length === 0) {
+      return NextResponse.json({
+        success: true,
+        override_saved: true,
+        cancelled_count: cancelledCount,
+        notified_count: 0,
+        message: `Leave saved. ${cancelledCount} appointment(s) cancelled.`,
+      })
     }
 
-    const cancelledCount = cancelError ? 0 : bookingIds.length
+    const bookingIds = affectedAppointments.map((a) => a.booking_id)
 
     // 4. Cancel scheduled reminders for all affected appointments
     for (const bid of bookingIds) {

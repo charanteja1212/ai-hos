@@ -8,6 +8,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { logAudit } from '@/lib/audit';
 import { createRouteLogger } from '@/lib/logger';
+import { verifyCheckoutBodySchema } from '@/lib/validations/api-schemas';
+import { OP_PASS_VALIDITY_DAYS } from '@/lib/config/defaults';
 
 const log = createRouteLogger('payment/verify-checkout');
 
@@ -109,11 +111,15 @@ async function renderCard(html: string): Promise<string | null> {
 
 export async function POST(req: NextRequest) {
   try {
-    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, booking_id } = await req.json();
-
-    if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature || !booking_id) {
-      return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+    const body = await req.json();
+    const validation = verifyCheckoutBodySchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', details: validation.error.issues },
+        { status: 400 }
+      );
     }
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, booking_id } = validation.data;
 
     // 1. Verify signature
     const secret = RZP_SECRET();
@@ -174,40 +180,46 @@ export async function POST(req: NextRequest) {
     } catch { /* ok */ }
 
     const ist = nowIST();
-    const expiryDate = new Date(ist.ms + 15 * 86400000).toISOString().split('T')[0];
+    const expiryDate = new Date(ist.ms + OP_PASS_VALIDITY_DAYS * 86400000).toISOString().split('T')[0];
     const opPassId = 'OP' + Date.now() + Math.random().toString(36).slice(2, 6);
     const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.ainewworld.in'}/api/verify?id=` + encodeURIComponent(opPassId);
     const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(verifyUrl);
     const expiryDisplay = new Date(expiryDate + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 
-    // Create OP Pass
+    // Atomically: create OP pass + update appointment + release slot lock
     try {
-      await sbPost('/op_passes', {
-        op_pass_id: opPassId, booking_id,
-        patient_phone: patientPhone, patient_name: patientName,
-        patient_type: pType, dependent_id: depId,
-        issue_date: ist.date, expiry_date: expiryDate,
-        status: 'ACTIVE', qr_code: verifyUrl,
-        booked_by_whatsapp_number: bookedBy, tenant_id: tenantId,
+      const rpcRes = await fetch(SB_URL() + '/rpc/fn_confirm_payment', {
+        method: 'POST',
+        headers: { ...sbHeaders(), Prefer: 'return=representation' },
+        body: JSON.stringify({
+          p_booking_id: booking_id,
+          p_payment_id: razorpay_payment_id,
+          p_op_pass_id: opPassId,
+          p_patient_phone: patientPhone,
+          p_patient_name: patientName,
+          p_patient_type: pType,
+          p_dependent_id: depId,
+          p_issue_date: ist.date,
+          p_expiry_date: expiryDate,
+          p_qr_code: verifyUrl,
+          p_booked_by: bookedBy,
+          p_tenant_id: tenantId,
+        }),
+        signal: AbortSignal.timeout(15000),
       });
-    } catch { /* continue */ }
-
-    // Update appointment
-    try {
-      await sbPatch('/appointments?booking_id=eq.' + encodeURIComponent(booking_id), {
-        status: 'confirmed', payment_status: 'paid',
-        payment_id: razorpay_payment_id, razorpay_payment_id, op_pass_id: opPassId,
-      });
+      const rpcResult = await rpcRes.json();
+      if (!rpcResult?.success && !rpcResult?.already_processed) {
+        log.error({ booking_id, err: rpcResult?.error }, 'Payment confirmation RPC failed');
+      }
       logAudit({
         action: "status_change", entityType: "appointment", entityId: booking_id,
         actorEmail: patientPhone || "checkout", actorRole: "system",
         tenantId: tenantId || undefined,
         details: { payment_status: "paid", payment_id: razorpay_payment_id },
       });
-    } catch { /* continue */ }
-
-    // Release slot lock
-    try { await sbDelete('/slot_locks?booking_id=eq.' + encodeURIComponent(booking_id)); } catch { /* ok */ }
+    } catch (rpcErr) {
+      log.error({ booking_id, err: rpcErr }, 'Payment confirmation RPC error');
+    }
 
     // Get tenant WA credentials
     let hospitalName = 'Care Hospital';

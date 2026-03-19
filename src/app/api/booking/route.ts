@@ -10,8 +10,10 @@ import {
   savePatient,
 } from "@/lib/booking/service"
 import { sendBookingConfirmation, sendCancellationConfirmation, getTenantWhatsAppConfig } from "@/lib/whatsapp/sender"
+import { bookingActionSchema } from "@/lib/validations/api-schemas"
 import { createServerClient } from "@/lib/supabase/server"
 import { createRouteLogger } from "@/lib/logger"
+import { isRateLimited } from "@/lib/rate-limit"
 
 const log = createRouteLogger("booking")
 
@@ -30,7 +32,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
+    // Rate limit: 60 actions per 5 minutes per user
+    if (await isRateLimited(`booking:${user.email}`, 60, 300000)) {
+      return NextResponse.json({ error: "Too many requests. Please wait." }, { status: 429 })
+    }
+
     const body = await req.json()
+
+    // Validate request body with Zod
+    const validation = bookingActionSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: validation.error.issues },
+        { status: 400 }
+      )
+    }
     const { action, ...params } = body
 
     // Inject tenant_id from session to prevent cross-tenant access
@@ -59,32 +75,6 @@ export async function POST(req: NextRequest) {
 
     // ── book-appointment ──────────────────────────────────────────────────
     if (action === "book-appointment") {
-      // Validate required fields
-      const errors: string[] = []
-
-      if (!params.doctor_id || typeof params.doctor_id !== "string" || !params.doctor_id.trim()) {
-        errors.push("doctor_id is required")
-      }
-      if (!params.doctor_name || typeof params.doctor_name !== "string" || !params.doctor_name.trim()) {
-        errors.push("doctor_name is required")
-      }
-      if (!params.patient_name || typeof params.patient_name !== "string" || !params.patient_name.trim()) {
-        errors.push("patient_name is required")
-      }
-      if (!params.date || !/^\d{4}-\d{2}-\d{2}$/.test(params.date)) {
-        errors.push("date must be in YYYY-MM-DD format")
-      }
-      if (!params.time || !/^\d{2}:\d{2}$/.test(params.time)) {
-        errors.push("time must be in HH:MM 24-hour format")
-      }
-      if (!params.patient_phone || !/\d{10,}/.test(params.patient_phone.replace(/\D/g, ""))) {
-        errors.push("patient_phone must have at least 10 digits")
-      }
-
-      if (errors.length > 0) {
-        return NextResponse.json({ error: "Validation failed", details: errors }, { status: 400 })
-      }
-
       const result = await bookAppointment({
         tenant_id,
         patient_phone: params.patient_phone,

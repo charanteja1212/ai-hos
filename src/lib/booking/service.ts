@@ -344,67 +344,34 @@ export async function bookAppointment(params: BookingParams) {
     return { error: "This time slot was just booked. Please choose another." }
   }
 
-  // 3. Ensure patient exists (upsert)
+  // 3-6. Atomically: upsert patient + insert appointment + release lock + increment visit count
   const normalizedPhone = params.patient_phone.replace(/\D/g, "")
-  await supabase
-    .from("patients")
-    .upsert(
-      {
-        phone: normalizedPhone,
-        name: params.patient_name,
-        tenant_id: params.tenant_id,
-      },
-      { onConflict: "phone" }
-    )
+  const { data: rpcResult, error: rpcError } = await supabase.rpc("fn_book_appointment", {
+    p_booking_id: bookingId,
+    p_tenant_id: params.tenant_id,
+    p_patient_phone: normalizedPhone,
+    p_patient_name: params.patient_name,
+    p_patient_type: params.patient_type || "SELF",
+    p_patient_age: params.patient_age ?? null,
+    p_patient_gender: params.patient_gender || null,
+    p_doctor_id: params.doctor_id,
+    p_doctor_name: params.doctor_name,
+    p_specialty: params.specialty,
+    p_date: params.date,
+    p_time: params.time,
+    p_source: params.source || "dashboard",
+    p_booked_by: params.booked_by_whatsapp_number || null,
+    p_dependent_id: null,
+  })
 
-  // 4. Insert appointment
-  const appointmentRow: Record<string, unknown> = {
-    booking_id: bookingId,
-    tenant_id: params.tenant_id,
-    patient_phone: normalizedPhone,
-    patient_name: params.patient_name,
-    patient_type: params.patient_type || "SELF",
-    patient_age: params.patient_age ?? null,
-    doctor_id: params.doctor_id,
-    doctor_name: params.doctor_name,
-    specialty: params.specialty,
-    date: params.date,
-    time: params.time,
-    status: "confirmed",
-    source: params.source || "dashboard",
-    booked_by_whatsapp_number: params.booked_by_whatsapp_number,
-  }
-  if (params.patient_gender) {
-    appointmentRow.patient_gender = params.patient_gender
-  }
-  let { error: insertError } = await supabase
-    .from("appointments")
-    .insert(appointmentRow)
-  // Retry without patient_gender if column doesn't exist yet
-  if (insertError?.message?.includes("patient_gender")) {
-    delete appointmentRow.patient_gender
-    const retry = await supabase.from("appointments").insert(appointmentRow)
-    insertError = retry.error
-  }
-
-  // 5. Release slot lock (appointment now has the UNIQUE index protection)
-  await supabase
-    .from("slot_locks")
-    .delete()
-    .eq("doctor_id", params.doctor_id)
-    .eq("slot_date", params.date)
-    .eq("slot_time", params.time)
-
-  if (insertError) {
-    if (insertError.code === "23505") {
+  if (rpcError || (rpcResult && !rpcResult.success)) {
+    const errorMsg = rpcResult?.error || rpcError?.message || "Failed to create appointment"
+    if (rpcResult?.code === "23505" || rpcError?.code === "23505") {
       return { error: "Double booking prevented. This slot is taken." }
     }
-    log.error({ err: insertError.message, bookingId }, "Appointment insert failed")
-    return { error: "Failed to create appointment" }
+    log.error({ err: errorMsg, bookingId }, "Appointment insert failed")
+    return { error: errorMsg }
   }
-
-  // 6. Increment patient visit count
-  try { await supabase.rpc("increment_visit_count", { p_phone: normalizedPhone }) } catch { /* non-critical */ }
 
   // 7. Schedule WhatsApp reminders (24h + 2h before appointment)
   // Fetch hospital name for reminder message

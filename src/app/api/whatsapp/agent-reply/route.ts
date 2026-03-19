@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
+import type { SessionUser } from "@/types/auth"
 import { sendText, getTenantWhatsAppConfig } from "@/lib/whatsapp/sender"
 import { createServerClient } from "@/lib/supabase/server"
+import { agentReplyBodySchema } from "@/lib/validations/api-schemas"
+import { createRouteLogger } from "@/lib/logger"
+import { isRateLimited } from "@/lib/rate-limit"
+
+const log = createRouteLogger("whatsapp/agent-reply")
 
 /**
  * POST /api/whatsapp/agent-reply
@@ -9,29 +15,38 @@ import { createServerClient } from "@/lib/supabase/server"
  * Also supports closing the chat.
  */
 export async function POST(req: NextRequest) {
+ try {
   const session = await auth()
-  if (!session?.user) {
+  const user = session?.user as SessionUser | undefined
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   // Role check: only staff roles can reply
   const allowedRoles = ["RECEPTION", "BRANCH_ADMIN", "ADMIN", "CLIENT_ADMIN", "SUPER_ADMIN"]
-  const userRole = (session.user as { role?: string }).role
-  if (!userRole || !allowedRoles.includes(userRole)) {
+  if (!allowedRoles.includes(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
-  const body = await req.json()
-  const { chat_id, message, action } = body
-
-  if (!chat_id) {
-    return NextResponse.json({ error: "chat_id required" }, { status: 400 })
+  // Rate limit: 30 messages per 5 minutes per staff user
+  if (await isRateLimited(`agent-reply:${user.email}`, 30, 300000)) {
+    return NextResponse.json({ error: "Too many messages. Please slow down." }, { status: 429 })
   }
+
+  const body = await req.json()
+  const validation = agentReplyBodySchema.safeParse(body)
+  if (!validation.success) {
+    return NextResponse.json(
+      { error: "Validation failed", details: validation.error.issues },
+      { status: 400 }
+    )
+  }
+  const { chat_id, message, action } = validation.data
 
   const supabase = createServerClient()
 
   // Fetch the live chat (scoped to the user's tenant)
-  const tenantId = (session.user as { tenantId?: string }).tenantId
+  const tenantId = user.tenantId
   const { data: chat, error: chatErr } = await supabase
     .from("live_chats")
     .select("*")
@@ -95,7 +110,7 @@ export async function POST(req: NextRequest) {
   existingMessages.push({
     role: "staff",
     content: message,
-    staff_name: (session.user as { name?: string }).name || "Staff",
+    staff_name: user.name || "Staff",
     ts: new Date().toISOString(),
   })
 
@@ -104,7 +119,7 @@ export async function POST(req: NextRequest) {
     .update({
       messages: existingMessages,
       updated_at: new Date().toISOString(),
-      assigned_to: (session.user as { name?: string }).name || "Staff",
+      assigned_to: user.name || "Staff",
     })
     .eq("id", chat_id)
 
@@ -112,4 +127,8 @@ export async function POST(req: NextRequest) {
     success: result.success,
     messageId: result.messageId,
   })
+ } catch (err) {
+    log.error({ err }, "Agent reply error")
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
 }

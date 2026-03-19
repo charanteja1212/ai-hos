@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { createServerClient } from "@/lib/supabase/server"
 import { createRouteLogger } from "@/lib/logger"
+import { pushSubscribeBodySchema } from "@/lib/validations/api-schemas"
 
 const log = createRouteLogger("/api/push/subscribe")
 
@@ -12,11 +13,15 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { subscription } = await req.json()
-
-    if (!subscription?.endpoint) {
-      return NextResponse.json({ error: "Invalid subscription" }, { status: 400 })
+    const body = await req.json()
+    const validation = pushSubscribeBodySchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid subscription", details: validation.error.issues },
+        { status: 400 }
+      )
     }
+    const { subscription } = validation.data
 
     // Use session values instead of request body
     const sessionUser = session.user as { id?: string; email?: string; tenantId?: string }

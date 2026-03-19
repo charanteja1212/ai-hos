@@ -7,6 +7,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteLogger } from '@/lib/logger';
+import { isRateLimited } from '@/lib/rate-limit';
+import { createOrderBodySchema } from '@/lib/validations/api-schemas';
 
 const log = createRouteLogger('payment/create-order');
 
@@ -17,10 +19,22 @@ const RZP_KEY_ID = () => process.env.RAZORPAY_KEY_ID || '';
 
 export async function POST(req: NextRequest) {
   try {
-    const { booking_id } = await req.json();
-    if (!booking_id) {
-      return NextResponse.json({ error: 'booking_id required' }, { status: 400 });
+    // Rate limit: max 20 order creations per IP per 15 minutes
+    const forwarded = req.headers.get('x-forwarded-for');
+    const ip = forwarded?.split(',')[0]?.trim() || 'unknown';
+    if (await isRateLimited(`pay-create:${ip}`, 20, 15 * 60 * 1000)) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
+
+    const body = await req.json();
+    const validation = createOrderBodySchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', details: validation.error.issues },
+        { status: 400 }
+      );
+    }
+    const { booking_id } = validation.data;
 
     // Get appointment
     const apptRes = await fetch(

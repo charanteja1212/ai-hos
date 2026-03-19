@@ -3,8 +3,10 @@ import { createClient } from "@supabase/supabase-js"
 import { apiGuard, isGuardError } from "@/lib/auth/api-guard"
 import { createRouteLogger } from "@/lib/logger"
 import { getGatewayToken, requestAbhaOtp, verifyAbhaOtp } from "@/lib/abdm/abha"
+import { abdmActionSchema } from "@/lib/validations/api-schemas"
 
 const log = createRouteLogger("/api/abdm")
+import { ABDM_CONSENT_EXPIRY_DAYS } from "@/lib/config/defaults"
 import { buildConsentArtifact, generateConsentId } from "@/lib/abdm/consent"
 import {
   buildOPConsultationBundle,
@@ -46,6 +48,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
+    const validation = abdmActionSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid request", details: validation.error.issues },
+        { status: 400 }
+      )
+    }
     const { action } = body
     // Use tenant from session, not from request body (prevents cross-tenant access)
     const tenantId = guard.tenantId
@@ -142,7 +151,7 @@ export async function POST(req: NextRequest) {
           hi_types: hiTypes || ["OPConsultation", "Prescription"],
           date_range_from: dateRangeFrom,
           date_range_to: dateRangeTo,
-          expiry: expiry || new Date(Date.now() + 30 * 24 * 3600000).toISOString(),
+          expiry: expiry || new Date(Date.now() + ABDM_CONSENT_EXPIRY_DAYS * 24 * 3600000).toISOString(),
           status: "REQUESTED",
           created_at: new Date().toISOString(),
         }

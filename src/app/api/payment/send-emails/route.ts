@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase/server"
 import nodemailer from "nodemailer"
 import { createRouteLogger } from "@/lib/logger"
+import { sendEmailsBodySchema } from "@/lib/validations/api-schemas"
 
 const log = createRouteLogger("/api/payment/send-emails")
 
@@ -34,6 +35,15 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
+    const validation = sendEmailsBodySchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid request", details: validation.error.issues },
+        { status: 400 }
+      )
+    }
+    // Use body (any) for destructuring since template functions handle missing values.
+    // The Zod check above already ensured the shape/bounds are valid.
     const {
       type,
       patient_phone,

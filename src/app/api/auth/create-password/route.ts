@@ -4,6 +4,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { logAudit } from "@/lib/audit"
 import type { SessionUser } from "@/types/auth"
 import { createRouteLogger } from "@/lib/logger"
+import { createPasswordBodySchema } from "@/lib/validations/api-schemas"
 
 const log = createRouteLogger("/api/auth/create-password")
 
@@ -16,24 +17,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { email, password } = await req.json()
-
-    // Validate inputs
-    if (!email || typeof email !== "string" || !email.includes("@")) {
-      return NextResponse.json({ error: "Valid email is required" }, { status: 400 })
-    }
-    if (!password || typeof password !== "string" || password.length < 10) {
+    const body = await req.json()
+    const validation = createPasswordBodySchema.safeParse(body)
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Password must be at least 10 characters" },
+        { error: validation.error.issues[0]?.message || "Invalid input", details: validation.error.issues },
         { status: 400 }
       )
     }
-    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password)) {
-      return NextResponse.json(
-        { error: "Password must contain uppercase, lowercase, and a number" },
-        { status: 400 }
-      )
-    }
+    const { email, password } = validation.data
 
     const supabase = createServerClient()
 

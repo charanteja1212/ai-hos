@@ -2,16 +2,27 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { createServerClient } from "@/lib/supabase/server"
 import { createRouteLogger } from "@/lib/logger"
+import { isRateLimited } from "@/lib/rate-limit"
+import { MAX_UPLOAD_SIZE_BYTES } from "@/lib/config/defaults"
 
 const log = createRouteLogger("/api/upload")
 
 const ALLOWED_BUCKETS = ["logos", "doctors", "documents"]
+const ALLOWED_MIME_TYPES = [
+  "image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml",
+]
 
 export async function POST(req: NextRequest) {
   // Auth check
   const session = await auth()
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  // Rate limit: 20 uploads per 5 minutes per user
+  const userEmail = (session.user as { email?: string }).email || "unknown"
+  if (await isRateLimited(`upload:${userEmail}`, 20, 300000)) {
+    return NextResponse.json({ error: "Too many uploads. Please wait." }, { status: 429 })
   }
 
   try {
@@ -34,12 +45,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid file path" }, { status: 400 })
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      return NextResponse.json({ error: "File must be under 2MB" }, { status: 400 })
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      return NextResponse.json({ error: `File must be under ${MAX_UPLOAD_SIZE_BYTES / (1024 * 1024)}MB` }, { status: 400 })
     }
 
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "Only image files allowed" }, { status: 400 })
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      return NextResponse.json(
+        { error: `Invalid file type. Allowed: ${ALLOWED_MIME_TYPES.join(", ")}` },
+        { status: 400 }
+      )
     }
 
     const supabase = createServerClient()

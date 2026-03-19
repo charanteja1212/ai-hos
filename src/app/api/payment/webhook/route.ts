@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { logAudit } from '@/lib/audit';
 import { createRouteLogger, createTenantLogger } from '@/lib/logger';
+import { OP_PASS_VALIDITY_DAYS } from '@/lib/config/defaults';
 
 const log = createRouteLogger('payment/webhook');
 
@@ -253,7 +254,7 @@ export async function POST(req: NextRequest) {
 
       // ── PHASE 8: Generate OP Pass data ──
       const ist = nowIST();
-      const expiryDate = new Date(ist.ms + 15 * 86400000).toISOString().split('T')[0];
+      const expiryDate = new Date(ist.ms + OP_PASS_VALIDITY_DAYS * 86400000).toISOString().split('T')[0];
       const opPassId = 'OP' + Date.now() + Math.random().toString(36).slice(2, 6);
       const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.ainewworld.in'}/api/verify?id=` + encodeURIComponent(opPassId);
       const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(verifyUrl);
@@ -277,30 +278,41 @@ export async function POST(req: NextRequest) {
       }
       if (!bookedBy) bookedBy = patientPhone;
 
-      // ── PHASE 10: Insert OP Pass into DB ──
+      // ── PHASE 10-12: Atomic payment confirmation ──
+      // Uses fn_confirm_payment RPC for atomic: OP pass + appointment update + slot lock release
       try {
-        const opPassData = {
-          op_pass_id: opPassId, booking_id: bookingId,
-          patient_phone: patientPhone, patient_name: patientName,
-          patient_type: pType, dependent_id: depId,
-          issue_date: ist.date, expiry_date: expiryDate,
-          status: 'ACTIVE', qr_code: verifyUrl,
-          booked_by_whatsapp_number: bookedBy, tenant_id: tenantId,
-        };
-        tlog.info({ opPassData }, 'PHASE 10 — Inserting OP pass');
-        await sbPost('/op_passes', opPassData);
-        tlog.info({ opPassId }, 'PHASE 10 OK — OP pass inserted');
-      } catch (e) {
-        tlog.error({ err: e }, 'PHASE 10 FAIL — OP pass insert error');
-      }
-
-      // ── PHASE 11: Update appointment status ──
-      try {
-        await sbPatch('/appointments?booking_id=eq.' + encodeURIComponent(bookingId), {
-          status: 'confirmed', payment_status: 'paid',
-          payment_id: paymentId, razorpay_payment_id: paymentId, op_pass_id: opPassId,
+        const rpcRes = await fetch(SB_URL() + '/rpc/fn_confirm_payment', {
+          method: 'POST',
+          headers: { ...sbHeaders(), Prefer: 'return=representation' },
+          body: JSON.stringify({
+            p_booking_id: bookingId,
+            p_payment_id: paymentId,
+            p_op_pass_id: opPassId,
+            p_patient_phone: patientPhone,
+            p_patient_name: patientName,
+            p_patient_type: pType,
+            p_dependent_id: depId,
+            p_issue_date: ist.date,
+            p_expiry_date: expiryDate,
+            p_qr_code: verifyUrl,
+            p_booked_by: bookedBy,
+            p_tenant_id: tenantId,
+          }),
+          signal: AbortSignal.timeout(15000),
         });
-        tlog.info('PHASE 11 OK — Appointment updated to confirmed/paid');
+
+        const rpcResult = await rpcRes.json();
+        if (!rpcRes.ok || !rpcResult?.success) {
+          if (rpcResult?.already_processed) {
+            processedPayments.add(paymentId);
+            tlog.info('PHASE 10-12 SKIP — Already processed (RPC dedup)');
+            return NextResponse.json({ status: 'already_processed' });
+          }
+          tlog.error({ err: rpcResult?.error }, 'PHASE 10-12 FAIL — RPC error');
+          return NextResponse.json({ error: rpcResult?.error || 'Payment confirmation failed' }, { status: 500 });
+        }
+
+        tlog.info({ opPassId }, 'PHASE 10-12 OK — Atomic: OP pass + appointment + slot lock');
         logAudit({
           action: "status_change", entityType: "appointment", entityId: bookingId,
           actorEmail: patientPhone || "payment_webhook", actorRole: "system",
@@ -308,15 +320,8 @@ export async function POST(req: NextRequest) {
           details: { payment_status: "paid", payment_id: paymentId, amount },
         });
       } catch (e) {
-        tlog.error({ err: e }, 'PHASE 11 FAIL — Appointment update error');
-      }
-
-      // ── PHASE 12: Release slot lock ──
-      try {
-        await sbDelete('/slot_locks?booking_id=eq.' + encodeURIComponent(bookingId));
-        tlog.info('PHASE 12 OK — Slot lock released');
-      } catch (e) {
-        tlog.warn({ err: e }, 'PHASE 12 — Slot lock release failed');
+        tlog.error({ err: e }, 'PHASE 10-12 FAIL — Payment confirmation error');
+        return NextResponse.json({ error: 'Payment confirmation failed' }, { status: 500 });
       }
 
       // ── PHASE 13: Get tenant WA credentials ──

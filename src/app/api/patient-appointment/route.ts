@@ -5,6 +5,7 @@ import type { SessionUser } from "@/types/auth"
 import { cancelAppointment } from "@/lib/booking/service"
 import { sendCancellationConfirmation, getTenantWhatsAppConfig } from "@/lib/whatsapp/sender"
 import { createRouteLogger } from "@/lib/logger"
+import { patientAppointmentBodySchema } from "@/lib/validations/api-schemas"
 
 const log = createRouteLogger("patient-appointment")
 
@@ -17,11 +18,14 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { action, booking_id } = body
-
-    if (!booking_id) {
-      return NextResponse.json({ error: "Missing booking_id" }, { status: 400 })
+    const validation = patientAppointmentBodySchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: validation.error.issues },
+        { status: 400 }
+      )
     }
+    const { action, booking_id } = validation.data
 
     const tenant_id = user.tenantId
 
@@ -75,7 +79,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 })
-  } catch {
+  } catch (err) {
+    log.error({ err }, "Patient appointment API error")
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -4,6 +4,8 @@ import { createServerClient } from "@/lib/supabase/server"
 import { sendText, getTenantWhatsAppConfig } from "@/lib/whatsapp/sender"
 import { createServerNotifications } from "@/lib/notifications-server"
 import { createRouteLogger } from "@/lib/logger"
+import { postConsultationBodySchema } from "@/lib/validations/api-schemas"
+import { FEEDBACK_DELAY_MS, FOLLOWUP_REMINDER_UTC } from "@/lib/config/defaults"
 
 const log = createRouteLogger("/api/notifications/post-consultation")
 
@@ -27,6 +29,14 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
+  const validation = postConsultationBodySchema.safeParse(body)
+  if (!validation.success) {
+    log.error({ details: validation.error.issues }, "Validation failed")
+    return NextResponse.json(
+      { error: "Validation failed", details: validation.error.issues },
+      { status: 400 }
+    )
+  }
   const {
     prescription_id,
     booking_id,
@@ -38,18 +48,13 @@ export async function POST(req: NextRequest) {
     lab_tests,
     follow_up_date,
     tenant_id,
-  } = body
+  } = validation.data
 
   log.info({
     prescription_id, booking_id, patient_phone, patient_name,
     doctor_name, diagnosis, itemCount: items?.length, labCount: lab_tests?.length,
     follow_up_date, tenant_id,
   }, "Payload received")
-
-  if (!patient_phone || !tenant_id) {
-    log.error({ patient_phone, tenant_id }, "Missing required fields")
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
-  }
 
   const supabase = createServerClient()
 
@@ -148,12 +153,12 @@ export async function POST(req: NextRequest) {
           hospital_name: hospitalName,
         },
         {
-          delay: 30 * 60 * 1000, // 30 minutes
+          delay: FEEDBACK_DELAY_MS,
           jobId: `feedback-${booking_id}`,
         }
       )
-    } catch {
-      // Queue not available — non-critical
+    } catch (err) {
+      log.warn({ err, booking_id }, "Feedback queue job failed — queue may be unavailable")
     }
   }
 
@@ -165,7 +170,7 @@ export async function POST(req: NextRequest) {
       // Schedule a reminder 1 day before follow-up at 9 AM IST
       const reminderTime = new Date(followUpDate)
       reminderTime.setDate(reminderTime.getDate() - 1)
-      reminderTime.setHours(3, 30, 0, 0) // 9 AM IST = 3:30 UTC
+      reminderTime.setHours(FOLLOWUP_REMINDER_UTC.hours, FOLLOWUP_REMINDER_UTC.minutes, 0, 0)
 
       if (reminderTime.getTime() > Date.now() + 60000) {
         const { getReminderQueue } = await import("@/lib/queue/queues")
@@ -187,8 +192,8 @@ export async function POST(req: NextRequest) {
           }
         )
       }
-    } catch {
-      // Queue not available — non-critical
+    } catch (err) {
+      log.warn({ err, booking_id, follow_up_date }, "Follow-up reminder queue job failed — queue may be unavailable")
     }
   }
 

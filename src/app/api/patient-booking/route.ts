@@ -8,6 +8,7 @@ import {
 } from "@/lib/booking/service"
 import { sendBookingConfirmation, getTenantWhatsAppConfig } from "@/lib/whatsapp/sender"
 import { createServerClient } from "@/lib/supabase/server"
+import { patientBookingActionSchema } from "@/lib/validations/api-schemas"
 import { createRouteLogger } from "@/lib/logger"
 
 const log = createRouteLogger("patient-booking")
@@ -21,7 +22,14 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { action } = body
+    const validation = patientBookingActionSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: validation.error.issues },
+        { status: 400 }
+      )
+    }
+    const { action } = validation.data
 
     const tenant_id = body.tenant_id || user.tenantId
     if (!tenant_id) {
@@ -76,7 +84,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 })
-  } catch {
+  } catch (err) {
+    log.error({ err }, "Patient booking API error")
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

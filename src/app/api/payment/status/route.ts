@@ -5,6 +5,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteLogger } from '@/lib/logger';
+import { isRateLimited } from '@/lib/rate-limit';
+import { paymentStatusQuerySchema } from '@/lib/validations/api-schemas';
 
 const log = createRouteLogger('/api/payment/status');
 
@@ -12,10 +14,20 @@ const SB_URL = () => process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1';
 const SB_KEY = () => process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function GET(req: NextRequest) {
-  const bookingId = req.nextUrl.searchParams.get('booking_id');
-  if (!bookingId) {
+  // Rate limit: max 60 status checks per IP per 5 minutes (page polls frequently)
+  const forwarded = req.headers.get('x-forwarded-for');
+  const ip = forwarded?.split(',')[0]?.trim() || 'unknown';
+  if (await isRateLimited(`pay-status:${ip}`, 60, 5 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
+  const validation = paymentStatusQuerySchema.safeParse({
+    booking_id: req.nextUrl.searchParams.get('booking_id'),
+  });
+  if (!validation.success) {
     return NextResponse.json({ error: 'booking_id required' }, { status: 400 });
   }
+  const bookingId = validation.data.booking_id;
 
   try {
     const res = await fetch(

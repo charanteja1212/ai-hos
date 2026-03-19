@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { createRouteLogger } from "@/lib/logger"
+import { queueNotifyBodySchema } from "@/lib/validations/api-schemas"
 
 const log = createRouteLogger("/api/queue/notify")
 
@@ -17,6 +18,13 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
+    const validation = queueNotifyBodySchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: validation.error.issues },
+        { status: 400 }
+      )
+    }
     const {
       phone,
       patient_name,
@@ -26,11 +34,7 @@ export async function POST(req: Request) {
       estimated_wait,
       waiting_ahead,
       queue_url,
-    } = body
-
-    if (!phone || !queue_number) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
-    }
+    } = validation.data
 
     // Validate queue_url is from our domain (prevent phishing)
     if (queue_url) {
@@ -63,8 +67,8 @@ export async function POST(req: Request) {
     }
 
     const firstName = (patient_name || "Patient").split(" ")[0]
-    const waitText = estimated_wait > 0 ? `~${estimated_wait} min` : "Shortly"
-    const aheadText = waiting_ahead > 0 ? `${waiting_ahead}` : "0"
+    const waitText = (estimated_wait ?? 0) > 0 ? `~${estimated_wait} min` : "Shortly"
+    const aheadText = (waiting_ahead ?? 0) > 0 ? `${waiting_ahead}` : "0"
 
     const message = [
       `*${hospital_name || "Hospital"}*`,
