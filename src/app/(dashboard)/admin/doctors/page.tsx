@@ -562,7 +562,7 @@ export default function DoctorsManagementPage() {
         icon={<Stethoscope className="w-6 h-6" />}
         gradient="gradient-blue"
         title="Doctors"
-        subtitle="Manage hospital doctors, specialties, and consultation fees"
+        subtitle="Manage hospital doctors, specialties, and schedules"
         badge={<Badge variant="secondary" className="text-xs">{stats.total}</Badge>}
         action={
           <Button onClick={() => { resetForm(); setShowForm(true) }} className="gradient-blue text-white hover:opacity-90">
@@ -591,7 +591,6 @@ export default function DoctorsManagementPage() {
               <TableHead>Doctor</TableHead>
               <TableHead>Specialty</TableHead>
               <TableHead>Contact</TableHead>
-              <TableHead>Fee</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Doctor ID</TableHead>
               <TableHead className="w-12" />
@@ -600,7 +599,7 @@ export default function DoctorsManagementPage() {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
                   <motion.div animate={{ y: [0, -4, 0] }} transition={{ duration: 2, repeat: Infinity }}>
                     <Stethoscope className="w-10 h-10 mx-auto mb-3 opacity-30" />
                   </motion.div>
@@ -648,7 +647,6 @@ export default function DoctorsManagementPage() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm font-mono">Rs {doc.consultation_fee || 200}</TableCell>
                   <TableCell>
                     <Badge variant={doc.status === "active" ? "default" : doc.status === "on_leave" ? "secondary" : "outline"}>
                       {doc.status || "active"}
@@ -726,10 +724,6 @@ export default function DoctorsManagementPage() {
             <div className="space-y-1.5">
               <Label>Designation</Label>
               <Input placeholder="e.g. Senior Cardiologist" value={formDesignation} onChange={(e) => setFormDesignation(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Consultation Fee (Rs)</Label>
-              <Input type="number" value={formFee} onChange={(e) => setFormFee(e.target.value)} min="0" />
             </div>
             <div className="space-y-1.5">
               <Label>Phone</Label>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { useBranch } from "@/components/providers/branch-context"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { FeatureGate } from "@/components/shared/feature-gate"
@@ -93,6 +94,7 @@ export default function RevenueLeaksPage() {
 function RevenueLeaksContent() {
   const { data: session } = useSession()
   const { activeTenantId: tenantId } = useBranch()
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState("appointments")
   const [unbilledAppts, setUnbilledAppts] = useState<LeakRow[]>([])
@@ -283,7 +285,31 @@ function RevenueLeaksContent() {
             heads={["Patient", "Doctor", "Specialty", "Date", "Fee"]} rows={unbilledAppts}
             emptyMsg="No unbilled appointments found -- great job!"
             actionLabel="Create Invoice" actionIcon={FilePlus2}
-            onAction={(r) => toast.success(`Invoice creation queued for ${r.cols[0]}`)} />
+            onAction={async (r) => {
+              try {
+                const res = await fetch("/api/billing", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    action: "generate-invoice",
+                    tenant_id: tenantId,
+                    patient_name: r.cols[0],
+                    patient_phone: "",
+                    type: "consultation",
+                    booking_id: r.id,
+                    items: [{ description: `Consultation — Dr. ${r.cols[1]} (${r.cols[2]})`, quantity: 1, rate: r.amount }],
+                  }),
+                })
+                const data = await res.json()
+                if (res.ok) {
+                  toast.success(`Invoice ${data.invoice_id} created for ${r.cols[0]}`)
+                  setUnbilledAppts(prev => prev.filter(a => a.id !== r.id))
+                  setTimeout(() => router.push("/admin/billing"), 1000)
+                } else {
+                  toast.error(data.error || "Failed to create invoice")
+                }
+              } catch { toast.error("Failed to create invoice") }
+            }} />
         </TabsContent>
 
         <TabsContent value="invoices" className="mt-4">
@@ -299,7 +325,27 @@ function RevenueLeaksContent() {
             heads={["Order ID", "Patient", "Amount", "Dispensed"]} rows={unbilledPharm}
             emptyMsg="All pharmacy orders are billed"
             actionLabel="Create Invoice" actionIcon={FilePlus2}
-            onAction={(r) => toast.success(`Invoice creation queued for order ${r.id}`)} />
+            onAction={async (r) => {
+              try {
+                const res = await fetch("/api/billing", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    action: "generate-invoice",
+                    tenant_id: tenantId,
+                    patient_name: r.cols[1],
+                    patient_phone: "",
+                    type: "pharmacy",
+                    items: [{ description: `Pharmacy Order ${r.cols[0]}`, quantity: 1, rate: r.amount }],
+                  }),
+                })
+                const data = await res.json()
+                if (res.ok) {
+                  toast.success(`Invoice created for order ${r.cols[0]}`)
+                  setUnbilledPharm(prev => prev.filter(p => p.id !== r.id))
+                } else { toast.error(data.error || "Failed to create invoice") }
+              } catch { toast.error("Failed to create invoice") }
+            }} />
         </TabsContent>
 
         <TabsContent value="lab" className="mt-4">
@@ -307,7 +353,27 @@ function RevenueLeaksContent() {
             heads={["Order ID", "Patient", "Amount", "Ordered"]} rows={unbilledLabs}
             emptyMsg="All lab orders are billed"
             actionLabel="Create Invoice" actionIcon={FilePlus2}
-            onAction={(r) => toast.success(`Invoice creation queued for order ${r.id}`)} />
+            onAction={async (r) => {
+              try {
+                const res = await fetch("/api/billing", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    action: "generate-invoice",
+                    tenant_id: tenantId,
+                    patient_name: r.cols[1],
+                    patient_phone: "",
+                    type: "lab",
+                    items: [{ description: `Lab Order ${r.cols[0]}`, quantity: 1, rate: r.amount }],
+                  }),
+                })
+                const data = await res.json()
+                if (res.ok) {
+                  toast.success(`Invoice created for order ${r.cols[0]}`)
+                  setUnbilledLabs(prev => prev.filter(l => l.id !== r.id))
+                } else { toast.error(data.error || "Failed to create invoice") }
+              } catch { toast.error("Failed to create invoice") }
+            }} />
         </TabsContent>
       </Tabs>
     </div>
