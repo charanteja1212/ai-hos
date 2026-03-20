@@ -73,7 +73,12 @@ export default auth((req) => {
     return NextResponse.redirect(new URL(dest, req.nextUrl.origin))
   }
 
-  // Check role-based access
+  // API routes — auth is checked, role enforcement is in individual route handlers
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.next()
+  }
+
+  // Check role-based access for pages
   const allowed = roleRoutes[user.role] || []
   const hasAccess = allowed.some((prefix) => pathname.startsWith(prefix))
 
