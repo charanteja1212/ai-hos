@@ -22,7 +22,7 @@ import {
   Pill, TestTube, Send, FilePlus2, RefreshCw,
 } from "lucide-react"
 
-interface LeakRow { id: string; cols: string[]; amount: number }
+interface LeakRow { id: string; cols: string[]; amount: number; phone?: string }
 
 function LeakTable({ title, count, heads, rows, emptyMsg, actionLabel, actionIcon: Icon, onAction }: {
   title: string; count: number; heads: string[]; rows: LeakRow[]
@@ -154,7 +154,7 @@ function RevenueLeaksContent() {
     setUnbilledAppts(appts.filter(a => !billedIds.has(String(a.booking_id))).map(a => {
       const fee = drFees[String(a.doctor_id)] || baseFee
       return {
-        id: String(a.booking_id), amount: fee,
+        id: String(a.booking_id), amount: fee, phone: String(a.patient_phone || ""),
         cols: [String(a.patient_name || "Unknown"), String(a.doctor_name || "Unknown"),
           String(a.specialty || "-"), fmtDate(String(a.date || "")), formatCurrency(fee)],
       }
@@ -294,17 +294,17 @@ function RevenueLeaksContent() {
                     action: "generate-invoice",
                     tenant_id: tenantId,
                     patient_name: r.cols[0],
-                    patient_phone: "",
+                    patient_phone: r.phone || "0000000000",
                     type: "consultation",
                     booking_id: r.id,
-                    items: [{ description: `Consultation — Dr. ${r.cols[1]} (${r.cols[2]})`, quantity: 1, rate: r.amount }],
+                    items: [{ description: `Consultation — Dr. ${r.cols[1]} (${r.cols[2]})`, quantity: 1, amount: r.amount }],
                   }),
                 })
                 const data = await res.json()
                 if (res.ok) {
                   toast.success(`Invoice ${data.invoice_id} created for ${r.cols[0]}`)
                   setUnbilledAppts(prev => prev.filter(a => a.id !== r.id))
-                  setTimeout(() => router.push("/admin/billing"), 1000)
+                  setTimeout(() => router.push("/admin/billing"), 1500)
                 } else {
                   toast.error(data.error || "Failed to create invoice")
                 }
@@ -334,9 +334,9 @@ function RevenueLeaksContent() {
                     action: "generate-invoice",
                     tenant_id: tenantId,
                     patient_name: r.cols[1],
-                    patient_phone: "",
+                    patient_phone: r.phone || "0000000000",
                     type: "pharmacy",
-                    items: [{ description: `Pharmacy Order ${r.cols[0]}`, quantity: 1, rate: r.amount }],
+                    items: [{ description: `Pharmacy Order ${r.cols[0]}`, quantity: 1, amount: r.amount }],
                   }),
                 })
                 const data = await res.json()
@@ -362,9 +362,9 @@ function RevenueLeaksContent() {
                     action: "generate-invoice",
                     tenant_id: tenantId,
                     patient_name: r.cols[1],
-                    patient_phone: "",
+                    patient_phone: r.phone || "0000000000",
                     type: "lab",
-                    items: [{ description: `Lab Order ${r.cols[0]}`, quantity: 1, rate: r.amount }],
+                    items: [{ description: `Lab Order ${r.cols[0]}`, quantity: 1, amount: r.amount }],
                   }),
                 })
                 const data = await res.json()
