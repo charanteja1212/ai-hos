@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { apiGuard, isGuardError } from "@/lib/auth/api-guard"
 import { createRouteLogger } from "@/lib/logger"
+import { requireFeature } from "@/lib/platform/check-feature"
 import { getGatewayToken, requestAbhaOtp, verifyAbhaOtp } from "@/lib/abdm/abha"
 import { abdmActionSchema } from "@/lib/validations/api-schemas"
 
@@ -45,6 +46,10 @@ export async function POST(req: NextRequest) {
   // Auth check — only DOCTOR, ADMIN, BRANCH_ADMIN can access ABDM
   const guard = await apiGuard({ allowedRoles: ["DOCTOR", "BRANCH_ADMIN", "SUPER_ADMIN", "CLIENT_ADMIN"] })
   if (isGuardError(guard)) return guard
+
+  // Subscription tier check — ABDM requires Enterprise
+  const featureBlock = await requireFeature(guard.user.clientId, "abdm_integration")
+  if (featureBlock) return featureBlock
 
   try {
     const body = await req.json()

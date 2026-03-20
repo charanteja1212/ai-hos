@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { useSession } from "next-auth/react"
 import { useBranch } from "@/components/providers/branch-context"
+import { useFeatures } from "@/components/providers/features-context"
 import { toast } from "sonner"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { logAuditClient } from "@/lib/audit-client"
@@ -244,6 +245,7 @@ export default function DoctorsManagementPage() {
   const { data: docSession } = useSession()
   const docUser = docSession?.user as { email?: string; role?: string } | undefined
   const { activeTenantId: tenantId } = useBranch()
+  const { limits } = useFeatures()
 
   const [doctors, setDoctors] = useState<Doctor[]>([])
   const [loading, setLoading] = useState(true)
@@ -425,6 +427,12 @@ export default function DoctorsManagementPage() {
         })
         toast.success("Doctor updated")
       } else {
+        // Check doctor limit before adding
+        if (limits && doctors.length >= limits.max_doctors) {
+          toast.error(`Doctor limit reached (${limits.max_doctors}). Upgrade your plan to add more.`)
+          setSaving(false)
+          return
+        }
         const doctorId = `DOC-${Date.now()}`
         const { error } = await supabase.from("doctors").insert({
           ...data,

@@ -6,6 +6,7 @@ import { pharmacyActionSchema } from "@/lib/validations/api-schemas"
 import { createRouteLogger } from "@/lib/logger"
 import { logAudit } from "@/lib/audit"
 import { isRateLimited } from "@/lib/rate-limit"
+import { requireFeature } from "@/lib/platform/check-feature"
 
 const log = createRouteLogger("/api/pharmacy")
 
@@ -21,6 +22,10 @@ export async function POST(req: NextRequest) {
     if (!staffRoles.includes(user.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
+
+    // Subscription tier check
+    const featureBlock = await requireFeature(user.clientId, "pharmacy_module")
+    if (featureBlock) return featureBlock
 
     if (await isRateLimited(`pharmacy:${user.email}`, 60, 300000)) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
