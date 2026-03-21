@@ -764,7 +764,7 @@ export default function BookPage() {
           ) : (
             <>
               <p className="text-sm text-muted-foreground mb-3">
-                Available dates for <span className="font-medium text-slate-900 dark:text-white">Dr. {selectedDoctor?.name}</span>
+                Available dates for <span className="font-medium text-slate-900 dark:text-white">{selectedDoctor?.name?.startsWith("Dr") ? selectedDoctor.name : `Dr. ${selectedDoctor?.name}`}</span>
               </p>
               <div className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
                 {availableDates.map((d) => {
@@ -845,7 +845,7 @@ export default function BookPage() {
 
             <div className="divide-y divide-slate-200 dark:divide-slate-800 mb-5">
               <ConfirmRow icon={<User className="w-4 h-4" />} label="Patient" value={isDependent ? depName : patientName} />
-              <ConfirmRow icon={<Stethoscope className="w-4 h-4" />} label="Doctor" value={`Dr. ${selectedDoctor?.name}`} />
+              <ConfirmRow icon={<Stethoscope className="w-4 h-4" />} label="Doctor" value={selectedDoctor?.name?.startsWith("Dr") ? selectedDoctor.name : `Dr. ${selectedDoctor?.name}`} />
               <ConfirmRow icon={<MapPin className="w-4 h-4" />} label="Department" value={selectedSpecialty?.specialty || ""} />
               <ConfirmRow icon={<CalendarDays className="w-4 h-4" />} label="Date" value={selectedDate?.date || ""} />
               <ConfirmRow icon={<Clock className="w-4 h-4" />} label="Time" value={selectedSlot?.time || ""} />

@@ -428,15 +428,13 @@ export async function bookAppointment(args: any): Promise<any> {
   if (!doctorId) return { success: false, error: 'doctor_id is required' };
   if (!phone || phone.length < 10) return { success: false, error: 'Valid phone number required' };
 
-  // Parse time
+  // Parse time — store in 24-hour format (HH:MM) to match DB CHECK constraint
   const parts = startTime.trim().split(/[\sT]+/);
   const dateStr = parts[0];
   const timeParts = (parts[1] || '10:00').split(':');
   const h24 = parseInt(timeParts[0], 10);
   const min = parseInt(timeParts[1] || '0', 10);
-  const ap = h24 >= 12 ? 'PM' : 'AM';
-  const h12 = h24 % 12 || 12;
-  const time = h12 + ':' + String(min).padStart(2, '0') + ' ' + ap;
+  const time = String(h24).padStart(2, '0') + ':' + String(min).padStart(2, '0');
 
   // Check future
   const istTimeStr = dateStr + 'T' + String(h24).padStart(2, '0') + ':' + String(min).padStart(2, '0') + ':00+05:30';
@@ -508,7 +506,14 @@ export async function bookAppointment(args: any): Promise<any> {
     await sbPost('/appointments', apptData);
   } catch (e: any) {
     await sbDelete('/slot_locks?lock_id=eq.' + lockId);
-    return { success: false, error: 'Failed to save appointment: ' + e.message };
+    const msg = e.message || '';
+    if (msg.includes('23505') || msg.includes('unique') || msg.includes('idx_unique_appointment_slot')) {
+      return { success: false, error: 'This slot was just booked by another patient. Please choose a different time.' };
+    }
+    if (msg.includes('23514') || msg.includes('check')) {
+      return { success: false, error: 'Invalid appointment data. Please try again.' };
+    }
+    return { success: false, error: 'Failed to save appointment. Please try again.' };
   }
 
   // Format date
