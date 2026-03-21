@@ -1,28 +1,47 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 
-let _client: SupabaseClient | null = null
+let _anonClient: SupabaseClient | null = null
+let _authClient: SupabaseClient | null = null
+let _currentToken: string | null = null
 
 /**
- * Kept for backwards compatibility — no-op since RLS is disabled.
+ * Set the Supabase JWT token for authenticated access.
+ * Called from useSupabaseToken hook when session is available.
  */
-export function setSupabaseToken(_token: string | null) {}
-
-/**
- * Create a browser Supabase client using the anon key.
- * RLS is disabled — tenant isolation is handled in code via tenant_id filters.
- */
-export function createBrowserClient(): SupabaseClient {
-  if (_client) return _client
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-  _client = createClient(supabaseUrl, supabaseAnonKey)
-  return _client
+export function setSupabaseToken(token: string | null) {
+  if (token === _currentToken) return
+  _currentToken = token
+  _authClient = null // force re-creation with new token
 }
 
 /**
- * Create an explicitly authenticated Supabase client.
+ * Create a browser Supabase client.
+ * If a JWT token has been set via setSupabaseToken(), uses authenticated role
+ * with tenant-scoped RLS. Otherwise falls back to anon key (read-only).
+ */
+export function createBrowserClient(): SupabaseClient {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+  // Prefer authenticated client when token is available
+  if (_currentToken) {
+    if (_authClient) return _authClient
+    _authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: `Bearer ${_currentToken}` },
+      },
+    })
+    return _authClient
+  }
+
+  // Fallback: anon client (public pages like /wa/book, /queue, /rx)
+  if (_anonClient) return _anonClient
+  _anonClient = createClient(supabaseUrl, supabaseAnonKey)
+  return _anonClient
+}
+
+/**
+ * Create an explicitly authenticated Supabase client with a specific token.
  */
 export function createAuthClient(token: string): SupabaseClient {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!

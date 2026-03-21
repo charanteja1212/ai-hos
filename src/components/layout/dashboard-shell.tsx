@@ -10,12 +10,19 @@ import { Skeleton } from "@/components/ui/skeleton"
 import type { SessionUser } from "@/types/auth"
 import { BranchProvider } from "@/components/providers/branch-context"
 import { FeaturesProvider } from "@/components/providers/features-context"
+import { setSupabaseToken } from "@/lib/supabase/client"
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  // Set Supabase JWT token for tenant-scoped RLS
+  useEffect(() => {
+    const token = (session as unknown as Record<string, unknown>)?.supabaseAccessToken as string | undefined
+    setSupabaseToken(token || null)
+  }, [session])
 
   useEffect(() => {
     setMobileOpen(false)
