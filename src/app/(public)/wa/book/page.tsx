@@ -1105,25 +1105,22 @@ function SuccessCard({ bookingResult, auth }: { bookingResult: any; auth: { toke
 
       {/* Pay Now - Pending */}
       {bookingResult.payment_link && paymentStatus === "pending" && (
-        <button
-          onClick={() => {
-            handlePayClick();
-            window.location.href = bookingResult.payment_link;
-          }}
+        <a
+          href={bookingResult.payment_link}
           className="block w-full h-12 bg-cyan-700 hover:bg-cyan-800 text-white rounded-xl font-semibold text-center leading-[3rem] transition-colors mb-4"
         >
           Pay Now {"\u2014"} {"\u20B9"}{bookingResult.consultation_fee || "200"}
-        </button>
+        </a>
       )}
 
       {/* Open Payment - Checking */}
       {bookingResult.payment_link && paymentStatus === "checking" && (
-        <button
-          onClick={() => { window.location.href = bookingResult.payment_link; }}
+        <a
+          href={bookingResult.payment_link}
           className="block w-full h-12 bg-cyan-700 hover:bg-cyan-800 text-white rounded-xl font-semibold text-center leading-[3rem] transition-colors mb-4"
         >
           Open Payment Page
-        </button>
+        </a>
       )}
 
       {/* Checking Status Indicator */}
