@@ -68,6 +68,57 @@ export async function GET(req: NextRequest) {
       } catch { /* ignore — fee is optional */ }
     }
 
+    // If payment_link is missing but booking is pending_payment, create Razorpay link on-the-fly
+    if (!appt.payment_link && appt.status === 'pending_payment' && appt.payment_status === 'unpaid') {
+      try {
+        // Fetch tenant razorpay_auth and consultation_fee
+        const tRes = await fetch(
+          SB_URL() + '/tenants?tenant_id=eq.' + encodeURIComponent(appt.tenant_id || 'T001') + '&select=razorpay_auth,consultation_fee,hospital_name',
+          { headers: { apikey: SB_KEY(), Authorization: 'Bearer ' + SB_KEY() }, signal: AbortSignal.timeout(5000) }
+        );
+        const tenants = tRes.ok ? await tRes.json() : [];
+        const tenant = Array.isArray(tenants) && tenants.length > 0 ? tenants[0] : null;
+        const rzpAuth = 'Basic ' + (tenant?.razorpay_auth || process.env.RAZORPAY_AUTH || '');
+        const fee = tenant?.consultation_fee || 200;
+        consultation_fee = fee;
+
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.ainewworld.in';
+        const rzpRes = await fetch('https://api.razorpay.com/v1/payment_links', {
+          method: 'POST',
+          headers: { 'Authorization': rzpAuth, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: fee * 100, currency: 'INR', accept_partial: false,
+            description: 'Consultation - ' + (appt.doctor_name || ''),
+            customer: { name: appt.patient_name || 'Patient', contact: '+91' + (appt.booking_id || '').slice(-10) },
+            notify: { sms: false, email: false }, reminder_enable: false,
+            callback_url: appUrl + '/wa/pay?id=' + encodeURIComponent(appt.booking_id),
+            callback_method: 'get',
+            expire_by: Math.floor(Date.now() / 1000) + 1200,
+          }),
+          signal: AbortSignal.timeout(15000),
+        });
+        if (rzpRes.ok) {
+          const rzpData = await rzpRes.json();
+          appt.payment_link = rzpData.short_url || null;
+          appt.payment_id = rzpData.id || null;
+          // Save to DB
+          if (appt.payment_link) {
+            await fetch(
+              SB_URL() + '/appointments?booking_id=eq.' + encodeURIComponent(appt.booking_id),
+              {
+                method: 'PATCH',
+                headers: { apikey: SB_KEY(), Authorization: 'Bearer ' + SB_KEY(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+                body: JSON.stringify({ payment_link: appt.payment_link, payment_id: appt.payment_id }),
+                signal: AbortSignal.timeout(5000),
+              }
+            );
+          }
+        }
+      } catch (e) {
+        log.error({ err: e }, 'Failed to create on-the-fly Razorpay link');
+      }
+    }
+
     // Redact sensitive PII — only expose what the payment page needs
     return NextResponse.json({
       booking_id: appt.booking_id,
