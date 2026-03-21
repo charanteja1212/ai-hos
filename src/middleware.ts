@@ -50,6 +50,7 @@ export default auth((req) => {
     pathname.startsWith("/api/verify/") ||
     pathname.startsWith("/api/whatsapp/webhook") ||
     pathname.startsWith("/api/whatsapp/token") ||
+    pathname.startsWith("/api/wa") ||
     pathname.startsWith("/api/patient-auth/") ||
     pathname.startsWith("/api/payment/send-emails") ||
     pathname.startsWith("/_next/") ||
