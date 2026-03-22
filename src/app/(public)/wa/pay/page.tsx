@@ -93,10 +93,67 @@ function PayPageContent() {
     }
   }, [paid]);
 
-  const handlePay = () => {
-    if (booking?.payment_link) {
+  const [payLoading, setPayLoading] = useState(false);
+
+  const handlePay = async () => {
+    if (!booking) return;
+
+    // If payment link exists, redirect to it
+    if (booking.payment_link) {
       try { localStorage.setItem('pay_active', bookingId); } catch {}
       window.location.href = booking.payment_link;
+      return;
+    }
+
+    // Otherwise use Razorpay Checkout
+    setPayLoading(true);
+    try {
+      const res = await fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_id: bookingId }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed' }));
+        setError(err.error || 'Failed to create payment');
+        setPayLoading(false);
+        return;
+      }
+      const order = await res.json();
+
+      // Load Razorpay script
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => {
+        const options = {
+          key: order.key_id,
+          amount: order.amount,
+          currency: order.currency,
+          name: booking.doctor_name || 'Consultation',
+          description: `Appointment: ${booking.appointment_date} ${booking.appointment_time}`,
+          order_id: order.order_id,
+          prefill: {
+            name: order.patient_name || '',
+            contact: order.patient_phone || '',
+          },
+          handler: function () {
+            try { localStorage.setItem('pay_active', bookingId); } catch {}
+            setPaid(false); // trigger polling
+            checkStatus();
+          },
+          theme: { color: '#2563eb' },
+        };
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on('payment.failed', function () {
+          setError('Payment failed. Please try again.');
+        });
+        rzp.open();
+        setPayLoading(false);
+      };
+      document.body.appendChild(script);
+    } catch {
+      setError('Something went wrong. Please try again.');
+      setPayLoading(false);
     }
   };
 
@@ -267,17 +324,17 @@ function PayPageContent() {
 
         <button
           onClick={handlePay}
-          disabled={!booking?.payment_link}
+          disabled={payLoading}
           style={{
             ...btnStyle,
             width: '100%', padding: '16px 0', fontSize: 16,
-            background: booking?.payment_link ? '#059669' : '#cbd5e1',
-            cursor: booking?.payment_link ? 'pointer' : 'default',
+            background: payLoading ? '#cbd5e1' : '#059669',
+            cursor: payLoading ? 'default' : 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-          {displayFee ? `Pay ${displayFee}` : 'Pay Now'}
+          {payLoading ? 'Loading...' : displayFee ? `Pay ${displayFee}` : 'Pay Now'}
         </button>
       </div>
 
