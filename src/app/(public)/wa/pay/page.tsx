@@ -137,7 +137,7 @@ function PayPageContent() {
             contact: order.patient_phone || '',
           },
           handler: async function (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
-            try { localStorage.setItem('pay_active', bookingId); } catch {}
+            try { localStorage.removeItem('pay_active'); } catch {}
             // Verify payment server-side
             try {
               const verifyRes = await fetch('/api/payment/verify', {
@@ -151,12 +151,16 @@ function PayPageContent() {
                 }),
               });
               if (verifyRes.ok) {
+                const data = await verifyRes.json();
+                setBooking(prev => prev ? { ...prev, status: 'confirmed', payment_status: 'paid', op_pass_id: data.op_pass_id || null } : prev);
                 setPaid(true);
-                checkStatus();
+                if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
                 return;
               }
             } catch { /* fall through to polling */ }
-            checkStatus();
+            // Fallback: poll for status
+            setPaid(true);
+            if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
           },
           theme: { color: '#2563eb' },
         };
