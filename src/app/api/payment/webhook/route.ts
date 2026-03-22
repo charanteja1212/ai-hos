@@ -228,7 +228,7 @@ export async function POST(req: NextRequest) {
     log.info({ linkKeys: Object.keys(link), notes, linkAmount: link.amount, linkStatus: link.status }, 'PHASE 5 — Raw data');
 
     const type = notes.type || 'appointment';
-    const bookingId = notes.reference_id || '';
+    let bookingId = notes.reference_id || '';
     const tenantId = notes.tenant_id || 'T001';
     const patientName = notes.patient_name || 'Patient';
     const patientPhone = (notes.patient_phone || '').replace(/\D/g, '');
@@ -266,6 +266,8 @@ export async function POST(req: NextRequest) {
       log.error('PHASE 5 FAIL — No booking ID in notes or DB');
       return NextResponse.json({ error: 'No booking ID' }, { status: 400 });
     }
+    // Use resolved booking ID everywhere from here
+    bookingId = resolvedBookingId;
 
     const tlog = createTenantLogger(tenantId, { route: 'payment/webhook', bookingId: resolvedBookingId, paymentId });
 
