@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
   try {
     const res = await fetch(
       SB_URL() + '/appointments?booking_id=eq.' + encodeURIComponent(bookingId) +
-      '&select=booking_id,status,payment_status,patient_name,doctor_name,specialty,date,time,op_pass_id,payment_link,payment_id,tenant_id',
+      '&select=booking_id,status,payment_status,patient_name,patient_phone,doctor_name,specialty,date,time,op_pass_id,payment_link,payment_id,tenant_id',
       {
         headers: { apikey: SB_KEY(), Authorization: 'Bearer ' + SB_KEY() },
         signal: AbortSignal.timeout(8000),
@@ -89,11 +89,22 @@ export async function GET(req: NextRequest) {
           body: JSON.stringify({
             amount: fee * 100, currency: 'INR', accept_partial: false,
             description: 'Consultation - ' + (appt.doctor_name || ''),
-            customer: { name: appt.patient_name || 'Patient', contact: '+91' + (appt.booking_id || '').slice(-10) },
+            customer: { name: appt.patient_name || 'Patient', contact: '+91' + (appt.patient_phone || '').replace(/\D/g, '').slice(-10) },
             notify: { sms: false, email: false }, reminder_enable: false,
             callback_url: appUrl + '/wa/pay?id=' + encodeURIComponent(appt.booking_id),
             callback_method: 'get',
             expire_by: Math.floor(Date.now() / 1000) + 1200,
+            notes: {
+              type: 'appointment',
+              reference_id: appt.booking_id,
+              patient_name: appt.patient_name || '',
+              patient_phone: appt.patient_phone || '',
+              doctor_name: appt.doctor_name || '',
+              specialty: appt.specialty || '',
+              appointment_date: appt.date || '',
+              appointment_time: appt.time || '',
+              tenant_id: appt.tenant_id || 'T001',
+            },
           }),
           signal: AbortSignal.timeout(15000),
         });

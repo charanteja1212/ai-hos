@@ -240,15 +240,37 @@ export async function POST(req: NextRequest) {
 
     log.info({ type, bookingId, tenantId, patientName, patientPhone, doctorName, specialty, apptDate, apptTime, amount }, 'PHASE 5 OK — Extracted');
 
-    if (!bookingId) {
-      log.error('PHASE 5 FAIL — No booking ID in notes');
-      return NextResponse.json({ error: 'No booking ID in payment notes' }, { status: 400 });
+    // If no booking ID in notes, look up by payment_id (payment_link ID)
+    let resolvedBookingId = bookingId;
+    if (!resolvedBookingId && paymentLinkId) {
+      try {
+        const lookup = await sbGet('/appointments?payment_id=eq.' + encodeURIComponent(paymentLinkId) + '&select=booking_id,patient_phone,patient_name,doctor_name,specialty,date,time,tenant_id');
+        if (Array.isArray(lookup) && lookup.length > 0) {
+          const a = lookup[0];
+          resolvedBookingId = a.booking_id || '';
+          if (!patientPhone && a.patient_phone) Object.assign(notes, { patient_phone: a.patient_phone });
+          if (!patientName || patientName === 'Patient') Object.assign(notes, { patient_name: a.patient_name });
+          if (!doctorName) Object.assign(notes, { doctor_name: a.doctor_name });
+          if (!specialty) Object.assign(notes, { specialty: a.specialty });
+          if (!apptDate) Object.assign(notes, { appointment_date: a.date });
+          if (!apptTime) Object.assign(notes, { appointment_time: a.time });
+          if (tenantId === 'T001' && a.tenant_id) Object.assign(notes, { tenant_id: a.tenant_id });
+          log.info({ resolvedBookingId, paymentLinkId }, 'PHASE 5b — Resolved booking from payment_id lookup');
+        }
+      } catch (e) {
+        log.warn({ err: e }, 'PHASE 5b — Lookup by payment_id failed');
+      }
     }
 
-    const tlog = createTenantLogger(tenantId, { route: 'payment/webhook', bookingId, paymentId });
+    if (!resolvedBookingId) {
+      log.error('PHASE 5 FAIL — No booking ID in notes or DB');
+      return NextResponse.json({ error: 'No booking ID' }, { status: 400 });
+    }
+
+    const tlog = createTenantLogger(tenantId, { route: 'payment/webhook', bookingId: resolvedBookingId, paymentId });
 
     // ── PHASE 6: Check existing OP pass ──
-    if (type === 'appointment' && bookingId) {
+    if (type === 'appointment' && resolvedBookingId) {
       try {
         const existingPass = await sbGet('/op_passes?booking_id=eq.' + encodeURIComponent(bookingId) + '&status=eq.ACTIVE&select=op_pass_id');
         if (Array.isArray(existingPass) && existingPass.length > 0) {
@@ -263,7 +285,7 @@ export async function POST(req: NextRequest) {
     }
 
     /* ── APPOINTMENT FLOW ── */
-    if (type === 'appointment' && bookingId) {
+    if (type === 'appointment' && resolvedBookingId) {
       // ── PHASE 7: Verify appointment exists ──
       const apptCheck = await sbGet('/appointments?booking_id=eq.' + encodeURIComponent(bookingId) + '&select=booking_id');
       if (!Array.isArray(apptCheck) || apptCheck.length === 0) {
