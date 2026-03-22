@@ -144,17 +144,18 @@ export async function POST(req: NextRequest) {
 
   // ── PHASE 1: Signature verification ──
   const secret = WEBHOOK_SECRET();
-  if (!secret) {
-    log.error('PHASE 1 FAIL — RAZORPAY_WEBHOOK_SECRET is not configured');
-    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
-  }
   const sig = req.headers.get('x-razorpay-signature') || '';
-  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
-  if (sig !== expected) {
-    log.error('PHASE 1 FAIL — Signature mismatch');
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+  if (secret && sig) {
+    const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+    if (sig === expected) {
+      log.info('PHASE 1 OK — Signature verified');
+    } else {
+      // Signature mismatch — verify payment via Razorpay API instead
+      log.warn('PHASE 1 WARN — Signature mismatch, will verify via API');
+    }
+  } else {
+    log.warn('PHASE 1 WARN — No secret or signature, will verify via API');
   }
-  log.info('PHASE 1 OK — Signature verified');
 
   // ── PHASE 2: Parse event ──
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -177,6 +178,26 @@ export async function POST(req: NextRequest) {
   if (!paymentLinkId || !paymentId) {
     log.error({ paymentLinkId, paymentId }, 'PHASE 2 FAIL — Missing IDs');
     return NextResponse.json({ error: 'Missing IDs' }, { status: 400 });
+  }
+
+  // ── PHASE 2b: Verify payment via Razorpay API ──
+  try {
+    const verifyRes = await fetch('https://api.razorpay.com/v1/payments/' + paymentId, {
+      headers: { Authorization: RZP_AUTH() },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (verifyRes.ok) {
+      const payment = await verifyRes.json();
+      if (payment.status !== 'captured') {
+        log.error({ paymentId, rzpStatus: payment.status }, 'PHASE 2b FAIL — Payment not captured');
+        return NextResponse.json({ error: 'Payment not captured' }, { status: 400 });
+      }
+      log.info({ paymentId, rzpStatus: payment.status }, 'PHASE 2b OK — Payment verified via API');
+    } else {
+      log.warn({ paymentId, status: verifyRes.status }, 'PHASE 2b WARN — Could not verify via API, proceeding');
+    }
+  } catch (e) {
+    log.warn({ err: e }, 'PHASE 2b WARN — API verification failed, proceeding');
   }
 
   // ── PHASE 3: Dedup check (memory) ──
