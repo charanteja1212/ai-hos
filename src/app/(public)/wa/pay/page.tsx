@@ -143,7 +143,8 @@ function PayPageContent() {
           },
           theme: { color: '#2563eb' },
         };
-        const rzp = new (window as any).Razorpay(options);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rzp = new (window as unknown as Record<string, any>).Razorpay(options);
         rzp.on('payment.failed', function () {
           setError('Payment failed. Please try again.');
         });
