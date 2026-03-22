@@ -98,85 +98,32 @@ function PayPageContent() {
   const handlePay = async () => {
     if (!booking) return;
 
-    // If payment link exists, redirect to it
+    // Use payment link — redirect to Razorpay hosted page
     if (booking.payment_link) {
       try { localStorage.setItem('pay_active', bookingId); } catch {}
       window.location.href = booking.payment_link;
       return;
     }
 
-    // Otherwise use Razorpay Checkout
+    // No payment link yet — fetch status again to trigger on-the-fly creation
     setPayLoading(true);
     try {
-      const res = await fetch('/api/payment/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ booking_id: bookingId }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Failed' }));
-        setError(err.error || 'Failed to create payment');
-        setPayLoading(false);
-        return;
+      const res = await fetch('/api/payment/status?booking_id=' + encodeURIComponent(bookingId));
+      if (res.ok) {
+        const data: BookingInfo = await res.json();
+        if (data.payment_link) {
+          setBooking(data);
+          try { localStorage.setItem('pay_active', bookingId); } catch {}
+          window.location.href = data.payment_link;
+          return;
+        }
       }
-      const order = await res.json();
-
-      // Load Razorpay script
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => {
-        const options = {
-          key: order.key_id,
-          amount: order.amount,
-          currency: order.currency,
-          name: booking.doctor_name || 'Consultation',
-          description: `Appointment: ${booking.appointment_date} ${booking.appointment_time}`,
-          order_id: order.order_id,
-          prefill: {
-            name: order.patient_name || '',
-            contact: order.patient_phone || '',
-          },
-          handler: async function (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
-            try { localStorage.removeItem('pay_active'); } catch {}
-            // Verify payment server-side
-            try {
-              const verifyRes = await fetch('/api/payment/verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                  booking_id: bookingId,
-                }),
-              });
-              if (verifyRes.ok) {
-                const data = await verifyRes.json();
-                setBooking(prev => prev ? { ...prev, status: 'confirmed', payment_status: 'paid', op_pass_id: data.op_pass_id || null } : prev);
-                setPaid(true);
-                if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-                return;
-              }
-            } catch { /* fall through to polling */ }
-            // Fallback: poll for status
-            setPaid(true);
-            if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-          },
-          theme: { color: '#2563eb' },
-        };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const rzp = new (window as unknown as Record<string, any>).Razorpay(options);
-        rzp.on('payment.failed', function () {
-          setError('Payment failed. Please try again.');
-        });
-        rzp.open();
-        setPayLoading(false);
-      };
-      document.body.appendChild(script);
+      // If still no link, show error
+      setError('Payment link could not be created. Please try again.');
     } catch {
       setError('Something went wrong. Please try again.');
-      setPayLoading(false);
     }
+    setPayLoading(false);
   };
 
   const handleBackToWhatsApp = () => {
